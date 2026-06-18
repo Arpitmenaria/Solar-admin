@@ -52,6 +52,8 @@ function AnimatedIcon({ icon: Icon, active, collapsed }: {
       }}
       transition={{ type: "spring", stiffness: 480, damping: 24 }}
     >
+
+      
       
       {collapsed && (
         <motion.span
