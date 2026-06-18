@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Header } from "@/components/layouts/header";
 import { StatCard } from "@/components/shared/stat-card";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { UserAvatar } from "@/components/shared/user-avatar";
@@ -32,11 +31,6 @@ export default function UsersPage() {
 
   return (
     <div className="flex flex-col flex-1">
-      <Header
-        title="User Directory"
-        breadcrumbs={[{ label: "User Management", href: "/dashboard/users" }, { label: "User Directory" }]}
-      />
-
       <main className="flex-1 space-y-6 p-4 md:p-6">
         {/* ── Stat cards ── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

@@ -11,7 +11,6 @@ import {
   TbDatabaseImport, TbClock,
   TbDotsVertical, TbEye, TbPencil, TbTrash,
 } from "react-icons/tb";
-import { Header } from "@/components/layouts/header";
 import { CustomSelect } from "@/components/shared/custom-select";
 import { formatNumberFull, cn } from "@/lib/utils";
 import { MOCK_GROUPS, MOCK_GROUP_STATS } from "@/constants/mock-data";
@@ -167,15 +166,6 @@ export default function GroupsPage() {
 
   return (
     <div className="flex flex-col flex-1">
-      <Header
-        title="Group Management"
-        breadcrumbs={[
-          { label: "Admin",      href: "/dashboard"        },
-          { label: "Management", href: "/dashboard/groups" },
-          { label: "Group List"                            },
-        ]}
-      />
-
       <main className="flex-1 space-y-6 p-4 md:p-6">
 
         {/* ── Flat nav tab bar — no card box, matches Figma ── */}
