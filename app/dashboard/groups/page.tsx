@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   TbDownload, TbPlus, TbSearch, TbRefresh, TbArrowLeft,
@@ -8,6 +8,7 @@ import {
   TbChevronsLeft, TbChevronsRight, TbChevronLeft, TbChevronRight,
   TbActivity, TbClock, TbBan, TbSparkles,
   TbDatabaseImport, TbPalette, TbCurrencyDollar, TbAlertTriangle,
+  TbDotsVertical, TbEye, TbPencil, TbTrash,
 } from "react-icons/tb";
 import { Header } from "@/components/layouts/header";
 import { formatNumberFull } from "@/lib/utils";
@@ -60,6 +61,65 @@ const PRIVACY_TABS: { label: string; value: "ALL" | GroupPrivacy }[] = [
 ];
 const STATUS_OPTS:   ("ALL" | GroupStatus)[]   = ["ALL", "ACTIVE", "SUSPENDED", "PENDING", "REPORTED"];
 const CATEGORY_OPTS: ("ALL" | GroupCategory)[] = ["ALL", "Tech", "Design", "Finance", "Security", "Gaming", "Social"];
+
+/* ── ActionMenu popover ─────────────────────── */
+const ACTION_ITEMS = (status: GroupStatus) => [
+  { label: "View Details",                        icon: TbEye,    className: "text-slate-300 hover:bg-white/[0.05]"        },
+  { label: "Edit Group",                          icon: TbPencil, className: "text-slate-300 hover:bg-white/[0.05]"        },
+  { label: status === "SUSPENDED" ? "Unsuspend" : "Suspend", icon: TbBan, className: "text-orange-400 hover:bg-orange-500/[0.08]" },
+  { label: "Delete Group",                        icon: TbTrash,  className: "text-red-400 hover:bg-red-500/[0.08]"        },
+];
+
+function ActionMenu({ status }: { status: GroupStatus }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative flex justify-center">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className={`flex h-7 w-7 items-center justify-center rounded-lg transition-colors ${
+          open ? "bg-white/[0.10] text-slate-200" : "text-caption hover:bg-white/[0.08] hover:text-slate-200"
+        }`}
+      >
+        <TbDotsVertical size={15} />
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.90, y: -6 }}
+            animate={{ opacity: 1, scale: 1,    y: 0  }}
+            exit={{    opacity: 0, scale: 0.90, y: -6 }}
+            transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
+            style={{ transformOrigin: "top right" }}
+            className="absolute right-0 top-full z-50 mt-1.5 w-44 overflow-hidden rounded-xl border border-white/[0.10] bg-[#0f1828] shadow-2xl shadow-black/60"
+          >
+            {ACTION_ITEMS(status).map(({ label, icon: Icon, className }) => (
+              <button
+                key={label}
+                onClick={() => setOpen(false)}
+                className={`flex w-full items-center gap-2.5 px-3.5 py-2.5 text-[12px] font-medium transition-colors ${className}`}
+              >
+                <Icon size={14} />
+                {label}
+              </button>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
 
 /* ───────────────────────────────────────────── */
 export default function GroupsPage() {
@@ -260,7 +320,7 @@ export default function GroupsPage() {
           </div>
 
           {/* Table header */}
-          <div className="grid grid-cols-[2.5fr_120px_110px_160px_110px_100px_120px] gap-4 border-b border-white/[0.05] px-6 py-3 text-label">
+          <div className="grid grid-cols-[2.5fr_120px_110px_160px_110px_100px_120px_120px_60px] gap-4 border-b border-white/[0.05] px-6 py-3 text-label">
             <span>GROUP NAME</span>
             <span>CATEGORY</span>
             <span>PRIVACY</span>
@@ -268,6 +328,8 @@ export default function GroupsPage() {
             <span className="text-center">MEMBERS</span>
             <span className="text-center">POSTS</span>
             <span>STATUS</span>
+            <span>CREATED DATE</span>
+            <span className="text-center">ACTIONS</span>
           </div>
 
           {/* Table rows */}
@@ -278,7 +340,7 @@ export default function GroupsPage() {
               <motion.div key={group.id}
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                 transition={{ delay: i * 0.04 }}
-                className="grid grid-cols-[2.5fr_120px_110px_160px_110px_100px_120px] items-center gap-4 border-b border-white/[0.04] px-6 py-4 transition-colors hover:bg-white/[0.02]"
+                className="grid grid-cols-[2.5fr_120px_110px_160px_110px_100px_120px_120px_60px] items-center gap-4 border-b border-white/[0.04] px-6 py-4 transition-colors hover:bg-white/[0.02]"
               >
                 <div className="flex min-w-0 items-center gap-3">
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
@@ -318,6 +380,10 @@ export default function GroupsPage() {
                   <span className={`h-1.5 w-1.5 rounded-full ${st.dot}`} />
                   <span className={`text-[11px] font-semibold ${st.text}`}>{st.label}</span>
                 </div>
+
+                <span className="text-[12px] text-caption">{group.createdAt}</span>
+
+                <ActionMenu status={group.status} />
               </motion.div>
             );
           })}
