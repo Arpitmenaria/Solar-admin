@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
@@ -18,6 +18,7 @@ const fadeUp = { hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } };
 
 export default function UserDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const router = useRouter();
   const { data: user, isLoading } = useUser(id);
 
   if (isLoading) return <UserDetailSkeleton />;
@@ -37,12 +38,21 @@ export default function UserDetailPage() {
       />
 
       <main className="flex-1 p-6 space-y-5">
-        {/* Page heading */}
-        <motion.div variants={fadeUp} initial="hidden" animate="show">
-          <h1 className="text-2xl font-bold text-white">{user.displayName}</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Manage user profile, permissions, location, and moderation history.
-          </p>
+        {/* Page heading + back button */}
+        <motion.div variants={fadeUp} initial="hidden" animate="show" className="flex items-start gap-3">
+          <button
+            onClick={() => router.back()}
+            className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/[0.10] bg-white/[0.03] text-caption transition-colors hover:bg-white/[0.07] hover:text-slate-200"
+            aria-label="Go back"
+          >
+            ←
+          </button>
+          <div>
+            <h1 className="text-2xl font-bold text-white">{user.displayName}</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Manage user profile, permissions, location, and moderation history.
+            </p>
+          </div>
         </motion.div>
 
         {/* Top row: profile card + stat cards */}
@@ -56,7 +66,9 @@ export default function UserDetailPage() {
           <motion.div variants={fadeUp} className="rounded-xl border border-white/[0.08] bg-[#0d1321] p-6 flex flex-col gap-5">
             {/* Avatar */}
             <div className="flex flex-col items-center gap-3">
-              <UserAvatar src={user.avatarUrl} name={user.displayName} size="xl" />
+              <div className="rounded-full p-[3px] bg-gradient-to-br from-blue-500/60 via-blue-400/30 to-transparent">
+                <UserAvatar src={user.avatarUrl} name={user.displayName} size="xl" />
+              </div>
               <Link
                 href={`/dashboard/users/${user.id}/edit`}
                 className="flex items-center gap-1.5 rounded-lg bg-[#2563eb] px-4 py-2 text-xs font-semibold text-white hover:bg-blue-600 transition-colors"

@@ -95,12 +95,16 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="mt-5 h-[180px]">
-            <EngagementChart data={chart ?? []} />
+          {/* Chart — flex-1 so it fills remaining card height, no blank gap */}
+          <div className="mt-5 flex-1 min-h-[180px]">
+            {chart && chart.length > 0
+              ? <EngagementChart data={chart} />
+              : <div className="h-full animate-pulse rounded-lg bg-white/[0.03]" />
+            }
           </div>
 
-          {/* Financial sub-stats */}
-          <div className="mt-5 grid grid-cols-3 gap-3 border-t border-white/[0.05] pt-5">
+          {/* Financial sub-stats — pinned to bottom via mt-auto */}
+          <div className="mt-auto pt-5 grid grid-cols-3 gap-3 border-t border-white/[0.05]">
             {FINANCIAL_STATS(stats).map(({ label, value, color }) => (
               <div key={label}>
                 <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-caption">{label}</p>
