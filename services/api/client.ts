@@ -1,0 +1,38 @@
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
+
+interface RequestOptions {
+  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+  body?: unknown;
+  headers?: Record<string, string>;
+}
+
+export interface ApiError {
+  message: string;
+  status: number;
+}
+
+async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  const { method = "GET", body, headers = {} } = options;
+
+  const res = await fetch(`${BASE_URL}${path}`, {
+    method,
+    headers: { "Content-Type": "application/json", ...headers },
+    body: body != null ? JSON.stringify(body) : undefined,
+  });
+
+  if (!res.ok) {
+    const error: ApiError = { message: res.statusText, status: res.status };
+    throw error;
+  }
+
+  if (res.status === 204) return undefined as T;
+  return res.json() as Promise<T>;
+}
+
+export const apiClient = {
+  get:    <T>(path: string, h?: Record<string, string>) => request<T>(path, { method: "GET", headers: h }),
+  post:   <T>(path: string, body: unknown, h?: Record<string, string>) => request<T>(path, { method: "POST", body, headers: h }),
+  put:    <T>(path: string, body: unknown, h?: Record<string, string>) => request<T>(path, { method: "PUT", body, headers: h }),
+  patch:  <T>(path: string, body: unknown, h?: Record<string, string>) => request<T>(path, { method: "PATCH", body, headers: h }),
+  delete: <T>(path: string, h?: Record<string, string>) => request<T>(path, { method: "DELETE", headers: h }),
+};
