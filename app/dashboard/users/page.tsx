@@ -37,17 +37,17 @@ export default function UsersPage() {
         breadcrumbs={[{ label: "User Management", href: "/dashboard/users" }, { label: "User Directory" }]}
       />
 
-      <main className="flex-1 space-y-6 p-6">
+      <main className="flex-1 space-y-6 p-4 md:p-6">
         {/* ── Stat cards ── */}
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {statsLoading ? (
             Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)
           ) : (
             <>
-              <StatCard label="FLAGGED USERS" value={formatNumberFull(stats?.flaggedUsers ?? 0)}  icon={Flag} />
-              <StatCard label="NEW SIGNUPS"    value={formatNumberFull(stats?.newSignups ?? 0)}    icon={UserPlus} sub="Last 24 hours" />
-              <StatCard label="TOTAL USERS"    value={formatNumberFull(stats?.totalUsers ?? 0)}    icon={Users} />
-              <StatCard label="PREMIUM USERS"  value={formatNumberFull(stats?.premiumUsers ?? 0)}  icon={Crown} />
+              <StatCard label="TOTAL USERS"    value={formatNumberFull(stats?.totalUsers ?? 0)}    icon={Users} badge="+12%" />
+              <StatCard label="PREMIUM USERS"  value={formatNumberFull(stats?.premiumUsers ?? 0)}  icon={Crown} dot />
+              <StatCard label="NEW SIGN UP"     value={formatNumberFull(stats?.newSignups ?? 0)}    icon={UserPlus} sub="Today" />
+              <StatCard label="FLAGGED USERS"   value={formatNumberFull(stats?.flaggedUsers ?? 0)}  icon={Flag} sub="Needs review" />
             </>
           )}
         </div>
@@ -55,76 +55,71 @@ export default function UsersPage() {
         {/* ── User Directory card ── */}
         <div className="overflow-hidden rounded-xl border border-white/[0.08] bg-card">
 
-          {/* Card header */}
-          <div className="flex items-center justify-between border-b border-white/[0.06] px-6 py-5">
-            <div>
-              <h2 className="text-xl font-bold text-white">User Directory</h2>
-              <div className="mt-1.5 h-0.5 w-5 rounded-full bg-blue-500" />
+          {/* Single controls row: search + filters + sort + export */}
+          <div className="flex flex-wrap items-center gap-3 px-5 py-4 border-b border-white/[0.06]">
+
+            {/* Search */}
+            <div className="relative w-[220px] sm:w-[260px] shrink-0">
+              <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#3a4d6a]" />
+              <input
+                id="user-search"
+                type="text"
+                placeholder="Search users…"
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                aria-label="Search users"
+                className="w-full rounded-lg border border-white/[0.08] bg-white/[0.03] py-2 pl-9 pr-3 text-[12px] text-slate-200 placeholder:text-[#2e3d57] transition-all focus:border-blue-500/40 focus:bg-white/[0.05] focus:outline-none"
+              />
             </div>
-            <button className="flex items-center gap-2 rounded-lg border border-white/[0.10] bg-white/[0.03] px-4 py-2 text-xs font-medium text-slate-300 transition-colors hover:bg-white/[0.06]">
-              <Download size={13} />
+
+            {/* Filter pills */}
+            <div className="flex items-center gap-1.5">
+              {USER_FILTER_TABS.map((tab) => (
+                <button
+                  key={tab.value}
+                  onClick={() => { setStatusFilter(tab.value); setPage(1); }}
+                  aria-pressed={statusFilter === tab.value}
+                  className={`rounded-full px-3.5 py-1.5 text-[11px] font-bold tracking-widest transition-all ${
+                    statusFilter === tab.value
+                      ? "bg-blue-600 text-white"
+                      : "border border-white/[0.12] text-caption hover:border-white/[0.22] hover:text-slate-300"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Sort By */}
+            <select
+              aria-label="Sort users by"
+              className="ml-auto rounded-lg border border-white/[0.12] bg-white/[0.03] px-3 py-2 text-[12px] font-medium text-slate-200 focus:outline-none focus:border-blue-500/40 appearance-none pr-7 cursor-pointer shrink-0"
+              style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%236b7a99' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 9px center" }}
+            >
+              <option>Registration Date</option>
+              <option>Followers</option>
+              <option>Name</option>
+              <option>Status</option>
+            </select>
+
+            {/* Export CSV */}
+            <button className="flex shrink-0 items-center gap-1.5 rounded-lg border border-white/[0.10] bg-white/[0.03] px-3.5 py-2 text-[12px] font-medium text-slate-300 transition-colors hover:bg-white/[0.06]">
+              <Download size={12} />
               Export CSV
             </button>
           </div>
 
-          {/* Search + Sort By */}
-          <div className="flex items-center gap-4 px-6 pb-3 pt-5">
-            <div className="relative flex-1">
-              <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#3a4d6a]" />
-              <input
-                id="user-search"
-                type="text"
-                placeholder="Search by Name, Username, Email, Phone"
-                value={search}
-                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                aria-label="Search users"
-                className="w-full rounded-lg border border-white/[0.08] bg-white/[0.03] py-2.5 pl-10 pr-4 text-sm text-slate-200 placeholder:text-[#2e3d57] transition-all focus:border-blue-500/40 focus:bg-white/[0.05] focus:outline-none"
-              />
-            </div>
-            <div className="flex shrink-0 items-center gap-3">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-caption">SORT BY:</span>
-              <select
-                aria-label="Sort users by"
-                className="rounded-lg border border-white/[0.12] bg-white/[0.03] px-3.5 py-2.5 text-xs font-medium text-slate-200 focus:outline-none focus:border-blue-500/40 appearance-none pr-7 cursor-pointer"
-                style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7a99' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 10px center" }}
-              >
-                <option>Registration Date</option>
-                <option>Followers</option>
-                <option>Name</option>
-                <option>Status</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Filter tabs — pill shape to match Figma */}
-          <div className="flex items-center gap-2 px-6 pb-5">
-            {USER_FILTER_TABS.map((tab) => (
-              <button
-                key={tab.value}
-                onClick={() => { setStatusFilter(tab.value); setPage(1); }}
-                aria-pressed={statusFilter === tab.value}
-                className={`rounded-full px-4 py-1.5 text-[11px] font-bold tracking-widest transition-all ${
-                  statusFilter === tab.value
-                    ? "bg-blue-600 text-white"
-                    : "border border-white/[0.12] text-caption hover:border-white/[0.22] hover:text-slate-300"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
           {/* Table */}
-          <div className="border-t border-white/[0.06]">
+          <div className="border-t border-white/[0.06] overflow-x-auto">
 
             {/* Table header */}
-            <div className={`grid ${COLS} gap-4 border-b border-white/[0.05] px-6 py-3`}>
-              <span className="text-label">USER NODE</span>
-              <span className="text-label">STATUS</span>
-              <span className="text-label">REGISTRATION</span>
-              <span className="text-label text-center">FOLLOWERS</span>
-              <span className="text-label text-center">POSTS</span>
-              <span className="text-label text-right">VIEW DETAIL</span>
+            <div className={`grid ${COLS} gap-4 border-b border-white/[0.05] bg-white/[0.025] px-6 py-3`}>
+              <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400">USER NODE</span>
+              <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400">STATUS</span>
+              <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400">REGISTRATION</span>
+              <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400 text-center">FOLLOWERS</span>
+              <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400 text-center">POSTS</span>
+              <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400 text-right">VIEW DETAIL</span>
             </div>
 
             {/* Table body */}

@@ -17,7 +17,7 @@ interface HeaderProps {
 
 export function Header({ title, breadcrumbs, actions }: HeaderProps) {
   return (
-    <header className="sticky top-12 z-30 flex h-12 items-center border-b border-white/[0.06] bg-[#080c16]/95 backdrop-blur-sm px-6">
+    <header className="sticky top-12 z-30 flex h-12 items-center border-b border-white/[0.06] bg-[#080c16]/95 backdrop-blur-sm px-4 md:px-6">
       {/* Left */}
       <div className="flex items-center gap-4 flex-1 min-w-0">
         {title && (

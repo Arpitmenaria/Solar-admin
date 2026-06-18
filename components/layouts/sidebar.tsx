@@ -5,21 +5,19 @@ import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   TbLayoutDashboard, TbUsers, TbUsersGroup,
-  TbHelpCircle, TbLogout, TbChevronLeft, TbChevronRight, TbX,
+  TbChevronLeft, TbChevronRight, TbX,
 } from "react-icons/tb";
 import { FaRegStar } from "react-icons/fa";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/store/ui.store";
 
-type IconKey = "Dashboard" | "Users" | "Groups" | "Support" | "SignOut";
+type IconKey = "Dashboard" | "Users" | "Groups";
 
 const ICON_MAP: Record<IconKey, React.ElementType> = {
   Dashboard: TbLayoutDashboard,
   Users:     TbUsers,
   Groups:    TbUsersGroup,
-  Support:   TbHelpCircle,
-  SignOut:   TbLogout,
 };
 
 const NAV_MAIN = [
@@ -28,10 +26,6 @@ const NAV_MAIN = [
   { label: "Group Management", href: "/dashboard/groups", icon: "Groups"    },
 ] as const;
 
-const NAV_BOTTOM = [
-  { label: "Support",  href: "/dashboard/support", icon: "Support"  },
-  { label: "Sign Out", href: "/",                  icon: "SignOut"   },
-] as const;
 
 /* ── Animated icon ─────────────────────────── */
 function AnimatedIcon({ icon: Icon, active, collapsed }: {
@@ -246,11 +240,9 @@ function SidebarContent({ collapsed, instanceId }: { collapsed: boolean; instanc
                 className="min-w-0 overflow-hidden"
               >
                 <p style={{ fontFamily: "var(--font-pjs)", fontSize: 14, fontWeight: 700, color: "#fff", whiteSpace: "nowrap" }}>
-                  Admin Console
+                  Admin
                 </p>
-                <p style={{ fontFamily: "var(--font-pjs)", fontSize: 9, fontWeight: 600, letterSpacing: "0.18em", textTransform: "uppercase", color: "#2a3d5c", marginTop: 5, whiteSpace: "nowrap" }}>
-                  Infrastructure Control
-                </p>
+                
               </motion.div>
             )}
           </AnimatePresence>
@@ -273,72 +265,13 @@ function SidebarContent({ collapsed, instanceId }: { collapsed: boolean; instanc
         ))}
       </nav>
 
-      {/* Bottom nav */}
-      <div className="space-y-[2px] border-t border-white/[0.05] px-2 py-2">
-        {NAV_BOTTOM.map((item, i) => (
-          <NavItem
-            key={item.href}
-            index={NAV_MAIN.length + i}
-            label={item.label}
-            href={item.href}
-            icon={item.icon as IconKey}
-            active={false}
-            collapsed={collapsed}
-            pillId={pillId}
-          />
-        ))}
-      </div>
-
-      {/* Admin chip */}
-      <div className={cn("pb-3", collapsed ? "px-2" : "px-3")}>
-        <div className={cn(
-          "flex items-center rounded-lg border border-[#141e33] bg-[#0f1728] transition-all duration-200",
-          collapsed ? "justify-center px-0 py-2.5" : "gap-2.5 px-3 py-2.5"
-        )}>
-          <motion.div
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#1a2a44] text-[11px] font-bold text-[#4a7cc7]"
-            style={{ fontFamily: "var(--font-pjs)" }}
-            whileHover={{ scale: 1.18 }}
-            transition={{ type: "spring", stiffness: 400, damping: 20 }}
-          >
-            A
-          </motion.div>
-          <AnimatePresence initial={false}>
-            {!collapsed && (
-              <motion.div
-                key="admin-text"
-                initial={{ opacity: 0, width: 0 }}
-                animate={{ opacity: 1, width: "auto" }}
-                exit={{ opacity: 0, width: 0 }}
-                transition={{ duration: 0.18 }}
-                className="min-w-0 overflow-hidden"
-              >
-                <p style={{ fontFamily: "var(--font-pjs)", fontSize: 13, fontWeight: 600, color: "#fff", whiteSpace: "nowrap" }}>Admin</p>
-                <p style={{ fontFamily: "var(--font-pjs)", fontSize: 10, color: "#2a3d5c", whiteSpace: "nowrap" }}>Sys-Log 01</p>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      </div>
-
-      {/* Collapse toggle (desktop only) */}
-      <motion.button
-        onClick={toggleSidebar}
-        title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-        className="mx-3 mb-3 hidden h-8 items-center justify-center rounded-lg border border-white/[0.07] text-[#5a7090] lg:flex"
-        whileHover={{ scale: 1.05, backgroundColor: "rgba(255,255,255,0.05)" }}
-        whileTap={{ scale: 0.95 }}
-        transition={{ type: "spring", stiffness: 400, damping: 22 }}
-      >
-        {collapsed ? <TbChevronRight size={15} /> : <TbChevronLeft size={15} />}
-      </motion.button>
     </div>
   );
 }
 
 /* ── Export ─────────────────────────────────── */
 export function Sidebar() {
-  const { sidebarCollapsed, mobileOpen, setMobileOpen } = useUIStore();
+  const { sidebarCollapsed, toggleSidebar, mobileOpen, setMobileOpen } = useUIStore();
 
   return (
     <>
@@ -350,6 +283,31 @@ export function Sidebar() {
       >
         <SidebarContent collapsed={sidebarCollapsed} instanceId="desktop" />
       </motion.aside>
+
+      {/* Border-edge toggle — small circle centered on sidebar right border (desktop only) */}
+      <motion.button
+        onClick={toggleSidebar}
+        animate={{ left: sidebarCollapsed ? 64 - 10 : 238 - 10 }}
+        transition={{ type: "spring", stiffness: 340, damping: 32 }}
+        title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        className="fixed z-50 hidden h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full border border-white/[0.18] bg-[#0e1625] text-[#5a7090] shadow-md transition-colors hover:border-blue-500/60 hover:bg-[#111f36] hover:text-blue-400 lg:flex"
+        style={{ top: "calc(52px + (100vh - 52px) / 2)" }}
+        whileHover={{ scale: 1.2 }}
+        whileTap={{ scale: 0.88 }}
+      >
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.span
+            key={sidebarCollapsed ? "right" : "left"}
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.5 }}
+            transition={{ duration: 0.12 }}
+            className="flex items-center justify-center"
+          >
+            {sidebarCollapsed ? <TbChevronRight size={11} /> : <TbChevronLeft size={11} />}
+          </motion.span>
+        </AnimatePresence>
+      </motion.button>
 
       {/* Tablet */}
       <aside

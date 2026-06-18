@@ -1,11 +1,12 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   Pencil, Users, Eye, FileText, Flag, CreditCard, Calendar
 } from "lucide-react";
+import { BackButton } from "@/components/shared/back-button";
 import { Header } from "@/components/layouts/header";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -18,7 +19,6 @@ const fadeUp = { hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } };
 
 export default function UserDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const router = useRouter();
   const { data: user, isLoading } = useUser(id);
 
   if (isLoading) return <UserDetailSkeleton />;
@@ -37,27 +37,19 @@ export default function UserDetailPage() {
        
       />
 
-      <main className="flex-1 p-6 space-y-5">
-        {/* Page heading + back button */}
-        <motion.div variants={fadeUp} initial="hidden" animate="show" className="flex items-start gap-3">
-          <button
-            onClick={() => router.back()}
-            className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/[0.10] bg-white/[0.03] text-caption transition-colors hover:bg-white/[0.07] hover:text-slate-200"
-            aria-label="Go back"
-          >
-            ←
-          </button>
-          <div>
-            <h1 className="text-2xl font-bold text-white">{user.displayName}</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              Manage user profile, permissions, location, and moderation history.
-            </p>
-          </div>
+      <main className="flex-1 p-4 md:p-6 space-y-5">
+        {/* Back button above title */}
+        <motion.div variants={fadeUp} initial="hidden" animate="show">
+          <BackButton />
+          <h1 className="mt-3 text-2xl font-bold text-white">{user.displayName}</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Manage user profile, permissions, location, and moderation history.
+          </p>
         </motion.div>
 
         {/* Top row: profile card + stat cards */}
         <motion.div
-          className="grid grid-cols-[340px_1fr] gap-5"
+          className="grid grid-cols-1 xl:grid-cols-[340px_1fr] gap-5"
           variants={{ show: { transition: { staggerChildren: 0.08 } } }}
           initial="hidden"
           animate="show"
@@ -91,7 +83,7 @@ export default function UserDetailPage() {
           {/* Right column: stats + groups/events + account/subscription */}
           <div className="space-y-5">
             {/* 6 stat cards */}
-            <motion.div variants={fadeUp} className="grid grid-cols-3 gap-4">
+            <motion.div variants={fadeUp} className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               <MiniStat label="FRIENDS"        value={formatNumberFull(user.stats.friends)} />
               <MiniStat label="FOLLOWERS"      value={formatNumberFull(user.stats.followers)} />
               <MiniStat label="FOLLOWING"      value={formatNumberFull(user.stats.following)} />
@@ -101,7 +93,7 @@ export default function UserDetailPage() {
             </motion.div>
 
             {/* Groups + Events */}
-            <motion.div variants={fadeUp} className="grid grid-cols-2 gap-4">
+            <motion.div variants={fadeUp} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="rounded-xl border border-white/[0.08] bg-[#0d1321] p-4">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
@@ -144,7 +136,7 @@ export default function UserDetailPage() {
             </motion.div>
 
             {/* Account Status + Subscription — same row, same height */}
-            <motion.div variants={fadeUp} className="grid grid-cols-2 gap-4">
+            <motion.div variants={fadeUp} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Account status */}
               <div className="rounded-xl border border-white/[0.08] bg-[#0d1321] p-5">
                 <div className="flex items-center justify-between">

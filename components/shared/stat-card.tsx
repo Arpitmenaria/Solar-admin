@@ -13,7 +13,13 @@ interface StatCardProps {
 
 export function StatCard({ label, value, icon: Icon, badge, dot, sub, className }: StatCardProps) {
   return (
-    <div className={cn("flex flex-col rounded-xl border border-white/[0.07] bg-card p-5", className)}>
+    <div className={cn(
+      "group flex flex-col rounded-xl border border-white/[0.07] bg-card p-5",
+      "transition-all duration-200 cursor-default",
+      "hover:border-blue-500/40 hover:bg-blue-500/[0.04]",
+      "hover:-translate-y-[2px] hover:shadow-xl hover:shadow-blue-500/10",
+      className
+    )}>
       {/* Row 1 — icon + badge/dot */}
       <div className="flex items-start justify-between">
         {Icon && (

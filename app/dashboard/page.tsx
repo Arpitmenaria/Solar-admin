@@ -6,7 +6,7 @@ import { StatCardSkeleton } from "@/components/shared/loading-skeleton";
 import { useDashboardStats, useModerationQueue, useChartData } from "@/hooks/use-users";
 import { formatNumber, formatCurrency } from "@/lib/utils";
 import { VIOLATION_BADGE } from "@/constants/moderation";
-import { Users, PauseCircle, UserPlus, MoreVertical, ArrowRight } from "lucide-react";
+import { Users, UserCheck, UserPlus, Flag, MoreVertical, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import type { ModerationItem } from "@/types";
 import { motion } from "framer-motion";
@@ -36,7 +36,7 @@ export default function DashboardPage() {
   const { data: chart } = useChartData();
 
   return (
-    <main className="flex-1 space-y-5 p-6">
+    <main className="flex-1 space-y-5 p-4 md:p-6">
       {/* ── Page heading ── */}
       <motion.div variants={fadeUp} initial="hidden" animate="show">
         <h1 className="text-[26px] font-bold text-white leading-snug">
@@ -48,32 +48,35 @@ export default function DashboardPage() {
         </p>
       </motion.div>
 
-      {/* ── 3 Stat cards ── */}
+      {/* ── 4 Stat cards ── */}
       <motion.div
-        className="grid grid-cols-3 gap-4 items-stretch"
+        className="grid grid-cols-2 lg:grid-cols-4 gap-4 items-stretch"
         variants={{ show: { transition: { staggerChildren: 0.06 } } }}
         initial="hidden"
         animate="show"
       >
         {statsLoading ? (
-          Array.from({ length: 3 }).map((_, i) => <StatCardSkeleton key={i} />)
+          Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)
         ) : (
           <>
             <motion.div variants={fadeUp} className="flex">
               <StatCard label="Total Users" value={formatNumber(stats?.totalUsers ?? 0)} icon={Users} badge="+12%" className="flex-1" />
             </motion.div>
             <motion.div variants={fadeUp} className="flex">
-              <StatCard label="Active Users" value={formatNumber(stats?.activeUsers ?? 0)} icon={PauseCircle} dot sub="71% of total" className="flex-1" />
+              <StatCard label="Premium Users" value={formatNumber(stats?.premiumUsers ?? 0)} icon={UserCheck} dot className="flex-1" />
             </motion.div>
             <motion.div variants={fadeUp} className="flex">
-              <StatCard label="New Registrations" value={formatNumber(stats?.newRegistrations ?? 0)} icon={UserPlus} sub="This Month" className="flex-1" />
+              <StatCard label="New Sign Up" value={formatNumber(stats?.newSignups ?? 0)} icon={UserPlus} sub="Today" className="flex-1" />
+            </motion.div>
+            <motion.div variants={fadeUp} className="flex">
+              <StatCard label="Flagged Users" value={formatNumber(stats?.flaggedUsers ?? 0)} icon={Flag} sub="Needs review" className="flex-1" />
             </motion.div>
           </>
         )}
       </motion.div>
 
       {/* ── Chart + Moderation row ── */}
-      <div className="grid grid-cols-[1fr_308px] gap-4">
+      <div className="grid grid-cols-1 xl:grid-cols-[1fr_308px] gap-4">
 
         {/* Engagement chart card */}
         <motion.div

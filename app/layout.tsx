@@ -18,7 +18,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Social Flow Admin — Control Plane",
+  title: "Social Platform Admin",
   description: "Infrastructure admin panel for Social Flow platform",
 };
 

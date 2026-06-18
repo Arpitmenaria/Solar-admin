@@ -8,10 +8,27 @@ import { z } from "zod";
 import { motion } from "framer-motion";
 import { Camera, Globe, MapPin, FileText, User } from "lucide-react";
 import { Header } from "@/components/layouts/header";
+import { BackButton } from "@/components/shared/back-button";
 import { FormField } from "@/components/forms/field";
+import { CustomSelect } from "@/components/shared/custom-select";
 import { useUser, useUpdateUser } from "@/hooks/use-users";
 import { Skeleton } from "@/components/shared/loading-skeleton";
 import { cn } from "@/lib/utils";
+
+const GENDER_OPTIONS = [
+  { value: "",                  label: "Select gender"        },
+  { value: "Male",              label: "Male"                 },
+  { value: "Female",            label: "Female"               },
+  { value: "Non-binary",        label: "Non-binary"           },
+  { value: "Prefer not to say", label: "Prefer not to say"   },
+];
+const RELATIONSHIP_OPTIONS = [
+  { value: "",                   label: "Select status"        },
+  { value: "Single",             label: "Single"               },
+  { value: "Married",            label: "Married"              },
+  { value: "In a relationship",  label: "In a relationship"    },
+  { value: "Complicated",        label: "Complicated"          },
+];
 
 const profileSchema = z.object({
   fullName:           z.string().min(2, "Full name is required"),
@@ -56,7 +73,7 @@ export default function EditProfilePage() {
   const avatarRef = useRef<HTMLInputElement>(null);
 
   const {
-    register, handleSubmit, reset, watch,
+    register, handleSubmit, reset, watch, setValue,
     formState: { errors, isDirty },
   } = useForm<ProfileSchema>({
     resolver: zodResolver(profileSchema),
@@ -123,7 +140,8 @@ export default function EditProfilePage() {
           {/* ── Page title row ── */}
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="text-[22px] font-bold text-white">Account Settings</h1>
+              <BackButton />
+              <h1 className="mt-3 text-[22px] font-bold text-white">Account Settings</h1>
               <p className="mt-1 text-sm text-caption">
                 Update member profile details and credentials.
               </p>
@@ -266,23 +284,23 @@ export default function EditProfilePage() {
                 </FormField>
 
                 <FormField htmlFor="gender" label="GENDER" error={errors.gender?.message}>
-                  <select id="gender" {...register("gender")} className={selectCn(!!errors.gender)}>
-                    <option value="">Select gender</option>
-                    <option>Male</option>
-                    <option>Female</option>
-                    <option>Non-binary</option>
-                    <option>Prefer not to say</option>
-                  </select>
+                  <CustomSelect
+                    value={watch("gender")}
+                    onChange={(v) => setValue("gender", v, { shouldDirty: true, shouldValidate: true })}
+                    options={GENDER_OPTIONS}
+                    hasError={!!errors.gender}
+                    className="w-full"
+                  />
                 </FormField>
 
                 <FormField htmlFor="relationshipStatus" label="RELATIONSHIP STATUS" error={errors.relationshipStatus?.message}>
-                  <select id="relationshipStatus" {...register("relationshipStatus")} className={selectCn(!!errors.relationshipStatus)}>
-                    <option value="">Select status</option>
-                    <option>Single</option>
-                    <option>Married</option>
-                    <option>In a relationship</option>
-                    <option>Complicated</option>
-                  </select>
+                  <CustomSelect
+                    value={watch("relationshipStatus")}
+                    onChange={(v) => setValue("relationshipStatus", v, { shouldDirty: true, shouldValidate: true })}
+                    options={RELATIONSHIP_OPTIONS}
+                    hasError={!!errors.relationshipStatus}
+                    className="w-full"
+                  />
                 </FormField>
               </div>
 
