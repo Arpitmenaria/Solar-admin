@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -152,7 +152,23 @@ export default function GroupsPage() {
     setSearch(""); setCategory("ALL"); setPrivacy("ALL"); setStatus("ALL"); setPage(1);
   };
 
+  // Tab-level base filter applied on top of user's manual filters
+  const TAB_CONFIG: Record<TabId, {
+    label: string; statValue: number; sub: string; icon: React.ElementType;
+    baseFilter: (g: (typeof MOCK_GROUPS)[0]) => boolean;
+  }> = {
+    total:     { label: "TOTAL GROUPS",    statValue: MOCK_GROUP_STATS.totalGroups,     sub: "+12.5% vs last month", icon: TbDatabaseImport, baseFilter: () => true },
+    pending:   { label: "PENDING APPROVAL",statValue: MOCK_GROUP_STATS.pendingApproval, sub: "Awaiting review",      icon: TbDatabaseImport, baseFilter: (g) => g.status === "PENDING"   },
+    private:   { label: "PRIVATE GROUPS",  statValue: MOCK_GROUP_STATS.privateGroups,   sub: "Members-only access",  icon: TbDatabaseImport, baseFilter: (g) => g.privacy === "PRIVATE"  },
+    public:    { label: "PUBLIC GROUPS",   statValue: MOCK_GROUP_STATS.publicGroups,    sub: "Open to everyone",     icon: TbDatabaseImport, baseFilter: (g) => g.privacy === "PUBLIC"   },
+    reported:  { label: "REPORTED GROUPS", statValue: MOCK_GROUP_STATS.reportedGroups,  sub: "Under investigation",  icon: TbDatabaseImport, baseFilter: (g) => g.status === "REPORTED"  },
+    suspended: { label: "SUSPENDED",       statValue: MOCK_GROUP_STATS.suspended,       sub: "Access restricted",    icon: TbDatabaseImport, baseFilter: (g) => g.status === "SUSPENDED" },
+  };
+
+  const tabCfg = TAB_CONFIG[activeTab];
+
   const filtered = MOCK_GROUPS.filter((g) => {
+    if (!tabCfg.baseFilter(g)) return false;
     if (search   && !g.name.toLowerCase().includes(search.toLowerCase())) return false;
     if (category !== "ALL" && g.category !== category) return false;
     if (privacy  !== "ALL" && g.privacy  !== privacy)  return false;
@@ -195,10 +211,8 @@ export default function GroupsPage() {
 
         {/* ── Content area ── */}
         <AnimatePresence mode="wait">
-          {activeTab === "total" ? (
-
             <motion.div
-              key="total-content"
+              key={activeTab}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 6 }}
@@ -208,7 +222,7 @@ export default function GroupsPage() {
               {/* ── Top row: stat card + controls ── */}
               <div className="flex flex-col xl:flex-row items-stretch gap-5">
 
-                {/* Total Groups stat card */}
+                {/* Tab stat card — dynamic per active tab */}
                 <motion.div
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -216,16 +230,16 @@ export default function GroupsPage() {
                 >
                   <div className="flex items-start justify-between mb-4">
                     <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-caption leading-snug pr-2">
-                      TOTAL GROUPS
+                      {tabCfg.label}
                     </p>
                     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/[0.07] bg-white/[0.04]">
                       <TbDatabaseImport size={15} style={{ color: "#4d6b90" }} />
                     </div>
                   </div>
                   <p className="text-[34px] font-bold leading-none tracking-tight text-[#99CBFF]">
-                    {formatNumberFull(MOCK_GROUP_STATS.totalGroups)}
+                    {formatNumberFull(tabCfg.statValue)}
                   </p>
-                  <p className="mt-2.5 text-[11px] text-[#99CBFF]">+12.5% vs last month</p>
+                  <p className="mt-2.5 text-[11px] text-[#99CBFF]">{tabCfg.sub}</p>
                 </motion.div>
 
                 {/* Controls: filters + actions */}
@@ -400,27 +414,6 @@ export default function GroupsPage() {
                 </div>
               </motion.div>
             </motion.div>
-
-          ) : (
-
-            /* Placeholder for other tabs */
-            <motion.div
-              key={activeTab}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 4 }}
-              transition={{ duration: 0.18 }}
-              className="flex items-center justify-center rounded-xl border border-white/[0.08] bg-card py-28"
-            >
-              <div className="text-center">
-                <p className="text-[13px] font-semibold text-slate-400">
-                  {GROUP_TABS.find((t) => t.id === activeTab)?.label}
-                </p>
-                <p className="mt-1.5 text-[12px] text-caption">This section is coming soon.</p>
-              </div>
-            </motion.div>
-
-          )}
         </AnimatePresence>
 
       </main>

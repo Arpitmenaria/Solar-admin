@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { StatCard } from "@/components/shared/stat-card";
+import { CustomSelect } from "@/components/shared/custom-select";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { StatCardSkeleton, TableRowSkeleton } from "@/components/shared/loading-skeleton";
@@ -85,16 +86,18 @@ export default function UsersPage() {
             </div>
 
             {/* Sort By */}
-            <select
-              aria-label="Sort users by"
-              className="ml-auto rounded-lg border border-white/[0.12] bg-white/[0.03] px-3 py-2 text-[12px] font-medium text-slate-200 focus:outline-none focus:border-blue-500/40 appearance-none pr-7 cursor-pointer shrink-0"
-              style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%236b7a99' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 9px center" }}
-            >
-              <option>Registration Date</option>
-              <option>Followers</option>
-              <option>Name</option>
-              <option>Status</option>
-            </select>
+            <CustomSelect
+              size="sm"
+              className="ml-auto shrink-0"
+              value="Registration Date"
+              onChange={() => {}}
+              options={[
+                { value: "Registration Date", label: "Registration Date" },
+                { value: "Followers",         label: "Followers"         },
+                { value: "Name",              label: "Name"              },
+                { value: "Status",            label: "Status"            },
+              ]}
+            />
 
             {/* Export CSV */}
             <button className="flex shrink-0 items-center gap-1.5 rounded-lg border border-white/[0.10] bg-white/[0.03] px-3.5 py-2 text-[12px] font-medium text-slate-300 transition-colors hover:bg-white/[0.06]">
