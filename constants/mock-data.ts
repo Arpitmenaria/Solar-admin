@@ -136,6 +136,46 @@ export const MOCK_MODERATION: ModerationItem[] = [
   { id: "3", username: "@sarah_dev", reportedAt: "2h ago", type: "Harassment", excerpt: "Multiple reports on a specific thread thread interaction." },
 ];
 
+export type GroupStatus   = "ACTIVE" | "SUSPENDED" | "PENDING" | "REPORTED";
+export type GroupPrivacy  = "Public" | "Private";
+export type GroupCategory = "Tech" | "Design" | "Finance" | "Security" | "Gaming" | "Social";
+
+export interface Group {
+  id: string;
+  name: string;
+  category: GroupCategory;
+  privacy: GroupPrivacy;
+  owner: { name: string; avatarUrl?: string; initials: string; };
+  members: number;
+  posts: number;
+  status: GroupStatus;
+  iconColor: string;
+}
+
+export const MOCK_GROUPS: Group[] = [
+  { id: "g1", name: "Dev_Infrastructure",      category: "Tech",     privacy: "Public",  owner: { name: "Marcus Thorne",   initials: "MT", avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=60&h=60&fit=crop" }, members: 12482, posts: 45200,  status: "ACTIVE",    iconColor: "#1d4ed8" },
+  { id: "g2", name: "Global_Design_Collective", category: "Design",   privacy: "Private", owner: { name: "Elena Voss",     initials: "EV", avatarUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=60&h=60&fit=crop" }, members:  8103, posts: 112000, status: "ACTIVE",    iconColor: "#374151" },
+  { id: "g3", name: "Shadow_Traders_Elite",     category: "Finance",  privacy: "Private", owner: { name: "Unknown Entity",  initials: "UK" },                                                                                                members:   542, posts:   1200, status: "SUSPENDED", iconColor: "#b91c1c" },
+  { id: "g4", name: "Alpha_Moderators",         category: "Security", privacy: "Public",  owner: { name: "Soren Kierk",    initials: "SK", avatarUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=60&h=60&fit=crop" }, members:    42, posts:   9800, status: "PENDING",   iconColor: "#1e3a5f" },
+  { id: "g5", name: "Crypto_Builders_Hub",      category: "Finance",  privacy: "Public",  owner: { name: "Ryan Nakamura",  initials: "RN", avatarUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=60&h=60&fit=crop" }, members:  3410, posts:  22100, status: "ACTIVE",    iconColor: "#065f46" },
+  { id: "g6", name: "UX_Craft_Society",         category: "Design",   privacy: "Public",  owner: { name: "Priya Sharma",   initials: "PS", avatarUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=60&h=60&fit=crop" }, members:  5820, posts:  34800, status: "ACTIVE",    iconColor: "#6b21a8" },
+  { id: "g7", name: "Esports_Arena_Pro",        category: "Gaming",   privacy: "Public",  owner: { name: "Jake Torres",    initials: "JT" },                                                                                                members: 28400, posts: 198000, status: "REPORTED",  iconColor: "#92400e" },
+  { id: "g8", name: "Social_Innovators_Lab",    category: "Social",   privacy: "Private", owner: { name: "Amara Okonkwo",  initials: "AO", avatarUrl: "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=60&h=60&fit=crop" }, members:  1290, posts:   8400, status: "ACTIVE",    iconColor: "#0e7490" },
+  { id: "g9", name: "Backend_Wizards",          category: "Tech",     privacy: "Private", owner: { name: "Chen Wei",       initials: "CW" },                                                                                                members:  2100, posts:  15600, status: "ACTIVE",    iconColor: "#1d4ed8" },
+  { id: "g10",name: "Creative_Freelancers",     category: "Design",   privacy: "Public",  owner: { name: "Sofia Reyes",    initials: "SR", avatarUrl: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=60&h=60&fit=crop" }, members:  4750, posts:  29700, status: "ACTIVE",    iconColor: "#374151" },
+];
+
+export const MOCK_GROUP_STATS = {
+  totalGroups:     39079,
+  activeGroups:    34838,
+  pendingApproval:   129,
+  privateGroups:   11313,
+  publicGroups:    27765,
+  reportedGroups:     25,
+  suspended:          13,
+  newlyCreated24h:    76,
+};
+
 export const MOCK_CHART_DATA: ChartDataPoint[] = [
   { day: "Mon", dau: 280, mau: 520 },
   { day: "Tue", dau: 320, mau: 580 },

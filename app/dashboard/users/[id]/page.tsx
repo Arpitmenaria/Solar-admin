@@ -76,9 +76,9 @@ export default function UserDetailPage() {
             </div>
           </motion.div>
 
-          {/* Stats grid + groups/events */}
+          {/* Right column: stats + groups/events + account/subscription */}
           <div className="space-y-5">
-            {/* Stat cards */}
+            {/* 6 stat cards */}
             <motion.div variants={fadeUp} className="grid grid-cols-3 gap-4">
               <MiniStat label="FRIENDS"        value={formatNumberFull(user.stats.friends)} />
               <MiniStat label="FOLLOWERS"      value={formatNumberFull(user.stats.followers)} />
@@ -130,56 +130,50 @@ export default function UserDetailPage() {
                 </div>
               </div>
             </motion.div>
+
+            {/* Account Status + Subscription — same row, same height */}
+            <motion.div variants={fadeUp} className="grid grid-cols-2 gap-4">
+              {/* Account status */}
+              <div className="rounded-xl border border-white/[0.08] bg-[#0d1321] p-5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-sm font-semibold text-white">Account Status</h4>
+                    <p className="text-xs text-muted-foreground mt-0.5">Current Tier: {user.accountTier}</p>
+                  </div>
+                  <StatusBadge status={user.status} />
+                </div>
+              </div>
+
+              {/* Subscription */}
+              <div className="rounded-xl border border-white/[0.08] bg-[#0d1321] p-5 space-y-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-label">SUBSCRIPTION PLAN</p>
+                  <span className={`flex items-center gap-1.5 text-[10px] font-bold rounded-full px-2 py-0.5 border ${
+                    user.subscription.status === "ACTIVE"
+                      ? "bg-blue-500/10 text-blue-400 border-blue-500/30"
+                      : "bg-red-500/10 text-red-400 border-red-500/30"
+                  }`}>
+                    <span className={`h-1.5 w-1.5 rounded-full ${user.subscription.status === "ACTIVE" ? "bg-blue-400" : "bg-red-400"}`} />
+                    {user.subscription.status}
+                  </span>
+                </div>
+                <p className="text-sm font-bold text-[#3b82f6]">{user.subscription.plan}</p>
+                <div className="border-t border-white/[0.05] pt-3 grid grid-cols-2 gap-2">
+                  <div>
+                    <p className="text-label">VALIDITY</p>
+                    <p className="text-xs text-slate-200 mt-1">Expires {user.subscription.validUntil}</p>
+                  </div>
+                  <div>
+                    <p className="text-label">PAYMENT</p>
+                    <p className="text-xs text-slate-200 mt-1 flex items-center gap-1">
+                      <CreditCard size={11} className="text-muted-foreground shrink-0" />
+                      <span className="truncate">{user.subscription.paymentMethod}</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
           </div>
-        </motion.div>
-
-        {/* Account status + subscription */}
-        <motion.div
-          className="grid grid-cols-2 gap-5"
-          variants={{ show: { transition: { staggerChildren: 0.08 } } }}
-          initial="hidden"
-          animate="show"
-          transition={{ delay: 0.2 }}
-        >
-          {/* Account status */}
-          <motion.div variants={fadeUp} className="rounded-xl border border-white/[0.08] bg-[#0d1321] p-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="text-sm font-semibold text-white">Account Status</h4>
-                <p className="text-xs text-muted-foreground mt-0.5">Current Tier: {user.accountTier}</p>
-              </div>
-              <StatusBadge status={user.status} />
-            </div>
-          </motion.div>
-
-          {/* Subscription */}
-          <motion.div variants={fadeUp} className="rounded-xl border border-white/[0.08] bg-[#0d1321] p-5 space-y-4">
-            <div className="flex items-center justify-between">
-              <p className="text-label">SUBSCRIPTION PLAN</p>
-              <span className={`flex items-center gap-1.5 text-[10px] font-bold rounded-full px-2 py-0.5 border ${
-                user.subscription.status === "ACTIVE"
-                  ? "bg-blue-500/10 text-blue-400 border-blue-500/30"
-                  : "bg-red-500/10 text-red-400 border-red-500/30"
-              }`}>
-                <span className={`h-1.5 w-1.5 rounded-full ${user.subscription.status === "ACTIVE" ? "bg-blue-400" : "bg-red-400"}`} />
-                {user.subscription.status}
-              </span>
-            </div>
-            <p className="text-base font-bold text-[#3b82f6]">{user.subscription.plan}</p>
-            <div className="grid grid-cols-2 gap-3 border-t border-white/[0.05] pt-4">
-              <div>
-                <p className="text-label">VALIDITY</p>
-                <p className="text-sm text-slate-200 mt-1">Expires {user.subscription.validUntil}</p>
-              </div>
-              <div>
-                <p className="text-label">PAYMENT METHOD</p>
-                <p className="text-sm text-slate-200 mt-1 flex items-center gap-1.5">
-                  <CreditCard size={12} className="text-muted-foreground" />
-                  {user.subscription.paymentMethod}
-                </p>
-              </div>
-            </div>
-          </motion.div>
         </motion.div>
       </main>
 

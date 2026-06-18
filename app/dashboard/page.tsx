@@ -50,7 +50,7 @@ export default function DashboardPage() {
 
       {/* ── 3 Stat cards ── */}
       <motion.div
-        className="grid grid-cols-3 gap-4"
+        className="grid grid-cols-3 gap-4 items-stretch"
         variants={{ show: { transition: { staggerChildren: 0.06 } } }}
         initial="hidden"
         animate="show"
@@ -59,14 +59,14 @@ export default function DashboardPage() {
           Array.from({ length: 3 }).map((_, i) => <StatCardSkeleton key={i} />)
         ) : (
           <>
-            <motion.div variants={fadeUp}>
-              <StatCard label="Total Users" value={formatNumber(stats?.totalUsers ?? 0)} icon={Users} badge="+12%" />
+            <motion.div variants={fadeUp} className="flex">
+              <StatCard label="Total Users" value={formatNumber(stats?.totalUsers ?? 0)} icon={Users} badge="+12%" className="flex-1" />
             </motion.div>
-            <motion.div variants={fadeUp}>
-              <StatCard label="Active Users" value={formatNumber(stats?.activeUsers ?? 0)} icon={PauseCircle} dot sub="71% of total" />
+            <motion.div variants={fadeUp} className="flex">
+              <StatCard label="Active Users" value={formatNumber(stats?.activeUsers ?? 0)} icon={PauseCircle} dot sub="71% of total" className="flex-1" />
             </motion.div>
-            <motion.div variants={fadeUp}>
-              <StatCard label="New Registrations" value={formatNumber(stats?.newRegistrations ?? 0)} icon={UserPlus} sub="This Month" />
+            <motion.div variants={fadeUp} className="flex">
+              <StatCard label="New Registrations" value={formatNumber(stats?.newRegistrations ?? 0)} icon={UserPlus} sub="This Month" className="flex-1" />
             </motion.div>
           </>
         )}

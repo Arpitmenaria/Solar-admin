@@ -4,36 +4,36 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  LayoutDashboard, Users, Shield, BarChart2, Wallet, Monitor,
-  HelpCircle, LogOut, Asterisk, ChevronLeft, ChevronRight, X,
-} from "lucide-react";
+  TbLayoutDashboard, TbUsers, TbUsersGroup,
+  TbHelpCircle, TbLogout, TbChevronLeft, TbChevronRight, TbX,
+} from "react-icons/tb";
+import { FaRegStar } from "react-icons/fa";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/store/ui.store";
 
-type IconKey =
-  | "LayoutDashboard" | "Users" | "Shield" | "BarChart2"
-  | "Wallet" | "Monitor" | "HelpCircle" | "LogOut";
+type IconKey = "Dashboard" | "Users" | "Groups" | "Support" | "SignOut";
 
 const ICON_MAP: Record<IconKey, React.ElementType> = {
-  LayoutDashboard, Users, Shield, BarChart2, Wallet, Monitor, HelpCircle, LogOut,
+  Dashboard: TbLayoutDashboard,
+  Users:     TbUsers,
+  Groups:    TbUsersGroup,
+  Support:   TbHelpCircle,
+  SignOut:   TbLogout,
 };
 
 const NAV_MAIN = [
-  { label: "Dashboard",          href: "/dashboard",            icon: "LayoutDashboard" },
-  { label: "Users",              href: "/dashboard/users",      icon: "Users"           },
-  { label: "Content Moderation", href: "/dashboard/moderation", icon: "Shield"          },
-  { label: "Analytics",          href: "/dashboard/analytics",  icon: "BarChart2"       },
-  { label: "Financials",         href: "/dashboard/financials", icon: "Wallet"          },
-  { label: "System Logs",        href: "/dashboard/logs",       icon: "Monitor"         },
+  { label: "Dashboard",        href: "/dashboard",        icon: "Dashboard" },
+  { label: "Users",            href: "/dashboard/users",  icon: "Users"     },
+  { label: "Group Management", href: "/dashboard/groups", icon: "Groups"    },
 ] as const;
 
 const NAV_BOTTOM = [
-  { label: "Support",  href: "/dashboard/support", icon: "HelpCircle" },
-  { label: "Sign Out", href: "/",                  icon: "LogOut"      },
+  { label: "Support",  href: "/dashboard/support", icon: "Support"  },
+  { label: "Sign Out", href: "/",                  icon: "SignOut"   },
 ] as const;
 
-/* ── Animated icon wrapper ──────────────────── */
+/* ── Animated icon ─────────────────────────── */
 function AnimatedIcon({ icon: Icon, active, collapsed }: {
   icon: React.ElementType; active: boolean; collapsed: boolean;
 }) {
@@ -52,7 +52,6 @@ function AnimatedIcon({ icon: Icon, active, collapsed }: {
       }}
       transition={{ type: "spring", stiffness: 480, damping: 24 }}
     >
-      {/* Glow ring in icon-only mode */}
       {collapsed && (
         <motion.span
           className="absolute inset-0 rounded-lg"
@@ -68,18 +67,13 @@ function AnimatedIcon({ icon: Icon, active, collapsed }: {
       )}
       <Icon
         size={active ? 18 : 17}
-        strokeWidth={active ? 2 : 1.8}
-        style={{
-          color: active ? "#ADB5CE" : "#BEC7D4",
-          position: "relative",
-          zIndex: 1,
-        }}
+        style={{ color: active ? "#ADB5CE" : "#BEC7D4", position: "relative", zIndex: 1 }}
       />
     </motion.div>
   );
 }
 
-/* ── Floating tooltip (collapsed mode) ─────── */
+/* ── Tooltip (collapsed mode) ──────────────── */
 function Tooltip({ label, visible }: { label: string; visible: boolean }) {
   return (
     <AnimatePresence>
@@ -94,7 +88,7 @@ function Tooltip({ label, visible }: { label: string; visible: boolean }) {
             background: "#1e2d45",
             border: "1px solid rgba(255,255,255,0.1)",
             color: "#dce8f8",
-            fontFamily: "var(--font-jbm)",
+            fontFamily: "var(--font-pjs), 'Plus Jakarta Sans', sans-serif",
             letterSpacing: "0.2px",
           }}
         >
@@ -109,11 +103,7 @@ function Tooltip({ label, visible }: { label: string; visible: boolean }) {
   );
 }
 
-/* ── Nav item ─────────────────────────────────
-   pillId must be unique per sidebar instance
-   so the Framer Motion shared layout animation
-   doesn't bleed between desktop & tablet DOMs.
-────────────────────────────────────────────── */
+/* ── Nav item ──────────────────────────────── */
 function NavItem({
   label, href, icon, active, collapsed, pillId, index,
 }: {
@@ -133,7 +123,6 @@ function NavItem({
       onHoverStart={() => setHovered(true)}
       onHoverEnd={() => setHovered(false)}
     >
-      {/* Floating tooltip — icon-only mode */}
       {collapsed && <Tooltip label={label} visible={hovered} />}
 
       <Link
@@ -145,13 +134,13 @@ function NavItem({
           active ? "text-nav-active" : "text-nav-inactive"
         )}
         style={{
-          fontFamily: "var(--font-jbm), 'JetBrains Mono', monospace",
+          fontFamily: "var(--font-pjs), 'Plus Jakarta Sans', sans-serif",
           fontSize: 13,
           fontWeight: 500,
-          letterSpacing: "0.26px",
+          letterSpacing: "0.15px",
         }}
       >
-        {/* Hover bg — expanded only */}
+        {/* Hover bg */}
         {!collapsed && (
           <motion.span
             className="absolute inset-0 rounded-lg"
@@ -161,7 +150,7 @@ function NavItem({
           />
         )}
 
-        {/* Active background pill — shared layout between routes */}
+        {/* Active pill */}
         {active && (
           <motion.span
             layoutId={pillId}
@@ -171,7 +160,7 @@ function NavItem({
           />
         )}
 
-        {/* Active left accent stripe — expanded mode only */}
+        {/* Left accent stripe */}
         {active && !collapsed && (
           <motion.span
             layoutId={`${pillId}-stripe`}
@@ -182,7 +171,7 @@ function NavItem({
           />
         )}
 
-        {/* Active glow — icon-only mode */}
+        {/* Active glow icon-only */}
         {active && collapsed && (
           <motion.span
             className="absolute inset-0 rounded-lg"
@@ -195,10 +184,8 @@ function NavItem({
           />
         )}
 
-        {/* Icon */}
         <AnimatedIcon icon={Icon} active={active} collapsed={collapsed} />
 
-        {/* Label fade */}
         <AnimatePresence initial={false}>
           {!collapsed && (
             <motion.span
@@ -218,7 +205,7 @@ function NavItem({
   );
 }
 
-/* ── Sidebar inner content ──────────────────── */
+/* ── Sidebar content ────────────────────────── */
 function SidebarContent({ collapsed, instanceId }: { collapsed: boolean; instanceId: string }) {
   const pathname = usePathname();
   const { toggleSidebar, setMobileOpen } = useUIStore();
@@ -230,21 +217,19 @@ function SidebarContent({ collapsed, instanceId }: { collapsed: boolean; instanc
   return (
     <div className="flex h-full flex-col">
 
-      {/* Brand card */}
+      {/* Brand */}
       <div className={cn("pt-3 pb-2", collapsed ? "px-2" : "px-3")}>
-        <div
-          className={cn(
-            "flex items-center rounded-xl border border-[#1a2744] bg-[#0f1728] transition-all duration-200",
-            collapsed ? "justify-center px-0 py-3" : "gap-3 px-3 py-3"
-          )}
-        >
+        <div className={cn(
+          "flex items-center rounded-xl border border-[#1a2744] bg-[#0f1728] transition-all duration-200",
+          collapsed ? "justify-center px-0 py-3" : "gap-3 px-3 py-3"
+        )}>
           <motion.div
             className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-xl bg-blue-700"
             whileHover={{ scale: 1.12, rotate: 8 }}
             whileTap={{ scale: 0.94 }}
             transition={{ type: "spring", stiffness: 400, damping: 20 }}
           >
-            <Asterisk size={18} color="#fff" strokeWidth={2.5} />
+            <FaRegStar size={16} color="#fff" />
           </motion.div>
 
           <AnimatePresence initial={false}>
@@ -285,7 +270,7 @@ function SidebarContent({ collapsed, instanceId }: { collapsed: boolean; instanc
         ))}
       </nav>
 
-      {/* Bottom links */}
+      {/* Bottom nav */}
       <div className="space-y-[2px] border-t border-white/[0.05] px-2 py-2">
         {NAV_BOTTOM.map((item, i) => (
           <NavItem
@@ -303,12 +288,10 @@ function SidebarContent({ collapsed, instanceId }: { collapsed: boolean; instanc
 
       {/* Admin chip */}
       <div className={cn("pb-3", collapsed ? "px-2" : "px-3")}>
-        <div
-          className={cn(
-            "flex items-center rounded-lg border border-[#141e33] bg-[#0f1728] transition-all duration-200",
-            collapsed ? "justify-center px-0 py-2.5" : "gap-2.5 px-3 py-2.5"
-          )}
-        >
+        <div className={cn(
+          "flex items-center rounded-lg border border-[#141e33] bg-[#0f1728] transition-all duration-200",
+          collapsed ? "justify-center px-0 py-2.5" : "gap-2.5 px-3 py-2.5"
+        )}>
           <motion.div
             className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#1a2a44] text-[11px] font-bold text-[#4a7cc7]"
             style={{ fontFamily: "var(--font-pjs)" }}
@@ -344,19 +327,19 @@ function SidebarContent({ collapsed, instanceId }: { collapsed: boolean; instanc
         whileTap={{ scale: 0.95 }}
         transition={{ type: "spring", stiffness: 400, damping: 22 }}
       >
-        {collapsed ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}
+        {collapsed ? <TbChevronRight size={15} /> : <TbChevronLeft size={15} />}
       </motion.button>
     </div>
   );
 }
 
-/* ── Sidebar export ─────────────────────────── */
+/* ── Export ─────────────────────────────────── */
 export function Sidebar() {
   const { sidebarCollapsed, mobileOpen, setMobileOpen } = useUIStore();
 
   return (
     <>
-      {/* Desktop (lg+) — animated width, unique instanceId = "desktop" */}
+      {/* Desktop */}
       <motion.aside
         animate={{ width: sidebarCollapsed ? 64 : 238 }}
         transition={{ type: "spring", stiffness: 340, damping: 32 }}
@@ -365,7 +348,7 @@ export function Sidebar() {
         <SidebarContent collapsed={sidebarCollapsed} instanceId="desktop" />
       </motion.aside>
 
-      {/* Tablet (md–lg) — fixed 64px icon-only, unique instanceId = "tablet" */}
+      {/* Tablet */}
       <aside
         className="fixed bottom-0 left-0 top-[52px] z-40 hidden flex-col overflow-visible border-r border-white/[0.06] bg-surface-sidebar md:flex lg:hidden"
         style={{ width: 64 }}
@@ -373,14 +356,12 @@ export function Sidebar() {
         <SidebarContent collapsed={true} instanceId="tablet" />
       </aside>
 
-      {/* Mobile: backdrop */}
+      {/* Mobile backdrop */}
       <AnimatePresence>
         {mobileOpen && (
           <motion.div
             key="backdrop"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm md:hidden"
             onClick={() => setMobileOpen(false)}
@@ -388,14 +369,12 @@ export function Sidebar() {
         )}
       </AnimatePresence>
 
-      {/* Mobile: drawer — unique instanceId = "mobile" */}
+      {/* Mobile drawer */}
       <AnimatePresence>
         {mobileOpen && (
           <motion.aside
             key="mobile-drawer"
-            initial={{ x: -238 }}
-            animate={{ x: 0 }}
-            exit={{ x: -238 }}
+            initial={{ x: -238 }} animate={{ x: 0 }} exit={{ x: -238 }}
             transition={{ type: "spring", stiffness: 340, damping: 32 }}
             className="fixed bottom-0 left-0 top-0 z-[60] flex flex-col border-r border-white/[0.06] bg-surface-sidebar md:hidden"
             style={{ width: 238 }}
@@ -410,7 +389,7 @@ export function Sidebar() {
                 whileHover={{ scale: 1.12, backgroundColor: "rgba(255,255,255,0.06)" }}
                 whileTap={{ scale: 0.9 }}
               >
-                <X size={16} />
+                <TbX size={16} />
               </motion.button>
             </div>
             <SidebarContent collapsed={false} instanceId="mobile" />
