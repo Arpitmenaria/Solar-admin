@@ -159,8 +159,8 @@ export default function GroupsPage() {
   }> = {
     total:     { label: "TOTAL GROUPS",    statValue: MOCK_GROUP_STATS.totalGroups,     sub: "+12.5% vs last month", icon: TbDatabaseImport, baseFilter: () => true },
     pending:   { label: "PENDING APPROVAL",statValue: MOCK_GROUP_STATS.pendingApproval, sub: "Awaiting review",      icon: TbDatabaseImport, baseFilter: (g) => g.status === "PENDING"   },
-    private:   { label: "PRIVATE GROUPS",  statValue: MOCK_GROUP_STATS.privateGroups,   sub: "Members-only access",  icon: TbDatabaseImport, baseFilter: (g) => g.privacy === "PRIVATE"  },
-    public:    { label: "PUBLIC GROUPS",   statValue: MOCK_GROUP_STATS.publicGroups,    sub: "Open to everyone",     icon: TbDatabaseImport, baseFilter: (g) => g.privacy === "PUBLIC"   },
+    private:   { label: "PRIVATE GROUPS",  statValue: MOCK_GROUP_STATS.privateGroups,   sub: "Members-only access",  icon: TbDatabaseImport, baseFilter: (g) => g.privacy === "Private"  },
+    public:    { label: "PUBLIC GROUPS",   statValue: MOCK_GROUP_STATS.publicGroups,    sub: "Open to everyone",     icon: TbDatabaseImport, baseFilter: (g) => g.privacy === "Public"   },
     reported:  { label: "REPORTED GROUPS", statValue: MOCK_GROUP_STATS.reportedGroups,  sub: "Under investigation",  icon: TbDatabaseImport, baseFilter: (g) => g.status === "REPORTED"  },
     suspended: { label: "SUSPENDED",       statValue: MOCK_GROUP_STATS.suspended,       sub: "Access restricted",    icon: TbDatabaseImport, baseFilter: (g) => g.status === "SUSPENDED" },
   };
