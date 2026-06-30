@@ -8,8 +8,8 @@ import {
   TbDownload, TbPlus, TbSearch, TbRefresh,
   TbLock, TbWorld,
   TbChevronsLeft, TbChevronsRight, TbChevronLeft, TbChevronRight,
-  TbBan, TbAlertTriangle, TbCircleCheck,
-  TbDatabaseImport, TbClock,
+  TbBan, TbCircleCheck,
+  TbDatabaseImport,
   TbDotsVertical, TbEye, TbPencil, TbTrash,
 } from "react-icons/tb";
 import { CustomSelect } from "@/components/shared/custom-select";
@@ -69,6 +69,7 @@ function ActionMenu({ group, onAction }: { group: Group; onAction: (action: "SUS
       <button
         ref={btnRef}
         onClick={handleOpen}
+        aria-label={`Actions for ${group.name}`}
         className={`flex h-7 w-7 items-center justify-center rounded-lg transition-colors ${
           open ? "bg-white/[0.12] text-white" : "text-caption hover:bg-white/[0.08] hover:text-white"
         }`}
