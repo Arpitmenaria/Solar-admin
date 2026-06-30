@@ -172,7 +172,7 @@ export default function UsersPage() {
                         href={`/dashboard/users/${user.id}`}
                         className="text-[12px] font-medium text-[#99CBFF] transition-colors hover:text-white"
                       >
-                        View → 
+                        View →
                       </Link>
                     </div>
                   </motion.div>
