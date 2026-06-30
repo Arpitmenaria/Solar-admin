@@ -4,9 +4,9 @@
 import { cn } from "@/lib/utils";
 
 const TABS = [
-  { value: "free", label: "Free Tier" },
+  { value: "free", label: "Free Tier", recommended: false },
   { value: "gold", label: "Gold Tier", recommended: true },
-  { value: "premium", label: "Premium Tier" },
+  { value: "premium", label: "Premium Tier", recommended: false },
 ] as const;
 
 export type PlanTier = (typeof TABS)[number]["value"];

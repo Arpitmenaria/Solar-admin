@@ -82,6 +82,48 @@ export interface ChartDataPoint {
   mau: number;
 }
 
+export type ReportStatus = "PENDING" | "REVIEWED" | "RESOLVED" | "DISMISSED";
+
+export type ReportReason =
+  | "Spam"
+  | "Harassment"
+  | "Inappropriate Content"
+  | "Scam / Fraud"
+  | "Fake or Misleading"
+  | "Hate Speech"
+  | "Other";
+
+export interface ReportTarget {
+  id: string;
+  name: string;
+  avatarUrl?: string;
+  /** secondary line under the name, e.g. "12,482 members" or "Sat, Aug 16 · 7:00 PM" */
+  meta: string;
+}
+
+export interface ReportedBy {
+  username: string;
+  avatarUrl?: string;
+}
+
+export interface Report {
+  id: string;
+  target: ReportTarget;
+  reportedBy: ReportedBy;
+  reason: ReportReason;
+  description: string;
+  status: ReportStatus;
+  reportedAt: string;
+}
+
+export interface ReportStats {
+  total: number;
+  pending: number;
+  reviewed: number;
+  resolved: number;
+  dismissed: number;
+}
+
 export interface UserFilters {
   search: string;
   status: UserStatus | "ALL";
@@ -112,16 +154,21 @@ export interface ProfileFormValues {
   bio: string;
 }
 
+export type PlanBillingMode = "recurring" | "one_time" | "metered";
+
 export interface Plan {
   id: string;
   name: string;
+  description?: string;
   price: number;
   currency: string;
   billingPeriod: string;
+  billingMode?: PlanBillingMode;
   features: string[];
   recommended?: boolean;
   sortOrder: number;
 }
+
 
 export interface PlanMetric {
   id: string;

@@ -17,6 +17,8 @@
   --color-muted-foreground:  var(--muted-foreground);
   --color-primary:           var(--primary);
   --color-primary-foreground:var(--primary-foreground);
+  --color-popover:           var(--popover);
+  --color-popover-foreground:var(--popover-foreground);
   --color-border:            var(--border);
   --color-ring:              var(--ring);
   --color-destructive:       var(--destructive);
@@ -46,6 +48,8 @@
   --muted-foreground:   #4a5a7a;
   --primary:            #2563eb;
   --primary-foreground: #ffffff;
+  --popover:            #0d1321;
+  --popover-foreground: #f0f4ff;
   --border:             rgba(255,255,255,0.07);
   --ring:               #2563eb;
   --destructive:        #ef4444;

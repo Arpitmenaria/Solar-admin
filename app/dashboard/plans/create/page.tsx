@@ -1,34 +1,24 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import { CreatePlanButton } from "@/components/plans/create-plan-button";
-
-const DURATION_OPTIONS = [
-  { value: "weekly", label: "Weekly" },
-  { value: "monthly", label: "Monthly" },
-  { value: "quarterly", label: "Quarterly" },
-  { value: "yearly", label: "Yearly" },
-] as const;
-
-const BILLING_OPTIONS = [
-  { value: "recurring", label: "Recurring" },
-  { value: "one_time", label: "One-Time" },
-  { value: "metered", label: "Metered / Usage" },
-] as const;
-
-type Duration = (typeof DURATION_OPTIONS)[number]["value"];
-type Billing = (typeof BILLING_OPTIONS)[number]["value"];
+import { toast } from "sonner";
+import { PlanForm } from "@/components/plans/plan-form";
+import { useCreatePlan } from "@/hooks/use-plans";
+import type { CreatePlanInput } from "@/services/plans.service";
 
 export default function CreatePlanPage() {
   const router = useRouter();
+  const createPlan = useCreatePlan();
 
-  const [planName, setPlanName] = useState("");
-  const [description, setDescription] = useState("");
-  const [coreFeatures, setCoreFeatures] = useState("");
-  const [duration, setDuration] = useState<Duration>("monthly");
-  const [billingMode, setBillingMode] = useState<Billing>("recurring");
+  const handleSubmit = (input: CreatePlanInput) => {
+    createPlan.mutate(input, {
+      onSuccess: (plan) => {
+        toast.success(`"${plan.name}" plan created.`);
+        router.push("/dashboard/plans");
+      },
+      onError: () => toast.error("Couldn't create the plan. Please try again."),
+    });
+  };
 
   return (
     <div className="relative flex flex-1 flex-col">
@@ -41,207 +31,12 @@ export default function CreatePlanPage() {
         }}
         aria-hidden
       />
-
-      {/* Sticky header — collapses gracefully on mobile */}
-      <div className="sticky top-0 z-20 border-b border-white/[0.06] bg-[#0a0f1a]/90 backdrop-blur-md">
-        <div className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-            <h1 className="text-[20px] font-bold text-white sm:text-[26px]">Create Plan</h1>
-            <p className="mt-1 text-[12.5px] text-caption sm:text-[13px]">
-              Define a new subscription tier for your platform.
-            </p>
-          </motion.div>
-
-          <div className="flex shrink-0 items-center gap-2.5 sm:gap-3">
-            <button
-              type="button"
-              onClick={() => router.back()}
-              className="flex-1 rounded-lg border border-white/[0.12] px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-slate-300 transition-colors hover:border-white/[0.22] hover:text-white active:scale-[0.97] sm:flex-none sm:py-2"
-            >
-              Discard
-            </button>
-            <div className="flex-1 sm:flex-none">
-              <CreatePlanButton label="Create Plan" onClick={() => router.push("/dashboard/plans")} />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <main className="relative flex-1 px-4 py-6 sm:px-6">
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.06 }}
-          className="mx-auto max-w-3xl rounded-xl border border-white/[0.08] bg-card p-5 sm:p-7 md:p-8"
-        >
-          <div className="flex flex-col gap-7">
-            {/* Plan Name + responsive two-column row on larger screens */}
-            <div className="grid grid-cols-1 gap-7 sm:grid-cols-2">
-              <Field label="Plan Name">
-                <input
-                  type="text"
-                  value={planName}
-                  onChange={(e) => setPlanName(e.target.value)}
-                  placeholder="e.g. Enterprise Production Node"
-                  className="w-full rounded-lg border border-white/[0.10] bg-[#0d1320] px-3.5 py-2.5 text-[13px] text-white placeholder:text-slate-500 outline-none transition-colors focus:border-blue-500/60 focus:ring-2 focus:ring-blue-500/15"
-                />
-              </Field>
-
-              <Field label="Billing Mode">
-                <SelectGroup
-                  options={BILLING_OPTIONS}
-                  value={billingMode}
-                  onChange={(v) => setBillingMode(v as Billing)}
-                  layout="row"
-                />
-              </Field>
-            </div>
-
-            {/* Description */}
-            <Field label="Description">
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Define the primary purpose and scope of this tier..."
-                rows={3}
-                className="w-full resize-none rounded-lg border border-white/[0.10] bg-[#0d1320] px-3.5 py-2.5 text-[13px] text-white placeholder:text-slate-500 outline-none transition-colors focus:border-blue-500/60 focus:ring-2 focus:ring-blue-500/15"
-              />
-            </Field>
-
-            {/* Core Features */}
-            <Field label="Core Features">
-              <textarea
-                value={coreFeatures}
-                onChange={(e) => setCoreFeatures(e.target.value)}
-                placeholder={"Unlimited API Access\nDedicated Node Support\n99.9% SLA Guarantee"}
-                rows={4}
-                className="w-full resize-none rounded-lg border border-white/[0.10] bg-[#0d1320] px-3.5 py-2.5 text-[13px] text-white placeholder:text-slate-500 outline-none transition-colors focus:border-blue-500/60 focus:ring-2 focus:ring-blue-500/15"
-              />
-              <p className="mt-1.5 text-[11px] text-slate-500">
-                One feature per line. These will be displayed as a checklist to subscribers.
-              </p>
-            </Field>
-
-            {/* Duration Cycle */}
-            <Field label="Duration Cycle">
-              <SelectGroup
-                options={DURATION_OPTIONS}
-                value={duration}
-                onChange={(v) => setDuration(v as Duration)}
-                layout="grid"
-              />
-            </Field>
-          </div>
-        </motion.div>
-
-        {/* Mobile sticky action bar (extra affordance on small screens) */}
-        <div className="pointer-events-none sticky bottom-0 left-0 right-0 mt-6 flex justify-center sm:hidden">
-          <div className="pointer-events-auto flex w-full max-w-3xl gap-2.5 rounded-xl border border-white/[0.08] bg-[#0a0f1a]/95 p-3 backdrop-blur-md">
-            <button
-              type="button"
-              onClick={() => router.back()}
-              className="flex-1 rounded-lg border border-white/[0.12] px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-slate-300 active:scale-[0.97]"
-            >
-              Discard
-            </button>
-            <div className="flex-1">
-              <CreatePlanButton label="Create Plan" onClick={() => router.push("/dashboard/plans")} />
-            </div>
-          </div>
-        </div>
-      </main>
+      <PlanForm
+        submitLabel="Create Plan"
+        onDiscard={() => router.push("/dashboard/plans")}
+        onSubmit={handleSubmit}
+        isSubmitting={createPlan.isPending}
+      />
     </div>
-  );
-}
-
-/* ── Field wrapper ─────────────────────────── */
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <label className="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-        {label}
-      </label>
-      {children}
-    </div>
-  );
-}
-
-/* ── Reusable selectable option group ─────────
-   layout="grid": stacked rows on mobile, 2x2 grid on larger (used for Duration)
-   layout="row":  stacked rows always (compact, used for Billing Mode next to Plan Name)
-*/
-function SelectGroup<T extends string>({
-  options,
-  value,
-  onChange,
-  layout,
-}: {
-  options: readonly { value: T; label: string }[];
-  value: T;
-  onChange: (v: T) => void;
-  layout: "grid" | "row";
-}) {
-  if (layout === "grid") {
-    return (
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        {options.map((opt) => {
-          const active = value === opt.value;
-          return (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => onChange(opt.value)}
-              className={[
-                "flex items-center justify-between rounded-lg border px-3 py-2.5 text-left text-[11.5px] font-semibold uppercase tracking-wide transition-all active:scale-[0.97]",
-                active
-                  ? "border-blue-500 bg-blue-600 text-white shadow-[0_0_0_1px_rgba(59,130,246,0.4)]"
-                  : "border-white/[0.10] bg-[#0d1320] text-slate-400 hover:border-white/[0.18] hover:bg-white/[0.04] hover:text-slate-200",
-              ].join(" ")}
-            >
-              <span className="truncate">{opt.label}</span>
-              <Dot active={active} />
-            </button>
-          );
-        })}
-      </div>
-    );
-  }
-
-  return (
-    <div className="overflow-hidden rounded-lg border border-white/[0.10]">
-      {options.map((opt, i) => {
-        const active = value === opt.value;
-        return (
-          <button
-            key={opt.value}
-            type="button"
-            onClick={() => onChange(opt.value)}
-            className={[
-              "flex w-full items-center justify-between px-3.5 py-2.5 text-left text-[12px] font-medium uppercase tracking-wide transition-colors",
-              i !== 0 ? "border-t border-white/[0.08]" : "",
-              active
-                ? "bg-blue-600 text-white"
-                : "bg-[#0d1320] text-slate-400 hover:bg-white/[0.04] hover:text-slate-200",
-            ].join(" ")}
-          >
-            <span className="truncate">{opt.label}</span>
-            <Dot active={active} />
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-function Dot({ active }: { active: boolean }) {
-  return (
-    <span
-      className={[
-        "flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border transition-colors",
-        active ? "border-white bg-white" : "border-slate-600 bg-transparent",
-      ].join(" ")}
-    >
-      {active && <span className="h-1.5 w-1.5 rounded-full bg-blue-600" />}
-    </span>
   );
 }

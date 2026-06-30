@@ -3,23 +3,24 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { PlansHeader } from "@/components/plans/plans-header";
 import { PlanList } from "@/components/plans/plan-list";
 import { PlanTabs, type PlanTier } from "@/components/plans/plan-tabs";
-import { usePlans, usePlanMetrics } from "@/hooks/use-plans";
-import { MOCK_PLANS } from "@/lib/mock-plans";
+import {
+  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
+} from "@/components/ui/alert-dialog";
+import { usePlans, usePlanMetrics, useDeletePlan } from "@/hooks/use-plans";
 import type { Plan } from "@/types";
-
-const USE_MOCK_DATA = true; // flip to false once real API data is ready
 
 export default function PlansPage() {
   const router = useRouter();
-  const { data: fetchedPlans = [], isLoading: plansLoading } = usePlans();
+  const { data: plans = [], isLoading: plansLoading } = usePlans();
   const { data: metrics = [], isLoading: metricsLoading } = usePlanMetrics();
+  const [pendingDelete, setPendingDelete] = useState<Plan | null>(null);
   const [activeTier, setActiveTier] = useState<PlanTier>("gold");
-
-  const plans = USE_MOCK_DATA ? MOCK_PLANS : fetchedPlans;
-  const filteredPlans = plans.filter((plan) => plan.tier === activeTier);
+  const deletePlan = useDeletePlan();
 
   const handleAddPlan = () => {
     router.push("/dashboard/plans/create");
@@ -29,8 +30,14 @@ export default function PlansPage() {
     router.push(`/dashboard/plans/${plan.id}/edit`);
   };
 
-  const handleDeletePlan = (_plan: Plan) => {
-    // Wire to delete confirmation + API mutation
+  const confirmDelete = () => {
+    if (!pendingDelete) return;
+    const { id, name } = pendingDelete;
+    deletePlan.mutate(id, {
+      onSuccess: () => toast.success(`"${name}" plan deleted.`),
+      onError: () => toast.error("Couldn't delete the plan. Please try again."),
+    });
+    setPendingDelete(null);
   };
 
   return (
@@ -55,12 +62,29 @@ export default function PlansPage() {
         <PlanTabs value={activeTier} onChange={setActiveTier} />
 
         <PlanList
-          plans={filteredPlans}
-          isLoading={USE_MOCK_DATA ? false : plansLoading}
+          plans={plans}
+          isLoading={plansLoading}
           onEdit={handleEditPlan}
-          onDelete={handleDeletePlan}
+          onDelete={setPendingDelete}
         />
       </main>
+
+      <AlertDialog open={!!pendingDelete} onOpenChange={(open) => { if (!open) setPendingDelete(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this plan?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingDelete && `This permanently removes "${pendingDelete.name}" from your subscription tiers. Subscribers already on this plan are not affected.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" onClick={confirmDelete}>
+              Delete Plan
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

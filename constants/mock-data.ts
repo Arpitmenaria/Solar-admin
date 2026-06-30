@@ -1,4 +1,4 @@
-import type { User, DashboardStats, ModerationItem, ChartDataPoint } from "@/types";
+import type { User, DashboardStats, ModerationItem, ChartDataPoint, Report, ReportStats } from "@/types";
 
 export const MOCK_USERS: User[] = [
   {
@@ -175,6 +175,43 @@ export const MOCK_GROUP_STATS = {
   reportedGroups:     25,
   suspended:          13,
   newlyCreated24h:    76,
+};
+
+export const MOCK_GROUP_REPORTS: Report[] = [
+  { id: "gr1", target: { id: "g7", name: "Esports_Arena_Pro", meta: "28,400 members" }, reportedBy: { username: "@johndoe_92" }, reason: "Hate Speech", description: "Multiple members posting targeted slurs in the general channel during tournament chat.", status: "PENDING", reportedAt: "2026-06-29" },
+  { id: "gr2", target: { id: "g3", name: "Shadow_Traders_Elite", meta: "542 members" }, reportedBy: { username: "@anonymous_star" }, reason: "Scam / Fraud", description: "Admins are promoting a fake investment scheme and asking members to wire funds.", status: "PENDING", reportedAt: "2026-06-28" },
+  { id: "gr3", target: { id: "g9", name: "Backend_Wizards", meta: "2,100 members" }, reportedBy: { username: "@sarah_dev" }, reason: "Spam", description: "Group is being flooded with repeated promotional links unrelated to the group topic.", status: "REVIEWED", reportedAt: "2026-06-27" },
+  { id: "gr4", target: { id: "g4", name: "Alpha_Moderators", meta: "42 members" }, reportedBy: { username: "@kb_enterprise" }, reason: "Inappropriate Content", description: "Pinned post contains explicit imagery not suitable for the platform.", status: "RESOLVED", reportedAt: "2026-06-24" },
+  { id: "gr5", target: { id: "g5", name: "Crypto_Builders_Hub", meta: "3,410 members" }, reportedBy: { username: "@elena_r" }, reason: "Fake or Misleading", description: "Group claims official partnership with a major exchange that does not exist.", status: "DISMISSED", reportedAt: "2026-06-22" },
+  { id: "gr6", target: { id: "g1", name: "Dev_Infrastructure", meta: "12,482 members" }, reportedBy: { username: "@marcus_v" }, reason: "Harassment", description: "A member is repeatedly DMing other users after being asked to stop.", status: "PENDING", reportedAt: "2026-06-21" },
+  { id: "gr7", target: { id: "g8", name: "Social_Innovators_Lab", meta: "1,290 members" }, reportedBy: { username: "@shadow_882" }, reason: "Other", description: "Group description was changed to impersonate a verified brand account.", status: "REVIEWED", reportedAt: "2026-06-18" },
+  { id: "gr8", target: { id: "g2", name: "Global_Design_Collective", meta: "8,103 members" }, reportedBy: { username: "@sjm_82" }, reason: "Spam", description: "Several members posting identical affiliate links across multiple threads.", status: "RESOLVED", reportedAt: "2026-06-15" },
+];
+
+export const MOCK_GROUP_REPORT_STATS: ReportStats = {
+  total: 312,
+  pending: 184,
+  reviewed: 56,
+  resolved: 48,
+  dismissed: 24,
+};
+
+export const MOCK_EVENT_REPORTS: Report[] = [
+  { id: "er1", target: { id: "e1", name: "Crypto Founders Meetup", meta: "Sat, Aug 16 · 7:00 PM" }, reportedBy: { username: "@anonymous_star" }, reason: "Scam / Fraud", description: "Organizer is collecting an upfront 'registration fee' that isn't disclosed in the event policy.", status: "PENDING", reportedAt: "2026-06-29" },
+  { id: "er2", target: { id: "e2", name: "Late Night Gaming Tournament", meta: "Fri, Jul 04 · 9:00 PM" }, reportedBy: { username: "@sarah_dev" }, reason: "Inappropriate Content", description: "Event banner image contains graphic content flagged by multiple attendees.", status: "PENDING", reportedAt: "2026-06-28" },
+  { id: "er3", target: { id: "e3", name: "Design Systems Workshop", meta: "Wed, Jul 09 · 2:00 PM" }, reportedBy: { username: "@kb_enterprise" }, reason: "Spam", description: "Event listing duplicated 6 times by the same host to game search rankings.", status: "REVIEWED", reportedAt: "2026-06-26" },
+  { id: "er4", target: { id: "e4", name: "Underground Trading Signals", meta: "Sun, Jul 13 · 6:00 PM" }, reportedBy: { username: "@elena_r" }, reason: "Fake or Misleading", description: "Event claims a celebrity guest speaker who has publicly denied involvement.", status: "RESOLVED", reportedAt: "2026-06-20" },
+  { id: "er5", target: { id: "e5", name: "Community Karaoke Night", meta: "Sat, Jul 19 · 8:00 PM" }, reportedBy: { username: "@marcus_v" }, reason: "Harassment", description: "Comments section used to target and harass a specific attendee.", status: "DISMISSED", reportedAt: "2026-06-17" },
+  { id: "er6", target: { id: "e6", name: "Open Mic Comedy Hour", meta: "Thu, Jul 24 · 8:30 PM" }, reportedBy: { username: "@shadow_882" }, reason: "Hate Speech", description: "Event description includes language targeting a protected group.", status: "PENDING", reportedAt: "2026-06-14" },
+  { id: "er7", target: { id: "e7", name: "Startup Pitch Night", meta: "Tue, Jul 29 · 6:30 PM" }, reportedBy: { username: "@sjm_82" }, reason: "Other", description: "Listed venue does not exist at the stated address.", status: "REVIEWED", reportedAt: "2026-06-12" },
+];
+
+export const MOCK_EVENT_REPORT_STATS: ReportStats = {
+  total: 187,
+  pending: 96,
+  reviewed: 41,
+  resolved: 33,
+  dismissed: 17,
 };
 
 export const MOCK_CHART_DATA: ChartDataPoint[] = [

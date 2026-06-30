@@ -14,6 +14,8 @@ import {
   TbX,
   TbHeadset,
   TbLogout,
+  TbFlag,
+  TbCalendarExclamation,
 } from "react-icons/tb";
 
 import { FaRegStar } from "react-icons/fa";
@@ -27,6 +29,8 @@ type IconKey =
   | "Dashboard"
   | "Users"
   | "Groups"
+  | "GroupReports"
+  | "EventReports"
   | "Plans"
   | "Support"
   | "SignOut";
@@ -48,6 +52,16 @@ const NAV_ITEMS = [
     label: "Groups",
     href: "/dashboard/groups",
     icon: "Groups",
+  },
+  {
+    label: "Group Reports",
+    href: "/dashboard/group-reports",
+    icon: "GroupReports",
+  },
+  {
+    label: "Event Reports",
+    href: "/dashboard/event-reports",
+    icon: "EventReports",
   },
   {
     label: "Plans",
@@ -73,6 +87,8 @@ const ICON_MAP: Record<IconKey, ElementType> = {
   Dashboard: TbLayoutDashboard,
   Users: TbUsers,
   Groups: TbUsersGroup,
+  GroupReports: TbFlag,
+  EventReports: TbCalendarExclamation,
   Plans: TbCreditCard,
   Support: TbHeadset,
   SignOut: TbLogout,

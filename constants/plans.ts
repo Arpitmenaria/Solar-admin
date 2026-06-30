@@ -4,9 +4,11 @@ export const MOCK_PLANS: Plan[] = [
   {
     id: "plan-free",
     name: "Free Infrastructure",
+    description: "Get started with the essentials, no cost.",
     price: 0,
     currency: "$",
     billingPeriod: "/MONTH",
+    billingMode: "recurring",
     sortOrder: 1,
     features: [
       "Basic Node Access",
@@ -18,9 +20,11 @@ export const MOCK_PLANS: Plan[] = [
   {
     id: "plan-gold",
     name: "Gold Infrastructure",
+    description: "Priority scaling and support for growing teams.",
     price: 49,
     currency: "$",
     billingPeriod: "/MONTH",
+    billingMode: "recurring",
     recommended: true,
     sortOrder: 2,
     features: [
@@ -33,9 +37,11 @@ export const MOCK_PLANS: Plan[] = [
   {
     id: "plan-premium",
     name: "Premium Infrastructure",
+    description: "Enterprise-grade throughput, SLA, and white-glove support.",
     price: 99,
     currency: "$",
     billingPeriod: "/MONTH",
+    billingMode: "recurring",
     sortOrder: 3,
     features: [
       "Unlimited Node Provisioning",

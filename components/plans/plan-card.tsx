@@ -34,6 +34,9 @@ export function PlanCard({ plan, index = 0, onEdit, onDelete }: PlanCardProps) {
               </Badge>
             )}
           </div>
+          {plan.description && (
+            <p className="mt-1.5 max-w-md text-[12.5px] text-caption">{plan.description}</p>
+          )}
           <p className="mt-3 flex flex-wrap items-baseline gap-1">
             <span className="text-4xl font-bold tracking-tight text-[#99CBFF] md:text-5xl">
               {formattedPrice}

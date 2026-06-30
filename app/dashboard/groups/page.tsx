@@ -2,19 +2,22 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   TbDownload, TbPlus, TbSearch, TbRefresh,
-  TbCode, TbShieldCheck, TbDeviceGamepad2, TbUsers, TbLock, TbWorld,
+  TbLock, TbWorld,
   TbChevronsLeft, TbChevronsRight, TbChevronLeft, TbChevronRight,
-  TbBan, TbPalette, TbCurrencyDollar, TbAlertTriangle,
+  TbBan, TbAlertTriangle, TbCircleCheck,
   TbDatabaseImport, TbClock,
   TbDotsVertical, TbEye, TbPencil, TbTrash,
 } from "react-icons/tb";
 import { CustomSelect } from "@/components/shared/custom-select";
 import { formatNumberFull, cn } from "@/lib/utils";
-import { MOCK_GROUPS, MOCK_GROUP_STATS } from "@/constants/mock-data";
-import type { GroupCategory, GroupPrivacy, GroupStatus } from "@/constants/mock-data";
+import type { Group, GroupCategory, GroupPrivacy, GroupStatus } from "@/constants/mock-data";
+import { useGroups, useGroupStats } from "@/hooks/use-groups";
+import { CATEGORY_ICON, CAT_BADGE, STATUS_STYLES } from "@/components/groups/group-meta";
+import { GroupActionDialog, type PendingGroupAction } from "@/components/groups/group-action-dialog";
 
 /* ── Nav tabs — text only, no numbers ───────── */
 const GROUP_TABS = [
@@ -28,36 +31,6 @@ const GROUP_TABS = [
 
 type TabId = typeof GROUP_TABS[number]["id"];
 
-/* ── Stat cards shown when Total Groups is active ── */
-const STAT_CARDS = [
-  { label: "TOTAL GROUPS",     value: MOCK_GROUP_STATS.totalGroups,     sub: "+12.5% vs last month",    icon: TbDatabaseImport, color: "#99CBFF"  },
-  { label: "PENDING APPROVAL", value: MOCK_GROUP_STATS.pendingApproval, sub: "Avg processing: 4.2h",    icon: TbClock,          color: "#e2e8f0"  },
-  { label: "PRIVATE GROUPS",   value: MOCK_GROUP_STATS.privateGroups,   sub: "29% of ecosystem",        icon: TbLock,           color: "#e2e8f0"  },
-  { label: "PUBLIC GROUPS",    value: MOCK_GROUP_STATS.publicGroups,    sub: "71% of ecosystem",        icon: TbWorld,          color: "#e2e8f0"  },
-  { label: "REPORTED GROUPS",  value: MOCK_GROUP_STATS.reportedGroups,  sub: "Urgent Review Required",  icon: TbAlertTriangle,  color: "#f97316"  },
-  { label: "SUSPENDED",        value: MOCK_GROUP_STATS.suspended,       sub: "-2 from yesterday",       icon: TbBan,            color: "#e2e8f0"  },
-];
-
-/* ── Table helpers ───────────────────────────── */
-const CATEGORY_ICON: Record<GroupCategory, React.ElementType> = {
-  Tech: TbCode, Design: TbPalette, Finance: TbCurrencyDollar,
-  Security: TbShieldCheck, Gaming: TbDeviceGamepad2, Social: TbUsers,
-};
-const CAT_BADGE: Record<GroupCategory, string> = {
-  Tech:     "border-blue-500/30 text-blue-300",
-  Design:   "border-purple-500/30 text-purple-300",
-  Finance:  "border-emerald-500/30 text-emerald-300",
-  Security: "border-slate-500/30 text-slate-300",
-  Gaming:   "border-orange-500/30 text-orange-300",
-  Social:   "border-cyan-500/30 text-cyan-300",
-};
-const STATUS_STYLES: Record<GroupStatus, { dot: string; text: string; label: string }> = {
-  ACTIVE:    { dot: "bg-emerald-400", text: "text-emerald-400", label: "Active"    },
-  SUSPENDED: { dot: "bg-red-400",     text: "text-red-400",     label: "Suspended" },
-  PENDING:   { dot: "bg-yellow-400",  text: "text-yellow-400",  label: "Pending"   },
-  REPORTED:  { dot: "bg-orange-400",  text: "text-orange-400",  label: "Reported"  },
-};
-
 const PRIVACY_TABS: { label: string; value: "ALL" | GroupPrivacy }[] = [
   { label: "All", value: "ALL" }, { label: "Public", value: "Public" }, { label: "Private", value: "Private" },
 ];
@@ -65,15 +38,7 @@ const STATUS_OPTS:   ("ALL" | GroupStatus)[]   = ["ALL", "ACTIVE", "SUSPENDED", 
 const CATEGORY_OPTS: ("ALL" | GroupCategory)[] = ["ALL", "Tech", "Design", "Finance", "Security", "Gaming", "Social"];
 
 /* ── ActionMenu (portal, fixed) ─────────────── */
-const ACTION_ITEMS = (status: GroupStatus) => [
-  { label: "View Details",  icon: TbEye,    cls: "text-white hover:bg-[rgba(255,255,255,0.07)]"    },
-  { label: "Edit Group",    icon: TbPencil, cls: "text-white hover:bg-[rgba(255,255,255,0.07)]"    },
-  { label: status === "SUSPENDED" ? "Unsuspend" : "Suspend",
-                            icon: TbBan,    cls: "text-orange-400 hover:bg-[rgba(249,115,22,0.12)]" },
-  { label: "Delete Group",  icon: TbTrash,  cls: "text-red-400 hover:bg-[rgba(239,68,68,0.12)]"   },
-];
-
-function ActionMenu({ status }: { status: GroupStatus }) {
+function ActionMenu({ group, onAction }: { group: Group; onAction: (action: "SUSPEND" | "UNSUSPEND" | "DELETE") => void }) {
   const [open, setOpen] = useState(false);
   const [pos, setPos]   = useState({ top: 0, right: 0 });
   const btnRef  = useRef<HTMLButtonElement>(null);
@@ -120,15 +85,44 @@ function ActionMenu({ status }: { status: GroupStatus }) {
               animate={{ opacity: 1, scale: 1,    y: 0  }}
               exit={{    opacity: 0, scale: 0.88, y: -8 }}
               transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-              style={{ position: "fixed", top: pos.top, right: pos.right, transformOrigin: "top right", zIndex: 9999 }}
+              style={{ position: "fixed", top: pos.top, right: pos.right, transformOrigin: "top right", zIndex: 40 }}
               className="w-44 overflow-hidden rounded-xl border border-white/[0.10] bg-[#0d1424] shadow-2xl shadow-black/70"
             >
-              {ACTION_ITEMS(status).map(({ label, icon: Icon, cls }) => (
-                <button key={label} onClick={() => setOpen(false)}
-                  className={`flex w-full items-center gap-2.5 px-3.5 py-2.5 text-[12px] font-medium transition-colors ${cls}`}>
-                  <Icon size={14} /> {label}
+              <Link
+                href={`/dashboard/groups/${group.id}`}
+                onClick={() => setOpen(false)}
+                className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-[12px] font-medium text-white transition-colors hover:bg-[rgba(255,255,255,0.07)]"
+              >
+                <TbEye size={14} /> View Details
+              </Link>
+              <Link
+                href={`/dashboard/groups/${group.id}/edit`}
+                onClick={() => setOpen(false)}
+                className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-[12px] font-medium text-white transition-colors hover:bg-[rgba(255,255,255,0.07)]"
+              >
+                <TbPencil size={14} /> Edit Group
+              </Link>
+              {group.status === "SUSPENDED" ? (
+                <button
+                  onClick={() => { setOpen(false); onAction("UNSUSPEND"); }}
+                  className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-[12px] font-medium text-emerald-400 transition-colors hover:bg-[rgba(16,185,129,0.12)]"
+                >
+                  <TbCircleCheck size={14} /> Unsuspend
                 </button>
-              ))}
+              ) : (
+                <button
+                  onClick={() => { setOpen(false); onAction("SUSPEND"); }}
+                  className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-[12px] font-medium text-orange-400 transition-colors hover:bg-[rgba(249,115,22,0.12)]"
+                >
+                  <TbBan size={14} /> Suspend
+                </button>
+              )}
+              <button
+                onClick={() => { setOpen(false); onAction("DELETE"); }}
+                className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-[12px] font-medium text-red-400 transition-colors hover:bg-[rgba(239,68,68,0.12)]"
+              >
+                <TbTrash size={14} /> Delete Group
+              </button>
             </motion.div>
           )}
         </AnimatePresence>,
@@ -140,12 +134,15 @@ function ActionMenu({ status }: { status: GroupStatus }) {
 
 /* ───────────────────────────────────────────── */
 export default function GroupsPage() {
+  const { data: groups = [] } = useGroups();
+  const { data: stats } = useGroupStats();
   const [activeTab, setActiveTab] = useState<TabId>("total");
   const [search,    setSearch]    = useState("");
   const [category,  setCategory]  = useState<"ALL" | GroupCategory>("ALL");
   const [privacy,   setPrivacy]   = useState<"ALL" | GroupPrivacy>("ALL");
   const [status,    setStatus]    = useState<"ALL" | GroupStatus>("ALL");
   const [page,      setPage]      = useState(1);
+  const [pendingAction, setPendingAction] = useState<PendingGroupAction | null>(null);
 
   const handleTabClick = (id: TabId) => {
     setActiveTab(id);
@@ -155,19 +152,19 @@ export default function GroupsPage() {
   // Tab-level base filter applied on top of user's manual filters
   const TAB_CONFIG: Record<TabId, {
     label: string; statValue: number; sub: string; icon: React.ElementType;
-    baseFilter: (g: (typeof MOCK_GROUPS)[0]) => boolean;
+    baseFilter: (g: Group) => boolean;
   }> = {
-    total:     { label: "TOTAL GROUPS",    statValue: MOCK_GROUP_STATS.totalGroups,     sub: "+12.5% vs last month", icon: TbDatabaseImport, baseFilter: () => true },
-    pending:   { label: "PENDING APPROVAL",statValue: MOCK_GROUP_STATS.pendingApproval, sub: "Awaiting review",      icon: TbDatabaseImport, baseFilter: (g) => g.status === "PENDING"   },
-    private:   { label: "PRIVATE GROUPS",  statValue: MOCK_GROUP_STATS.privateGroups,   sub: "Members-only access",  icon: TbDatabaseImport, baseFilter: (g) => g.privacy === "Private"  },
-    public:    { label: "PUBLIC GROUPS",   statValue: MOCK_GROUP_STATS.publicGroups,    sub: "Open to everyone",     icon: TbDatabaseImport, baseFilter: (g) => g.privacy === "Public"   },
-    reported:  { label: "REPORTED GROUPS", statValue: MOCK_GROUP_STATS.reportedGroups,  sub: "Under investigation",  icon: TbDatabaseImport, baseFilter: (g) => g.status === "REPORTED"  },
-    suspended: { label: "SUSPENDED",       statValue: MOCK_GROUP_STATS.suspended,       sub: "Access restricted",    icon: TbDatabaseImport, baseFilter: (g) => g.status === "SUSPENDED" },
+    total:     { label: "TOTAL GROUPS",    statValue: stats?.totalGroups ?? 0,     sub: "+12.5% vs last month", icon: TbDatabaseImport, baseFilter: () => true },
+    pending:   { label: "PENDING APPROVAL",statValue: stats?.pendingApproval ?? 0, sub: "Awaiting review",      icon: TbDatabaseImport, baseFilter: (g) => g.status === "PENDING"   },
+    private:   { label: "PRIVATE GROUPS",  statValue: stats?.privateGroups ?? 0,   sub: "Members-only access",  icon: TbDatabaseImport, baseFilter: (g) => g.privacy === "Private"  },
+    public:    { label: "PUBLIC GROUPS",   statValue: stats?.publicGroups ?? 0,    sub: "Open to everyone",     icon: TbDatabaseImport, baseFilter: (g) => g.privacy === "Public"   },
+    reported:  { label: "REPORTED GROUPS", statValue: stats?.reportedGroups ?? 0,  sub: "Under investigation",  icon: TbDatabaseImport, baseFilter: (g) => g.status === "REPORTED"  },
+    suspended: { label: "SUSPENDED",       statValue: stats?.suspended ?? 0,       sub: "Access restricted",    icon: TbDatabaseImport, baseFilter: (g) => g.status === "SUSPENDED" },
   };
 
   const tabCfg = TAB_CONFIG[activeTab];
 
-  const filtered = MOCK_GROUPS.filter((g) => {
+  const filtered = groups.filter((g) => {
     if (!tabCfg.baseFilter(g)) return false;
     if (search   && !g.name.toLowerCase().includes(search.toLowerCase())) return false;
     if (category !== "ALL" && g.category !== category) return false;
@@ -285,9 +282,12 @@ export default function GroupsPage() {
                     <button className="flex items-center gap-1.5 rounded-lg border border-white/[0.10] bg-white/[0.03] px-3.5 py-1.5 text-[11px] font-medium text-slate-300 transition-colors hover:bg-white/[0.06]">
                       <TbDownload size={12} /> Export CSV
                     </button>
-                    <button className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3.5 py-1.5 text-[11px] font-semibold text-white transition-colors hover:bg-blue-700">
+                    <Link
+                      href="/dashboard/groups/create"
+                      className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3.5 py-1.5 text-[11px] font-semibold text-white transition-colors hover:bg-blue-700"
+                    >
                       <TbPlus size={12} /> Create New Group
-                    </button>
+                    </Link>
                   </div>
                 </motion.div>
               </div>
@@ -373,7 +373,10 @@ export default function GroupsPage() {
 
                       <span className="text-[12px] text-caption">{group.createdAt}</span>
 
-                      <ActionMenu status={group.status} />
+                      <ActionMenu
+                        group={group}
+                        onAction={(action) => setPendingAction({ action, groupId: group.id, groupName: group.name })}
+                      />
                     </motion.div>
                   );
                 })}
@@ -417,6 +420,8 @@ export default function GroupsPage() {
         </AnimatePresence>
 
       </main>
+
+      <GroupActionDialog pending={pendingAction} onClose={() => setPendingAction(null)} />
     </div>
   );
 }
