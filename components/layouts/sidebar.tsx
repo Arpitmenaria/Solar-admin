@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  TbLayoutDashboard, TbUsers, TbUsersGroup,
+  TbLayoutDashboard, TbUsers, TbUsersGroup, TbCreditCard,
   TbChevronLeft, TbChevronRight, TbX,
 } from "react-icons/tb";
 import { FaRegStar } from "react-icons/fa";
@@ -12,18 +12,20 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/store/ui.store";
 
-type IconKey = "Dashboard" | "Users" | "Groups";
+type IconKey = "Dashboard" | "Users" | "Groups" | "Plans";
 
 const ICON_MAP: Record<IconKey, React.ElementType> = {
   Dashboard: TbLayoutDashboard,
   Users:     TbUsers,
   Groups:    TbUsersGroup,
+  Plans:     TbCreditCard,
 };
 
 const NAV_MAIN = [
   { label: "Dashboard",        href: "/dashboard",        icon: "Dashboard" },
   { label: "Users",            href: "/dashboard/users",  icon: "Users"     },
   { label: "Group Management", href: "/dashboard/groups", icon: "Groups"    },
+  { label: "Plans",            href: "/dashboard/plans",  icon: "Plans"     },
 ] as const;
 
 

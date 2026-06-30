@@ -6,20 +6,24 @@ interface StatCardProps {
   value: string;
   icon?: LucideIcon;
   badge?: string;
+  badgeClassName?: string;
   dot?: boolean;
   sub?: string;
   className?: string;
 }
 
-export function StatCard({ label, value, icon: Icon, badge, dot, sub, className }: StatCardProps) {
+export function StatCard({ label, value, icon: Icon, badge, badgeClassName, dot, sub, className }: StatCardProps) {
   return (
     <div className={cn(
-      "group flex flex-col rounded-xl border border-white/[0.07] bg-card p-5",
+      "group relative flex flex-col overflow-hidden rounded-xl border border-white/[0.07] bg-card p-5",
       "transition-all duration-200 cursor-default",
       "hover:border-blue-500/40 hover:bg-blue-500/[0.04]",
       "hover:-translate-y-[2px] hover:shadow-xl hover:shadow-blue-500/10",
       className
     )}>
+      {/* Bottom glow accent */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent opacity-60" />
+
       {/* Row 1 — icon + badge/dot */}
       <div className="flex items-start justify-between">
         {Icon && (
@@ -29,7 +33,10 @@ export function StatCard({ label, value, icon: Icon, badge, dot, sub, className 
         )}
         <div className="ml-auto flex items-center gap-2">
           {badge && (
-            <span className="rounded-md border border-emerald-400/25 bg-emerald-400/[0.12] px-1.5 py-0.5 text-[11px] font-semibold text-emerald-400">
+            <span className={cn(
+              "rounded-full border border-emerald-400/25 bg-emerald-400/[0.12] px-2 py-0.5 text-[11px] font-semibold text-emerald-400",
+              badgeClassName
+            )}>
               {badge}
             </span>
           )}

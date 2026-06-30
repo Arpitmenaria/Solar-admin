@@ -2,6 +2,7 @@ export const NAV_ITEMS = [
   { label: "Dashboard",        href: "/dashboard",        icon: "Dashboard" },
   { label: "Users",            href: "/dashboard/users",  icon: "Users"     },
   { label: "Group Management", href: "/dashboard/groups", icon: "Groups"    },
+  { label: "Plans",            href: "/dashboard/plans",  icon: "Plans"     },
 ] as const;
 
 export const NAV_BOTTOM = [

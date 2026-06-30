@@ -111,3 +111,22 @@ export interface ProfileFormValues {
   website: string;
   bio: string;
 }
+
+export interface Plan {
+  id: string;
+  name: string;
+  price: number;
+  currency: string;
+  billingPeriod: string;
+  features: string[];
+  recommended?: boolean;
+  sortOrder: number;
+}
+
+export interface PlanMetric {
+  id: string;
+  label: string;
+  value: number;
+  changePercent: number;
+  icon: "subscribers" | "active" | "free" | "trial";
+}

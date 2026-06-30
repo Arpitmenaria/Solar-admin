@@ -4,9 +4,9 @@ function Skeleton({ className }: { className?: string }) {
   return <div className={cn("animate-pulse rounded bg-white/[0.05]", className)} />;
 }
 
-export function StatCardSkeleton() {
+export function StatCardSkeleton({ className }: { className?: string }) {
   return (
-    <div className="rounded-xl border border-white/[0.08] bg-[#0d1321] p-5 space-y-3">
+    <div className={cn("rounded-xl border border-white/[0.08] bg-[#0d1321] p-5 space-y-3", className)}>
       <Skeleton className="h-3 w-24" />
       <Skeleton className="h-8 w-32" />
     </div>
