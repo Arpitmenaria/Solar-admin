@@ -4,7 +4,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { CreatePlanButton } from "@/components/plans/create-plan-button";
 import type { CreatePlanInput } from "@/services/plans.service";
-import type { Plan, PlanBillingMode } from "@/types";
+import type { Plan, PlanBillingMode, PlanTier } from "@/types";
 
 const DURATION_OPTIONS = [
   { value: "weekly", label: "Weekly", period: "/WEEK" },
@@ -17,6 +17,12 @@ const BILLING_OPTIONS: { value: PlanBillingMode; label: string }[] = [
   { value: "recurring", label: "Recurring" },
   { value: "one_time", label: "One-Time" },
   { value: "metered", label: "Metered / Usage" },
+];
+
+const TIER_OPTIONS: { value: PlanTier; label: string }[] = [
+  { value: "free", label: "Free" },
+  { value: "gold", label: "Gold" },
+  { value: "premium", label: "Premium" },
 ];
 
 type Duration = (typeof DURATION_OPTIONS)[number]["value"];
@@ -43,6 +49,7 @@ export function PlanForm({ defaultValues, submitLabel, onDiscard, onSubmit, isSu
     defaultValues ? periodToDuration(defaultValues.billingPeriod) : "monthly"
   );
   const [billingMode, setBillingMode] = useState<PlanBillingMode>(defaultValues?.billingMode ?? "recurring");
+  const [tier, setTier] = useState<PlanTier>(defaultValues?.tier ?? "free");
   const [recommended, setRecommended] = useState(defaultValues?.recommended ?? false);
   const [error, setError] = useState("");
 
@@ -68,6 +75,7 @@ export function PlanForm({ defaultValues, submitLabel, onDiscard, onSubmit, isSu
     onSubmit({
       name: trimmedName,
       description: description.trim() || undefined,
+      tier,
       price: parsedPrice,
       currency: "$",
       billingPeriod: DURATION_OPTIONS.find((d) => d.value === duration)!.period,
@@ -147,9 +155,15 @@ export function PlanForm({ defaultValues, submitLabel, onDiscard, onSubmit, isSu
               </Field>
             </div>
 
-            <Field label="Billing Mode">
-              <SelectGroup options={BILLING_OPTIONS} value={billingMode} onChange={(v) => setBillingMode(v)} layout="row" />
-            </Field>
+            <div className="grid grid-cols-1 gap-7 sm:grid-cols-2">
+              <Field label="Tier">
+                <SelectGroup options={TIER_OPTIONS} value={tier} onChange={(v) => setTier(v)} layout="row" />
+              </Field>
+
+              <Field label="Billing Mode">
+                <SelectGroup options={BILLING_OPTIONS} value={billingMode} onChange={(v) => setBillingMode(v)} layout="row" />
+              </Field>
+            </div>
 
             <Field label="Description">
               <textarea

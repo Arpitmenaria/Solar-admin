@@ -155,11 +155,13 @@ export interface ProfileFormValues {
 }
 
 export type PlanBillingMode = "recurring" | "one_time" | "metered";
+export type PlanTier = "free" | "gold" | "premium";
 
 export interface Plan {
   id: string;
   name: string;
   description?: string;
+  tier: PlanTier;
   price: number;
   currency: string;
   billingPeriod: string;

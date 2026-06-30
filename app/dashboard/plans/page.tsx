@@ -6,13 +6,13 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { PlansHeader } from "@/components/plans/plans-header";
 import { PlanList } from "@/components/plans/plan-list";
-import { PlanTabs, type PlanTier } from "@/components/plans/plan-tabs";
+import { PlanTabs } from "@/components/plans/plan-tabs";
 import {
   AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
   AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import { usePlans, usePlanMetrics, useDeletePlan } from "@/hooks/use-plans";
-import type { Plan } from "@/types";
+import type { Plan, PlanTier } from "@/types";
 
 export default function PlansPage() {
   const router = useRouter();
@@ -21,6 +21,7 @@ export default function PlansPage() {
   const [pendingDelete, setPendingDelete] = useState<Plan | null>(null);
   const [activeTier, setActiveTier] = useState<PlanTier>("gold");
   const deletePlan = useDeletePlan();
+  const filteredPlans = plans.filter((p) => p.tier === activeTier);
 
   const handleAddPlan = () => {
     router.push("/dashboard/plans/create");
@@ -62,7 +63,7 @@ export default function PlansPage() {
         <PlanTabs value={activeTier} onChange={setActiveTier} />
 
         <PlanList
-          plans={plans}
+          plans={filteredPlans}
           isLoading={plansLoading}
           onEdit={handleEditPlan}
           onDelete={setPendingDelete}

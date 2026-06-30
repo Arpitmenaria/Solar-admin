@@ -20,10 +20,10 @@ export function CreatePlanButton({
   const styles = cn(
     "inline-flex shrink-0 items-center gap-1.5 rounded-lg px-4 py-2",
     "text-[11px] font-bold uppercase tracking-wider",
-    "bg-[#facc15] text-[#0a0f1a]",
+    "bg-blue-600 text-white",
     "transition-all duration-150",
-    "hover:bg-[#fde047] hover:shadow-lg hover:shadow-yellow-500/20",
-    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#080c16]",
+    "hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-500/20",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#080c16]",
     className
   );
 

@@ -12,8 +12,6 @@ import {
   TbChevronLeft,
   TbChevronRight,
   TbX,
-  TbHeadset,
-  TbLogout,
   TbFlag,
   TbCalendarExclamation,
 } from "react-icons/tb";
@@ -31,9 +29,7 @@ type IconKey =
   | "Groups"
   | "GroupReports"
   | "EventReports"
-  | "Plans"
-  | "Support"
-  | "SignOut";
+  | "Plans";
 
 const SYSTEM_NAME = "Kick Analyst";
 
@@ -70,19 +66,6 @@ const NAV_ITEMS = [
   },
 ] as const;
 
-const NAV_BOTTOM = [
-  {
-    label: "Support",
-    href: "/dashboard/support",
-    icon: "Support",
-  },
-  {
-    label: "Sign Out",
-    href: "/logout",
-    icon: "SignOut",
-  },
-] as const;
-
 const ICON_MAP: Record<IconKey, ElementType> = {
   Dashboard: TbLayoutDashboard,
   Users: TbUsers,
@@ -90,8 +73,6 @@ const ICON_MAP: Record<IconKey, ElementType> = {
   GroupReports: TbFlag,
   EventReports: TbCalendarExclamation,
   Plans: TbCreditCard,
-  Support: TbHeadset,
-  SignOut: TbLogout,
 };
 
 
@@ -263,65 +244,6 @@ function NavItem({
   );
 }
 
-/* ── Profile card ──────────────────────────── */
-function ProfileCard({ collapsed }: { collapsed: boolean }) {
-  const [hovered, setHovered] = useState(false);
-
-  return (
-    <motion.div
-      className="relative"
-      onHoverStart={() => setHovered(true)}
-      onHoverEnd={() => setHovered(false)}
-    >
-      {collapsed && <Tooltip label="View Profile" visible={hovered} />}
-
-      <Link
-        href="/dashboard/profile"
-        className={cn(
-          "group flex items-center rounded-xl border border-white/[0.06] bg-[#0f1728] transition-colors duration-150 hover:border-blue-500/30 hover:bg-[#111f36]",
-          collapsed ? "justify-center px-0 py-2.5" : "gap-3 px-3 py-2.5"
-        )}
-      >
-        <motion.div
-          className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-blue-800 text-[13px] font-bold text-white"
-          whileHover={{ scale: 1.06 }}
-          whileTap={{ scale: 0.94 }}
-          style={{ fontFamily: "var(--font-pjs)" }}
-        >
-          A
-          <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#0f1728] bg-emerald-400" />
-        </motion.div>
-
-        <AnimatePresence initial={false}>
-          {!collapsed && (
-            <motion.div
-              key="profile-text"
-              initial={{ opacity: 0, width: 0 }}
-              animate={{ opacity: 1, width: "auto" }}
-              exit={{ opacity: 0, width: 0 }}
-              transition={{ duration: 0.18 }}
-              className="min-w-0 flex-1 overflow-hidden"
-            >
-              <p
-                className="truncate text-[13px] font-semibold text-white"
-                style={{ fontFamily: "var(--font-pjs)" }}
-              >
-                Admin
-              </p>
-              <p
-                className="truncate text-[11px] font-medium text-[#7a8aa6] group-hover:text-blue-400"
-                style={{ fontFamily: "var(--font-pjs)" }}
-              >
-                View Profile
-              </p>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </Link>
-    </motion.div>
-  );
-}
-
 /* ── Sidebar content ────────────────────────── */
 function SidebarContent({ collapsed, instanceId }: { collapsed: boolean; instanceId: string }) {
   const pathname = usePathname();
@@ -332,12 +254,15 @@ function SidebarContent({ collapsed, instanceId }: { collapsed: boolean; instanc
 
   return (
     <div className="flex h-full flex-col">
-      {/* Brand */}
+      {/* Brand — click to open profile */}
       <div className={cn("pt-3 pb-2", collapsed ? "px-2" : "px-3")}>
-        <div className={cn(
-          "flex items-center rounded-xl border border-[#1a2744] bg-[#0f1728] transition-all duration-200",
-          collapsed ? "justify-center px-0 py-3" : "gap-3 px-3 py-3"
-        )}>
+        <Link
+          href="/dashboard/profile"
+          className={cn(
+            "flex items-center rounded-xl border border-[#1a2744] bg-[#0f1728] transition-all duration-200 hover:border-blue-500/30 hover:bg-[#111f36]",
+            collapsed ? "justify-center px-0 py-3" : "gap-3 px-3 py-3"
+          )}
+        >
           <motion.div
             className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-xl bg-blue-700"
             whileHover={{ scale: 1.12, rotate: 8 }}
@@ -363,7 +288,7 @@ function SidebarContent({ collapsed, instanceId }: { collapsed: boolean; instanc
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
+        </Link>
       </div>
 
       {/* Main nav */}
@@ -381,27 +306,6 @@ function SidebarContent({ collapsed, instanceId }: { collapsed: boolean; instanc
           />
         ))}
       </nav>
-
-      {/* Bottom: support / sign out */}
-      <div className="space-y-[2px] border-t border-white/[0.06] px-2 py-2">
-        {NAV_BOTTOM.map((item, i) => (
-          <NavItem
-            key={item.href}
-            index={NAV_ITEMS.length + i}
-            label={item.label}
-            href={item.href}
-            icon={item.icon as IconKey}
-            active={isActive(item.href)}
-            collapsed={collapsed}
-            pillId={pillId}
-          />
-        ))}
-      </div>
-
-      {/* Profile card */}
-      <div className={cn("pb-3 pt-1", collapsed ? "px-2" : "px-3")}>
-        <ProfileCard collapsed={collapsed} />
-      </div>
     </div>
   );
 }
