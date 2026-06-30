@@ -1,15 +1,25 @@
+// app/dashboard/plans/page.tsx
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { PlansHeader } from "@/components/plans/plans-header";
 import { PlanList } from "@/components/plans/plan-list";
+import { PlanTabs, type PlanTier } from "@/components/plans/plan-tabs";
 import { usePlans, usePlanMetrics } from "@/hooks/use-plans";
+import { MOCK_PLANS } from "@/lib/mock-plans";
 import type { Plan } from "@/types";
+
+const USE_MOCK_DATA = true; // flip to false once real API data is ready
 
 export default function PlansPage() {
   const router = useRouter();
-  const { data: plans = [], isLoading: plansLoading } = usePlans();
+  const { data: fetchedPlans = [], isLoading: plansLoading } = usePlans();
   const { data: metrics = [], isLoading: metricsLoading } = usePlanMetrics();
+  const [activeTier, setActiveTier] = useState<PlanTier>("gold");
+
+  const plans = USE_MOCK_DATA ? MOCK_PLANS : fetchedPlans;
+  const filteredPlans = plans.filter((plan) => plan.tier === activeTier);
 
   const handleAddPlan = () => {
     router.push("/dashboard/plans/create");
@@ -25,7 +35,6 @@ export default function PlansPage() {
 
   return (
     <div className="relative flex flex-1 flex-col">
-      {/* Subtle grid background */}
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.03]"
         style={{
@@ -43,9 +52,11 @@ export default function PlansPage() {
           onAddPlan={handleAddPlan}
         />
 
+        <PlanTabs value={activeTier} onChange={setActiveTier} />
+
         <PlanList
-          plans={plans}
-          isLoading={plansLoading}
+          plans={filteredPlans}
+          isLoading={USE_MOCK_DATA ? false : plansLoading}
           onEdit={handleEditPlan}
           onDelete={handleDeletePlan}
         />

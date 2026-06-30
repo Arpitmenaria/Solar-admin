@@ -3,35 +3,85 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+
 import {
-  TbLayoutDashboard, TbUsers, TbUsersGroup, TbCreditCard,
-  TbChevronLeft, TbChevronRight, TbX,
+  TbLayoutDashboard,
+  TbUsers,
+  TbUsersGroup,
+  TbCreditCard,
+  TbChevronLeft,
+  TbChevronRight,
+  TbX,
+  TbHeadset,
+  TbLogout,
 } from "react-icons/tb";
+
 import { FaRegStar } from "react-icons/fa";
-import { useState } from "react";
+
+import { useState, type ElementType } from "react";
+
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/store/ui.store";
 
-type IconKey = "Dashboard" | "Users" | "Groups" | "Plans";
+type IconKey =
+  | "Dashboard"
+  | "Users"
+  | "Groups"
+  | "Plans"
+  | "Support"
+  | "SignOut";
 
-const ICON_MAP: Record<IconKey, React.ElementType> = {
-  Dashboard: TbLayoutDashboard,
-  Users:     TbUsers,
-  Groups:    TbUsersGroup,
-  Plans:     TbCreditCard,
-};
+const SYSTEM_NAME = "Kick Analyst";
 
-const NAV_MAIN = [
-  { label: "Dashboard",        href: "/dashboard",        icon: "Dashboard" },
-  { label: "Users",            href: "/dashboard/users",  icon: "Users"     },
-  { label: "Group Management", href: "/dashboard/groups", icon: "Groups"    },
-  { label: "Plans",            href: "/dashboard/plans",  icon: "Plans"     },
+const NAV_ITEMS = [
+  {
+    label: "Dashboard",
+    href: "/dashboard",
+    icon: "Dashboard",
+  },
+  {
+    label: "Users",
+    href: "/dashboard/users",
+    icon: "Users",
+  },
+  {
+    label: "Groups",
+    href: "/dashboard/groups",
+    icon: "Groups",
+  },
+  {
+    label: "Plans",
+    href: "/dashboard/plans",
+    icon: "Plans",
+  },
 ] as const;
+
+const NAV_BOTTOM = [
+  {
+    label: "Support",
+    href: "/dashboard/support",
+    icon: "Support",
+  },
+  {
+    label: "Sign Out",
+    href: "/logout",
+    icon: "SignOut",
+  },
+] as const;
+
+const ICON_MAP: Record<IconKey, ElementType> = {
+  Dashboard: TbLayoutDashboard,
+  Users: TbUsers,
+  Groups: TbUsersGroup,
+  Plans: TbCreditCard,
+  Support: TbHeadset,
+  SignOut: TbLogout,
+};
 
 
 /* ── Animated icon ─────────────────────────── */
 function AnimatedIcon({ icon: Icon, active, collapsed }: {
-  icon: React.ElementType; active: boolean; collapsed: boolean;
+  icon: ElementType; active: boolean; collapsed: boolean;
 }) {
   return (
     <motion.div
@@ -48,9 +98,6 @@ function AnimatedIcon({ icon: Icon, active, collapsed }: {
       }}
       transition={{ type: "spring", stiffness: 480, damping: 24 }}
     >
-
-      
-      
       {collapsed && (
         <motion.span
           className="absolute inset-0 rounded-lg"
@@ -139,7 +186,6 @@ function NavItem({
           letterSpacing: "0.15px",
         }}
       >
-        {/* Hover bg */}
         {!collapsed && (
           <motion.span
             className="absolute inset-0 rounded-lg"
@@ -149,7 +195,6 @@ function NavItem({
           />
         )}
 
-        {/* Active pill */}
         {active && (
           <motion.span
             layoutId={pillId}
@@ -159,7 +204,6 @@ function NavItem({
           />
         )}
 
-        {/* Left accent stripe */}
         {active && !collapsed && (
           <motion.span
             layoutId={`${pillId}-stripe`}
@@ -170,7 +214,6 @@ function NavItem({
           />
         )}
 
-        {/* Active glow icon-only */}
         {active && collapsed && (
           <motion.span
             className="absolute inset-0 rounded-lg"
@@ -204,10 +247,68 @@ function NavItem({
   );
 }
 
+/* ── Profile card ──────────────────────────── */
+function ProfileCard({ collapsed }: { collapsed: boolean }) {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <motion.div
+      className="relative"
+      onHoverStart={() => setHovered(true)}
+      onHoverEnd={() => setHovered(false)}
+    >
+      {collapsed && <Tooltip label="View Profile" visible={hovered} />}
+
+      <Link
+        href="/dashboard/profile"
+        className={cn(
+          "group flex items-center rounded-xl border border-white/[0.06] bg-[#0f1728] transition-colors duration-150 hover:border-blue-500/30 hover:bg-[#111f36]",
+          collapsed ? "justify-center px-0 py-2.5" : "gap-3 px-3 py-2.5"
+        )}
+      >
+        <motion.div
+          className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-blue-800 text-[13px] font-bold text-white"
+          whileHover={{ scale: 1.06 }}
+          whileTap={{ scale: 0.94 }}
+          style={{ fontFamily: "var(--font-pjs)" }}
+        >
+          A
+          <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#0f1728] bg-emerald-400" />
+        </motion.div>
+
+        <AnimatePresence initial={false}>
+          {!collapsed && (
+            <motion.div
+              key="profile-text"
+              initial={{ opacity: 0, width: 0 }}
+              animate={{ opacity: 1, width: "auto" }}
+              exit={{ opacity: 0, width: 0 }}
+              transition={{ duration: 0.18 }}
+              className="min-w-0 flex-1 overflow-hidden"
+            >
+              <p
+                className="truncate text-[13px] font-semibold text-white"
+                style={{ fontFamily: "var(--font-pjs)" }}
+              >
+                Admin
+              </p>
+              <p
+                className="truncate text-[11px] font-medium text-[#7a8aa6] group-hover:text-blue-400"
+                style={{ fontFamily: "var(--font-pjs)" }}
+              >
+                View Profile
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </Link>
+    </motion.div>
+  );
+}
+
 /* ── Sidebar content ────────────────────────── */
 function SidebarContent({ collapsed, instanceId }: { collapsed: boolean; instanceId: string }) {
   const pathname = usePathname();
-  const { toggleSidebar, setMobileOpen } = useUIStore();
   const pillId = `nav-pill-${instanceId}`;
 
   const isActive = (href: string) =>
@@ -215,7 +316,6 @@ function SidebarContent({ collapsed, instanceId }: { collapsed: boolean; instanc
 
   return (
     <div className="flex h-full flex-col">
-
       {/* Brand */}
       <div className={cn("pt-3 pb-2", collapsed ? "px-2" : "px-3")}>
         <div className={cn(
@@ -242,9 +342,8 @@ function SidebarContent({ collapsed, instanceId }: { collapsed: boolean; instanc
                 className="min-w-0 overflow-hidden"
               >
                 <p style={{ fontFamily: "var(--font-pjs)", fontSize: 14, fontWeight: 700, color: "#fff", whiteSpace: "nowrap" }}>
-                  Admin
+                  {SYSTEM_NAME}
                 </p>
-                
               </motion.div>
             )}
           </AnimatePresence>
@@ -253,7 +352,7 @@ function SidebarContent({ collapsed, instanceId }: { collapsed: boolean; instanc
 
       {/* Main nav */}
       <nav className="flex-1 space-y-[2px] overflow-y-auto px-2 py-2">
-        {NAV_MAIN.map((item, i) => (
+        {NAV_ITEMS.map((item, i) => (
           <NavItem
             key={item.href}
             index={i}
@@ -267,6 +366,26 @@ function SidebarContent({ collapsed, instanceId }: { collapsed: boolean; instanc
         ))}
       </nav>
 
+      {/* Bottom: support / sign out */}
+      <div className="space-y-[2px] border-t border-white/[0.06] px-2 py-2">
+        {NAV_BOTTOM.map((item, i) => (
+          <NavItem
+            key={item.href}
+            index={NAV_ITEMS.length + i}
+            label={item.label}
+            href={item.href}
+            icon={item.icon as IconKey}
+            active={isActive(item.href)}
+            collapsed={collapsed}
+            pillId={pillId}
+          />
+        ))}
+      </div>
+
+      {/* Profile card */}
+      <div className={cn("pb-3 pt-1", collapsed ? "px-2" : "px-3")}>
+        <ProfileCard collapsed={collapsed} />
+      </div>
     </div>
   );
 }
@@ -286,7 +405,7 @@ export function Sidebar() {
         <SidebarContent collapsed={sidebarCollapsed} instanceId="desktop" />
       </motion.aside>
 
-      {/* Border-edge toggle — small circle centered on sidebar right border (desktop only) */}
+      {/* Border-edge toggle */}
       <motion.button
         onClick={toggleSidebar}
         animate={{ left: sidebarCollapsed ? 64 - 10 : 238 - 10 }}
@@ -344,7 +463,7 @@ export function Sidebar() {
           >
             <div className="flex h-[52px] shrink-0 items-center justify-between border-b border-white/[0.06] px-4">
               <span style={{ fontFamily: "var(--font-pjs)", fontSize: 14, fontWeight: 700, color: "#3b82f6" }}>
-                Social Flow
+                {SYSTEM_NAME}
               </span>
               <motion.button
                 onClick={() => setMobileOpen(false)}
