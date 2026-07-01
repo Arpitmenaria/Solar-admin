@@ -14,9 +14,9 @@ interface PlanListProps {
 export function PlanList({ plans, isLoading, onEdit, onDelete }: PlanListProps) {
   if (isLoading) {
     return (
-      <div className="space-y-5">
+      <div className="flex gap-5 overflow-x-auto pb-2">
         {Array.from({ length: 3 }).map((_, i) => (
-          <StatCardSkeleton key={i} className="h-64" />
+          <StatCardSkeleton key={i} className="h-64 w-[380px] shrink-0 md:w-[420px]" />
         ))}
       </div>
     );
@@ -32,7 +32,7 @@ export function PlanList({ plans, isLoading, onEdit, onDelete }: PlanListProps) 
   }
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex gap-5 overflow-x-auto pb-2">
       {plans.map((plan, index) => (
         <PlanCard
           key={plan.id}

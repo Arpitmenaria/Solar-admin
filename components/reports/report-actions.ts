@@ -1,10 +1,9 @@
-import { ShieldCheck, CheckCircle2, Ban, type LucideIcon } from "lucide-react";
+import { CheckCircle2, Ban, type LucideIcon } from "lucide-react";
 import type { ReportStatus } from "@/types";
 
-export type ReportAction = "REVIEW" | "RESOLVE" | "DISMISS";
+export type ReportAction = "RESOLVE" | "DISMISS";
 
 export const ACTION_TO_STATUS: Record<ReportAction, ReportStatus> = {
-  REVIEW: "REVIEWED",
   RESOLVE: "RESOLVED",
   DISMISS: "DISMISSED",
 };
@@ -19,14 +18,6 @@ export interface ActionCopy {
 }
 
 export const ACTION_COPY: Record<ReportAction, ActionCopy> = {
-  REVIEW: {
-    label: "Mark Reviewed",
-    icon: ShieldCheck,
-    tone: "neutral",
-    confirmTitle: "Mark report as reviewed?",
-    confirmDescription: (name) => `This marks the report against "${name}" as reviewed and under investigation.`,
-    toastMessage: (name) => `Report against "${name}" marked as reviewed.`,
-  },
   RESOLVE: {
     label: "Resolve & Take Action",
     icon: CheckCircle2,
@@ -47,16 +38,12 @@ export const ACTION_COPY: Record<ReportAction, ActionCopy> = {
 
 /** Which actions remain valid given the report's current status. */
 export function availableActions(status: ReportStatus): ReportAction[] {
-  const actions: ReportAction[] = [];
-  if (status !== "REVIEWED" && status !== "RESOLVED") actions.push("REVIEW");
-  if (status !== "RESOLVED") actions.push("RESOLVE");
-  if (status !== "DISMISSED") actions.push("DISMISS");
-  return actions;
+  if (status !== "PENDING") return [];
+  return ["RESOLVE", "DISMISS"];
 }
 
 export const STATUS_STYLES: Record<ReportStatus, { dot: string; text: string; label: string }> = {
   PENDING:   { dot: "bg-yellow-400",  text: "text-yellow-400",  label: "Pending"   },
-  REVIEWED:  { dot: "bg-blue-400",    text: "text-blue-400",    label: "Reviewed"  },
   RESOLVED:  { dot: "bg-emerald-400", text: "text-emerald-400", label: "Resolved"  },
   DISMISSED: { dot: "bg-slate-400",   text: "text-slate-400",   label: "Dismissed" },
 };

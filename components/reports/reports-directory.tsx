@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
 import {
   Search, Download, RotateCcw, Flag, Clock, CheckCircle2, XCircle,
-  MoreVertical, Eye,
+  MoreVertical, Eye, CalendarDays,
   ChevronFirst, ChevronLast, ChevronLeft, ChevronRight,
 } from "lucide-react";
 
@@ -17,7 +17,7 @@ import { UserAvatar } from "@/components/shared/user-avatar";
 import { StatCardSkeleton, TableRowSkeleton } from "@/components/shared/loading-skeleton";
 import { PaginationButton } from "@/components/shared/pagination-button";
 import { formatNumberFull, formatDate, cn } from "@/lib/utils";
-import type { Report, ReportReason, ReportStats, ReportStatus } from "@/types";
+import type { Report, ReportCategory, ReportStats, ReportStatus } from "@/types";
 import { ACTION_COPY, availableActions, STATUS_STYLES, type ReportAction } from "@/components/reports/report-actions";
 import { ReportActionDialog, type PendingReportAction } from "@/components/reports/report-action-dialog";
 import type { ReportKind } from "@/hooks/use-reports";
@@ -31,12 +31,11 @@ const TONE_TEXT_CLASS: Record<"neutral" | "positive" | "destructive", string> = 
 const STATUS_TABS: { label: string; value: "ALL" | ReportStatus }[] = [
   { label: "All",       value: "ALL"       },
   { label: "Pending",   value: "PENDING"   },
-  { label: "Reviewed",  value: "REVIEWED"  },
   { label: "Resolved",  value: "RESOLVED"  },
   { label: "Dismissed", value: "DISMISSED" },
 ];
 
-const REASON_OPTS: ("ALL" | ReportReason)[] = [
+const CATEGORY_OPTS: ("ALL" | ReportCategory)[] = [
   "ALL", "Spam", "Harassment", "Inappropriate Content", "Scam / Fraud", "Fake or Misleading", "Hate Speech", "Other",
 ];
 
@@ -145,18 +144,20 @@ export function ReportsDirectory({
   reports, stats, isLoading,
 }: ReportsDirectoryProps) {
   const [statusTab, setStatusTab] = useState<"ALL" | ReportStatus>("ALL");
-  const [reason,    setReason]    = useState<"ALL" | ReportReason>("ALL");
+  const [category,  setCategory]  = useState<"ALL" | ReportCategory>("ALL");
   const [search,    setSearch]    = useState("");
+  const [date,      setDate]      = useState("");
   const [pendingAction, setPendingAction] = useState<PendingReportAction | null>(null);
   const [page,      setPage]      = useState(1);
 
   const resetFilters = () => {
-    setStatusTab("ALL"); setReason("ALL"); setSearch(""); setPage(1);
+    setStatusTab("ALL"); setCategory("ALL"); setSearch(""); setDate(""); setPage(1);
   };
 
   const filtered = (reports ?? []).filter((r) => {
     if (statusTab !== "ALL" && r.status !== statusTab) return false;
-    if (reason !== "ALL" && r.reason !== reason) return false;
+    if (category !== "ALL" && r.category !== category) return false;
+    if (date && r.reportedAt !== date) return false;
     if (search) {
       const q = search.toLowerCase();
       if (!r.target.name.toLowerCase().includes(q) && !r.reportedBy.username.toLowerCase().includes(q)) return false;
@@ -181,7 +182,7 @@ export function ReportsDirectory({
               <StatCard label="TOTAL REPORTS" value={formatNumberFull(stats?.total ?? 0)} icon={Flag} />
               <StatCard label="PENDING" value={formatNumberFull(stats?.pending ?? 0)} icon={Clock} sub="Needs review" />
               <StatCard label="RESOLVED" value={formatNumberFull(stats?.resolved ?? 0)} icon={CheckCircle2} badge="Actioned" />
-              <StatCard label="DISMISSED" value={formatNumberFull(stats?.dismissed ?? 0)} icon={XCircle} dot />
+              <StatCard label="DISMISSED" value={formatNumberFull(stats?.dismissed ?? 0)} icon={XCircle} />
             </>
           )}
         </div>
@@ -222,10 +223,21 @@ export function ReportsDirectory({
 
             <CustomSelect
               size="sm"
-              value={reason}
-              onChange={(v) => { setReason(v as typeof reason); setPage(1); }}
-              options={REASON_OPTS.map((r) => ({ value: r, label: r === "ALL" ? "All Reasons" : r }))}
+              value={category}
+              onChange={(v) => { setCategory(v as typeof category); setPage(1); }}
+              options={CATEGORY_OPTS.map((c) => ({ value: c, label: c === "ALL" ? "All Categories" : c }))}
             />
+
+            <div className="relative shrink-0">
+              <CalendarDays size={13} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#3a4d6a]" />
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => { setDate(e.target.value); setPage(1); }}
+                aria-label="Filter by date"
+                className="rounded-lg border border-white/[0.08] bg-white/[0.03] py-2 pl-9 pr-3 text-[12px] text-slate-200 transition-all focus:border-blue-500/40 focus:bg-white/[0.05] focus:outline-none [color-scheme:dark]"
+              />
+            </div>
 
             <button onClick={resetFilters} className="flex items-center gap-1 text-[11px] font-medium text-[#99CBFF] transition-colors hover:text-white">
               <RotateCcw size={12} /> Reset
@@ -240,7 +252,7 @@ export function ReportsDirectory({
           {/* Table */}
           <div className="overflow-x-auto border-t border-white/[0.06]">
             <div className="grid min-w-[980px] grid-cols-[2fr_1.3fr_1.1fr_2fr_100px_120px_60px] gap-4 border-b border-white/[0.05] bg-white/[0.025] px-6 py-3">
-              {[targetColumnLabel.toUpperCase(), "REPORTED BY", "REASON", "DESCRIPTION", "DATE", "STATUS", "ACTIONS"].map((label, i) => (
+              {[targetColumnLabel.toUpperCase(), "REPORTED BY", "CATEGORY", "DESCRIPTION", "DATE", "STATUS", "ACTIONS"].map((label, i) => (
                 <span key={label} className={cn("text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400", i === 6 && "text-center")}>
                   {label}
                 </span>
@@ -279,7 +291,7 @@ export function ReportsDirectory({
                       </div>
 
                       <span className="inline-flex w-fit items-center rounded border border-orange-500/30 px-2 py-[3px] text-[10px] font-semibold tracking-wide text-orange-300">
-                        {report.reason}
+                        {report.category}
                       </span>
 
                       <p className="truncate text-[12px] text-slate-300" title={report.description}>{report.description}</p>

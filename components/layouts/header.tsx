@@ -16,14 +16,19 @@ interface HeaderProps {
 }
 
 export function Header({ title, breadcrumbs, actions }: HeaderProps) {
+  const hasCrumbs = !!breadcrumbs && breadcrumbs.length > 0;
+  // The last breadcrumb already renders as the page title, so showing a
+  // separate title alongside it would just repeat the same label twice.
+  const showTitle = !!title && !hasCrumbs;
+
   return (
     <header className="sticky top-12 z-30 flex h-12 items-center border-b border-white/[0.06] bg-[#080c16]/95 backdrop-blur-sm px-4 md:px-6">
       {/* Left */}
       <div className="flex items-center gap-4 flex-1 min-w-0">
-        {title && (
+        {showTitle && (
           <span className="text-sm font-semibold text-white shrink-0">{title}</span>
         )}
-        {breadcrumbs && breadcrumbs.length > 0 && (
+        {hasCrumbs && (
           <nav className="flex items-center gap-1.5">
             {breadcrumbs.map((crumb, i) => (
               <span key={i} className="flex items-center gap-1.5">

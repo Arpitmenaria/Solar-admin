@@ -13,7 +13,6 @@ export default function GroupReportDetailPage() {
     <ReportDetail
       kind="group"
       basePath="/dashboard/group-reports"
-      listLabel="Group Reports"
       targetLabel="Group"
       targetIcon={Users}
       report={report}

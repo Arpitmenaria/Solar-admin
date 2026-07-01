@@ -6,7 +6,6 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { TbWorld, TbLock, TbPencil, TbBan, TbCircleCheck, TbTrash } from "react-icons/tb";
 
-import { Header } from "@/components/layouts/header";
 import { BackButton } from "@/components/shared/back-button";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Skeleton } from "@/components/shared/loading-skeleton";
@@ -39,7 +38,6 @@ export default function GroupDetailPage() {
   if (!group) {
     return (
       <div className="flex flex-1 flex-col">
-        <Header title="Group Detail" breadcrumbs={[{ label: "Groups", href: "/dashboard/groups" }, { label: "Group Detail" }]} />
         <div className="flex flex-1 items-center justify-center text-muted-foreground">Group not found</div>
       </div>
     );
@@ -50,8 +48,6 @@ export default function GroupDetailPage() {
 
   return (
     <div className="flex flex-1 flex-col">
-      <Header title="Group Detail" breadcrumbs={[{ label: "Groups", href: "/dashboard/groups" }, { label: "Group Detail" }]} />
-
       <main className="flex-1 space-y-5 p-4 md:p-6">
         <motion.div variants={fadeUp} initial="hidden" animate="show">
           <BackButton href="/dashboard/groups" />

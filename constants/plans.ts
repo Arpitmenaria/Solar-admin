@@ -9,7 +9,6 @@ export const MOCK_PLANS: Plan[] = [
     price: 0,
     currency: "$",
     billingPeriod: "/MONTH",
-    billingMode: "recurring",
     sortOrder: 1,
     features: [
       "Basic Node Access",
@@ -26,8 +25,6 @@ export const MOCK_PLANS: Plan[] = [
     price: 49,
     currency: "$",
     billingPeriod: "/MONTH",
-    billingMode: "recurring",
-    recommended: true,
     sortOrder: 2,
     features: [
       "Advanced Node Support",
@@ -44,7 +41,6 @@ export const MOCK_PLANS: Plan[] = [
     price: 99,
     currency: "$",
     billingPeriod: "/MONTH",
-    billingMode: "recurring",
     sortOrder: 3,
     features: [
       "Unlimited Node Provisioning",
@@ -57,8 +53,32 @@ export const MOCK_PLANS: Plan[] = [
 ];
 
 export const MOCK_PLAN_METRICS: PlanMetric[] = [
-  { id: "total-subscribers", label: "TOTAL SUBSCRIBERS", value: 12842, changePercent: 4.2,  icon: "subscribers" },
-  { id: "active-subs",       label: "ACTIVE SUBS",       value: 8921,  changePercent: 2.8,  icon: "active"      },
-  { id: "free-plan",         label: "FREE PLAN",         value: 2410,  changePercent: -0.5, icon: "free"        },
-  { id: "trial-users",       label: "TRIAL USERS",       value: 954,   changePercent: 12,   icon: "trial"       },
+  {
+    id: "total-subscribers",
+    label: "TOTAL SUBSCRIBERS",
+    value: 12842,
+    icon: "subscribers",
+    breakdown: { weekly: 412, monthly: 1840, quarterly: 4920, yearly: 12842 },
+  },
+  {
+    id: "free-trial-subscribers",
+    label: "FREE TRIAL SUBSCRIBERS",
+    value: 954,
+    icon: "trial",
+    breakdown: { weekly: 88, monthly: 320, quarterly: 640, yearly: 954 },
+  },
+  {
+    id: "gold-tier-subscribers",
+    label: "GOLD TIER SUBSCRIBERS",
+    value: 6512,
+    icon: "gold",
+    breakdown: { weekly: 210, monthly: 940, quarterly: 2510, yearly: 6512 },
+  },
+  {
+    id: "premium-tier-subscribers",
+    label: "PREMIUM TIER SUBSCRIBERS",
+    value: 2410,
+    icon: "premium",
+    breakdown: { weekly: 96, monthly: 380, quarterly: 980, yearly: 2410 },
+  },
 ];

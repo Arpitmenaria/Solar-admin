@@ -60,7 +60,7 @@ const NAV_ITEMS = [
     icon: "EventReports",
   },
   {
-    label: "Plans",
+    label: "Plans & Subscriptions",
     href: "/dashboard/plans",
     icon: "Plans",
   },

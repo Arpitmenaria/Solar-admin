@@ -2,7 +2,6 @@
 
 import { motion } from "framer-motion";
 import { TbCheck, TbPencil, TbTrash } from "react-icons/tb";
-import { Badge } from "@/components/ui/badge";
 import type { Plan } from "@/types";
 
 interface PlanCardProps {
@@ -20,20 +19,13 @@ export function PlanCard({ plan, index = 0, onEdit, onDelete }: PlanCardProps) {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.06, duration: 0.2 }}
-      className="rounded-xl border border-white/[0.08] bg-card p-6 md:p-8 transition-all duration-200 hover:border-blue-500/40 hover:bg-blue-500/[0.04] hover:-translate-y-[2px] hover:shadow-xl hover:shadow-blue-500/10"
+      className="w-[380px] shrink-0 rounded-xl border border-white/[0.08] bg-card p-6 transition-all duration-200 hover:border-blue-500/40 hover:bg-blue-500/[0.04] hover:-translate-y-[2px] hover:shadow-xl hover:shadow-blue-500/10 md:w-[420px] md:p-8"
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-xl font-bold uppercase tracking-wide text-white md:text-2xl">
-              {plan.name}
-            </h2>
-            {plan.recommended && (
-              <Badge className="bg-[#99CBFF]/20 text-[#99CBFF] border border-[#99CBFF]/30 text-[9px] font-bold uppercase tracking-wider">
-                Recommended
-              </Badge>
-            )}
-          </div>
+          <h2 className="text-xl font-bold uppercase tracking-wide text-white md:text-2xl">
+            {plan.name}
+          </h2>
           {plan.description && (
             <p className="mt-1.5 max-w-md text-[12.5px] text-caption">{plan.description}</p>
           )}

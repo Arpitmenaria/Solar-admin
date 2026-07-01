@@ -7,7 +7,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion } from "framer-motion";
 import { Camera, Globe, MapPin, FileText, User } from "lucide-react";
-import { Header } from "@/components/layouts/header";
 import { BackButton } from "@/components/shared/back-button";
 import { FormField } from "@/components/forms/field";
 import { CustomSelect } from "@/components/shared/custom-select";
@@ -122,15 +121,6 @@ export default function EditProfilePage() {
 
   return (
     <div className="flex flex-col flex-1">
-      {/* Header — shows "User Detail" breadcrumb, NOT Account Settings */}
-      <Header
-        title="User Detail"
-        breadcrumbs={[
-          { label: "User Management", href: "/dashboard/users" },
-          { label: "User Detail", href: `/dashboard/users/${id}` },
-        ]}
-      />
-
       <main className="flex-1 p-6">
         <form
           id="profile-form"

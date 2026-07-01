@@ -7,7 +7,6 @@ import {
   Pencil, Users, Eye, FileText, Flag, CreditCard, Calendar
 } from "lucide-react";
 import { BackButton } from "@/components/shared/back-button";
-import { Header } from "@/components/layouts/header";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { useUser } from "@/hooks/use-users";
@@ -28,15 +27,6 @@ export default function UserDetailPage() {
 
   return (
     <div className="flex flex-col flex-1">
-      <Header
-        title="User Detail"
-        breadcrumbs={[
-          { label: "User Management", href: "/dashboard/users" },
-          { label: "User Detail" },
-        ]}
-       
-      />
-
       <main className="flex-1 p-4 md:p-6 space-y-5">
         {/* Back button above title */}
         <motion.div variants={fadeUp} initial="hidden" animate="show">

@@ -13,7 +13,6 @@ export default function EventReportDetailPage() {
     <ReportDetail
       kind="event"
       basePath="/dashboard/event-reports"
-      listLabel="Event Reports"
       targetLabel="Event"
       targetIcon={CalendarDays}
       report={report}

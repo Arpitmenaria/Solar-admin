@@ -4,7 +4,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { CreatePlanButton } from "@/components/plans/create-plan-button";
 import type { CreatePlanInput } from "@/services/plans.service";
-import type { Plan, PlanBillingMode, PlanTier } from "@/types";
+import type { Plan, PlanTier } from "@/types";
 
 const DURATION_OPTIONS = [
   { value: "weekly", label: "Weekly", period: "/WEEK" },
@@ -12,12 +12,6 @@ const DURATION_OPTIONS = [
   { value: "quarterly", label: "Quarterly", period: "/QUARTER" },
   { value: "yearly", label: "Yearly", period: "/YEAR" },
 ] as const;
-
-const BILLING_OPTIONS: { value: PlanBillingMode; label: string }[] = [
-  { value: "recurring", label: "Recurring" },
-  { value: "one_time", label: "One-Time" },
-  { value: "metered", label: "Metered / Usage" },
-];
 
 const TIER_OPTIONS: { value: PlanTier; label: string }[] = [
   { value: "free", label: "Free" },
@@ -48,9 +42,7 @@ export function PlanForm({ defaultValues, submitLabel, onDiscard, onSubmit, isSu
   const [duration, setDuration] = useState<Duration>(
     defaultValues ? periodToDuration(defaultValues.billingPeriod) : "monthly"
   );
-  const [billingMode, setBillingMode] = useState<PlanBillingMode>(defaultValues?.billingMode ?? "recurring");
   const [tier, setTier] = useState<PlanTier>(defaultValues?.tier ?? "free");
-  const [recommended, setRecommended] = useState(defaultValues?.recommended ?? false);
   const [error, setError] = useState("");
 
   const handleSubmit = () => {
@@ -79,9 +71,7 @@ export function PlanForm({ defaultValues, submitLabel, onDiscard, onSubmit, isSu
       price: parsedPrice,
       currency: "$",
       billingPeriod: DURATION_OPTIONS.find((d) => d.value === duration)!.period,
-      billingMode,
       features,
-      recommended,
     });
   };
 
@@ -155,15 +145,9 @@ export function PlanForm({ defaultValues, submitLabel, onDiscard, onSubmit, isSu
               </Field>
             </div>
 
-            <div className="grid grid-cols-1 gap-7 sm:grid-cols-2">
-              <Field label="Tier">
-                <SelectGroup options={TIER_OPTIONS} value={tier} onChange={(v) => setTier(v)} layout="row" />
-              </Field>
-
-              <Field label="Billing Mode">
-                <SelectGroup options={BILLING_OPTIONS} value={billingMode} onChange={(v) => setBillingMode(v)} layout="row" />
-              </Field>
-            </div>
+            <Field label="Tier">
+              <SelectGroup options={TIER_OPTIONS} value={tier} onChange={(v) => setTier(v)} layout="row" />
+            </Field>
 
             <Field label="Description">
               <textarea
@@ -191,16 +175,6 @@ export function PlanForm({ defaultValues, submitLabel, onDiscard, onSubmit, isSu
             <Field label="Duration Cycle">
               <SelectGroup options={DURATION_OPTIONS} value={duration} onChange={(v) => setDuration(v)} layout="grid" />
             </Field>
-
-            <label className="flex items-center gap-2.5 text-[12px] font-medium text-slate-300">
-              <input
-                type="checkbox"
-                checked={recommended}
-                onChange={(e) => setRecommended(e.target.checked)}
-                className="h-4 w-4 rounded border-white/[0.20] bg-[#0d1320] accent-blue-600"
-              />
-              Mark as Recommended Plan
-            </label>
           </div>
         </motion.div>
 
@@ -238,7 +212,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 /* ── Reusable selectable option group ─────────
    layout="grid": stacked rows on mobile, 2x2 grid on larger (used for Duration)
-   layout="row":  stacked rows always (compact, used for Billing Mode next to Plan Name)
+   layout="row":  stacked rows always (compact, used for Tier)
 */
 function SelectGroup<T extends string>({
   options,

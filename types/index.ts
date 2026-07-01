@@ -82,9 +82,9 @@ export interface ChartDataPoint {
   mau: number;
 }
 
-export type ReportStatus = "PENDING" | "REVIEWED" | "RESOLVED" | "DISMISSED";
+export type ReportStatus = "PENDING" | "RESOLVED" | "DISMISSED";
 
-export type ReportReason =
+export type ReportCategory =
   | "Spam"
   | "Harassment"
   | "Inappropriate Content"
@@ -110,7 +110,7 @@ export interface Report {
   id: string;
   target: ReportTarget;
   reportedBy: ReportedBy;
-  reason: ReportReason;
+  category: ReportCategory;
   description: string;
   status: ReportStatus;
   reportedAt: string;
@@ -119,7 +119,6 @@ export interface Report {
 export interface ReportStats {
   total: number;
   pending: number;
-  reviewed: number;
   resolved: number;
   dismissed: number;
 }
@@ -154,7 +153,6 @@ export interface ProfileFormValues {
   bio: string;
 }
 
-export type PlanBillingMode = "recurring" | "one_time" | "metered";
 export type PlanTier = "free" | "gold" | "premium";
 
 export interface Plan {
@@ -165,17 +163,21 @@ export interface Plan {
   price: number;
   currency: string;
   billingPeriod: string;
-  billingMode?: PlanBillingMode;
   features: string[];
-  recommended?: boolean;
   sortOrder: number;
 }
 
+export interface PlanMetricBreakdown {
+  weekly: number;
+  monthly: number;
+  quarterly: number;
+  yearly: number;
+}
 
 export interface PlanMetric {
   id: string;
   label: string;
   value: number;
-  changePercent: number;
-  icon: "subscribers" | "active" | "free" | "trial";
+  icon: "subscribers" | "trial" | "gold" | "premium";
+  breakdown: PlanMetricBreakdown;
 }
