@@ -25,7 +25,6 @@ const GROUP_TABS = [
   { label: "PENDING APPROVAL", id: "pending"   },
   { label: "PRIVATE GROUPS",   id: "private"   },
   { label: "PUBLIC GROUPS",    id: "public"    },
-  { label: "REPORTED GROUPS",  id: "reported"  },
   { label: "SUSPENDED",        id: "suspended" },
 ] as const;
 
@@ -159,7 +158,6 @@ export default function GroupsPage() {
     pending:   { label: "PENDING APPROVAL",statValue: stats?.pendingApproval ?? 0, sub: "Awaiting review",      icon: TbDatabaseImport, baseFilter: (g) => g.status === "PENDING"   },
     private:   { label: "PRIVATE GROUPS",  statValue: stats?.privateGroups ?? 0,   sub: "Members-only access",  icon: TbDatabaseImport, baseFilter: (g) => g.privacy === "Private"  },
     public:    { label: "PUBLIC GROUPS",   statValue: stats?.publicGroups ?? 0,    sub: "Open to everyone",     icon: TbDatabaseImport, baseFilter: (g) => g.privacy === "Public"   },
-    reported:  { label: "REPORTED GROUPS", statValue: stats?.reportedGroups ?? 0,  sub: "Under investigation",  icon: TbDatabaseImport, baseFilter: (g) => g.status === "REPORTED"  },
     suspended: { label: "SUSPENDED",       statValue: stats?.suspended ?? 0,       sub: "Access restricted",    icon: TbDatabaseImport, baseFilter: (g) => g.status === "SUSPENDED" },
   };
 

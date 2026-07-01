@@ -7,12 +7,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
 import {
   Search, Download, RotateCcw, Flag, Clock, CheckCircle2, XCircle,
-  MoreVertical, Eye, CalendarDays,
+  MoreVertical, Eye,
   ChevronFirst, ChevronLast, ChevronLeft, ChevronRight,
 } from "lucide-react";
 
 import { StatCard } from "@/components/shared/stat-card";
 import { CustomSelect } from "@/components/shared/custom-select";
+import { DatePicker } from "@/components/shared/date-picker";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { StatCardSkeleton, TableRowSkeleton } from "@/components/shared/loading-skeleton";
 import { PaginationButton } from "@/components/shared/pagination-button";
@@ -154,6 +155,8 @@ export function ReportsDirectory({
     setStatusTab("ALL"); setCategory("ALL"); setSearch(""); setDate(""); setPage(1);
   };
 
+  const columnHeaderLabel = kind === "group" ? "GROUP NAME" : "EVENT NAME";
+
   const filtered = (reports ?? []).filter((r) => {
     if (statusTab !== "ALL" && r.status !== statusTab) return false;
     if (category !== "ALL" && r.category !== category) return false;
@@ -228,16 +231,12 @@ export function ReportsDirectory({
               options={CATEGORY_OPTS.map((c) => ({ value: c, label: c === "ALL" ? "All Categories" : c }))}
             />
 
-            <div className="relative shrink-0">
-              <CalendarDays size={13} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#3a4d6a]" />
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => { setDate(e.target.value); setPage(1); }}
-                aria-label="Filter by date"
-                className="rounded-lg border border-white/[0.08] bg-white/[0.03] py-2 pl-9 pr-3 text-[12px] text-slate-200 transition-all focus:border-blue-500/40 focus:bg-white/[0.05] focus:outline-none [color-scheme:dark]"
-              />
-            </div>
+            <DatePicker
+              size="sm"
+              value={date}
+              onChange={(v) => { setDate(v); setPage(1); }}
+              className="shrink-0"
+            />
 
             <button onClick={resetFilters} className="flex items-center gap-1 text-[11px] font-medium text-[#99CBFF] transition-colors hover:text-white">
               <RotateCcw size={12} /> Reset
@@ -252,7 +251,7 @@ export function ReportsDirectory({
           {/* Table */}
           <div className="overflow-x-auto border-t border-white/[0.06]">
             <div className="grid min-w-[980px] grid-cols-[2fr_1.3fr_1.1fr_2fr_100px_120px_60px] gap-4 border-b border-white/[0.05] bg-white/[0.025] px-6 py-3">
-              {[targetColumnLabel.toUpperCase(), "REPORTED BY", "CATEGORY", "DESCRIPTION", "DATE", "STATUS", "ACTIONS"].map((label, i) => (
+              {[columnHeaderLabel, "REPORTED BY", "CATEGORY", "DESCRIPTION", "DATE", "STATUS", "ACTIONS"].map((label, i) => (
                 <span key={label} className={cn("text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400", i === 6 && "text-center")}>
                   {label}
                 </span>

@@ -32,8 +32,7 @@ export default function CreatePlanPage() {
         aria-hidden
       />
       <PlanForm
-        submitLabel="Create Plan"
-        onDiscard={() => router.push("/dashboard/plans")}
+        submitLabel="Submit"
         onSubmit={handleSubmit}
         isSubmitting={createPlan.isPending}
       />

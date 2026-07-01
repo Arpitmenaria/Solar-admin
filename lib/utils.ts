@@ -29,8 +29,9 @@ export function formatDate(dateStr: string): string {
 }
 
 export function getInitials(name: string): string {
-  return name
-    .split(" ")
+  const words = name.replace(/^@/, "").trim().split(" ").filter(Boolean);
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return words
     .map((w) => w[0])
     .join("")
     .toUpperCase()

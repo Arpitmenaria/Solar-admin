@@ -1,5 +1,5 @@
-import type { Group, GroupCategory, GroupPrivacy, GroupStatus } from "@/constants/mock-data";
-import { MOCK_GROUPS, MOCK_GROUP_STATS } from "@/constants/mock-data";
+import type { Group, GroupCategory, GroupMember, GroupPost, GroupPrivacy, GroupStatus } from "@/constants/mock-data";
+import { MOCK_GROUPS, MOCK_GROUP_MEMBERS, MOCK_GROUP_POSTS, MOCK_GROUP_STATS, dummyAvatar, dummyCover } from "@/constants/mock-data";
 import { getInitials } from "@/lib/utils";
 
 const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -56,6 +56,25 @@ export const groupsService = {
     return group ? { ...group, owner: { ...group.owner } } : null;
   },
 
+  async getGroupMembers(id: string): Promise<GroupMember[]> {
+    await delay(200);
+    const group = MOCK_GROUPS.find((g) => g.id === id);
+    const admin: GroupMember = {
+      id: `${id}-owner`,
+      name: group?.owner.name ?? "Unknown",
+      avatarUrl: group?.owner.avatarUrl,
+      role: "Admin",
+      joinedAt: group?.createdAt ?? "",
+    };
+    return [admin, ...MOCK_GROUP_MEMBERS.filter((m) => m.name !== admin.name)];
+  },
+
+  async getGroupPosts(id: string): Promise<GroupPost[]> {
+    await delay(200);
+    void id; // demo data is shared across groups
+    return MOCK_GROUP_POSTS.map((p) => ({ ...p }));
+  },
+
   async createGroup(input: CreateGroupInput): Promise<Group> {
     await delay(400);
     const group: Group = {
@@ -69,6 +88,8 @@ export const groupsService = {
       status: "ACTIVE",
       iconColor: CATEGORY_ICON_COLOR[input.category],
       createdAt: formatToday(),
+      avatarUrl: dummyAvatar(slugify(input.name)),
+      coverUrl: dummyCover(slugify(input.name)),
     };
     MOCK_GROUPS.push(group);
     return { ...group, owner: { ...group.owner } };

@@ -9,13 +9,15 @@ interface CreatePlanButtonProps {
   onClick?: () => void;
   className?: string;
   label?: string;
+  showIcon?: boolean;
 }
 
 export function CreatePlanButton({
   href = "/dashboard/plans/create",
   onClick,
   className,
-  label = "Add Plans",
+  label = "Add Plan",
+  showIcon = true,
 }: CreatePlanButtonProps) {
   const styles = cn(
     "inline-flex shrink-0 items-center gap-1.5 rounded-lg px-4 py-2",
@@ -30,7 +32,7 @@ export function CreatePlanButton({
   if (onClick) {
     return (
       <button type="button" onClick={onClick} className={styles} aria-label={label}>
-        <TbPlus size={14} />
+        {showIcon && <TbPlus size={14} />}
         {label}
       </button>
     );
@@ -38,7 +40,7 @@ export function CreatePlanButton({
 
   return (
     <Link href={href} className={styles} aria-label={label}>
-      <TbPlus size={14} />
+      {showIcon && <TbPlus size={14} />}
       {label}
     </Link>
   );

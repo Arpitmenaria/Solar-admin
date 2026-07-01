@@ -46,7 +46,6 @@ export default function EditPlanPage() {
         <PlanForm
           defaultValues={plan}
           submitLabel="Save Changes"
-          onDiscard={() => router.push("/dashboard/plans")}
           onSubmit={handleSubmit}
           isSubmitting={updatePlan.isPending}
         />

@@ -151,19 +151,63 @@ export interface Group {
   status: GroupStatus;
   iconColor: string;
   createdAt: string;
+  description?: string;
+  avatarUrl?: string;
+  coverUrl?: string;
 }
 
+/** Deterministic placeholder images for demo groups — no group photo/cover is stored yet. */
+export const dummyAvatar = (seed: string) => `https://picsum.photos/seed/${seed}/300/300`;
+export const dummyCover = (seed: string) => `https://picsum.photos/seed/${seed}-cover/1200/400`;
+
 export const MOCK_GROUPS: Group[] = [
-  { id: "g1", name: "Dev_Infrastructure",      category: "Tech",     privacy: "Public",  owner: { name: "Marcus Thorne",   initials: "MT", avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=60&h=60&fit=crop" }, members: 12482, posts: 45200,  status: "ACTIVE",    iconColor: "#1d4ed8", createdAt: "06/02/2023" },
-  { id: "g2", name: "Global_Design_Collective", category: "Design",   privacy: "Private", owner: { name: "Elena Voss",     initials: "EV", avatarUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=60&h=60&fit=crop" }, members:  8103, posts: 112000, status: "ACTIVE",    iconColor: "#374151", createdAt: "08/14/2023" },
-  { id: "g3", name: "Shadow_Traders_Elite",     category: "Finance",  privacy: "Private", owner: { name: "Unknown Entity",  initials: "UK" },                                                                                                members:   542, posts:   1200, status: "SUSPENDED", iconColor: "#b91c1c", createdAt: "01/06/2024" },
-  { id: "g4", name: "Alpha_Moderators",         category: "Security", privacy: "Public",  owner: { name: "Soren Kierk",    initials: "SK", avatarUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=60&h=60&fit=crop" }, members:    42, posts:   9800, status: "PENDING",   iconColor: "#1e3a5f", createdAt: "11/20/2023" },
-  { id: "g5", name: "Crypto_Builders_Hub",      category: "Finance",  privacy: "Public",  owner: { name: "Ryan Nakamura",  initials: "RN", avatarUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=60&h=60&fit=crop" }, members:  3410, posts:  22100, status: "ACTIVE",    iconColor: "#065f46", createdAt: "03/18/2024" },
-  { id: "g6", name: "UX_Craft_Society",         category: "Design",   privacy: "Public",  owner: { name: "Priya Sharma",   initials: "PS", avatarUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=60&h=60&fit=crop" }, members:  5820, posts:  34800, status: "ACTIVE",    iconColor: "#6b21a8", createdAt: "09/05/2023" },
-  { id: "g7", name: "Esports_Arena_Pro",        category: "Gaming",   privacy: "Public",  owner: { name: "Jake Torres",    initials: "JT" },                                                                                                members: 28400, posts: 198000, status: "REPORTED",  iconColor: "#92400e", createdAt: "12/01/2022" },
-  { id: "g8", name: "Social_Innovators_Lab",    category: "Social",   privacy: "Private", owner: { name: "Amara Okonkwo",  initials: "AO", avatarUrl: "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=60&h=60&fit=crop" }, members:  1290, posts:   8400, status: "ACTIVE",    iconColor: "#0e7490", createdAt: "05/30/2024" },
-  { id: "g9", name: "Backend_Wizards",          category: "Tech",     privacy: "Private", owner: { name: "Chen Wei",       initials: "CW" },                                                                                                members:  2100, posts:  15600, status: "ACTIVE",    iconColor: "#1d4ed8", createdAt: "02/11/2024" },
-  { id: "g10",name: "Creative_Freelancers",     category: "Design",   privacy: "Public",  owner: { name: "Sofia Reyes",    initials: "SR", avatarUrl: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=60&h=60&fit=crop" }, members:  4750, posts:  29700, status: "ACTIVE",    iconColor: "#374151", createdAt: "07/22/2023" },
+  { id: "g1", name: "Dev_Infrastructure",      category: "Tech",     privacy: "Public",  owner: { name: "Marcus Thorne",   initials: "MT", avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=60&h=60&fit=crop" }, members: 12482, posts: 45200,  status: "ACTIVE",    iconColor: "#1d4ed8", createdAt: "06/02/2023", description: "A hub for backend engineers and DevOps practitioners sharing infrastructure patterns, tooling, and scaling war stories.", avatarUrl: dummyAvatar("g1"), coverUrl: dummyCover("g1") },
+  { id: "g2", name: "Global_Design_Collective", category: "Design",   privacy: "Private", owner: { name: "Elena Voss",     initials: "EV", avatarUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=60&h=60&fit=crop" }, members:  8103, posts: 112000, status: "ACTIVE",    iconColor: "#374151", createdAt: "08/14/2023", description: "A worldwide community of product and visual designers exchanging critique, process, and craft.", avatarUrl: dummyAvatar("g2"), coverUrl: dummyCover("g2") },
+  { id: "g3", name: "Shadow_Traders_Elite",     category: "Finance",  privacy: "Private", owner: { name: "Unknown Entity",  initials: "UK" },                                                                                                members:   542, posts:   1200, status: "SUSPENDED", iconColor: "#b91c1c", createdAt: "01/06/2024", description: "Private trading signals group — currently suspended pending a fraud investigation.", avatarUrl: dummyAvatar("g3"), coverUrl: dummyCover("g3") },
+  { id: "g4", name: "Alpha_Moderators",         category: "Security", privacy: "Public",  owner: { name: "Soren Kierk",    initials: "SK", avatarUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=60&h=60&fit=crop" }, members:    42, posts:   9800, status: "PENDING",   iconColor: "#1e3a5f", createdAt: "11/20/2023", description: "Coordination space for platform moderators to align on policy and escalation workflows.", avatarUrl: dummyAvatar("g4"), coverUrl: dummyCover("g4") },
+  { id: "g5", name: "Crypto_Builders_Hub",      category: "Finance",  privacy: "Public",  owner: { name: "Ryan Nakamura",  initials: "RN", avatarUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=60&h=60&fit=crop" }, members:  3410, posts:  22100, status: "ACTIVE",    iconColor: "#065f46", createdAt: "03/18/2024", description: "Builders shipping crypto and blockchain tooling, from wallets to on-chain analytics.", avatarUrl: dummyAvatar("g5"), coverUrl: dummyCover("g5") },
+  { id: "g6", name: "UX_Craft_Society",         category: "Design",   privacy: "Public",  owner: { name: "Priya Sharma",   initials: "PS", avatarUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=60&h=60&fit=crop" }, members:  5820, posts:  34800, status: "ACTIVE",    iconColor: "#6b21a8", createdAt: "09/05/2023", description: "Practitioners refining their UX research and interaction design craft together.", avatarUrl: dummyAvatar("g6"), coverUrl: dummyCover("g6") },
+  { id: "g7", name: "Esports_Arena_Pro",        category: "Gaming",   privacy: "Public",  owner: { name: "Jake Torres",    initials: "JT" },                                                                                                members: 28400, posts: 198000, status: "REPORTED",  iconColor: "#92400e", createdAt: "12/01/2022", description: "Tournament organizers and players coordinating esports events and brackets.", avatarUrl: dummyAvatar("g7"), coverUrl: dummyCover("g7") },
+  { id: "g8", name: "Social_Innovators_Lab",    category: "Social",   privacy: "Private", owner: { name: "Amara Okonkwo",  initials: "AO", avatarUrl: "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=60&h=60&fit=crop" }, members:  1290, posts:   8400, status: "ACTIVE",    iconColor: "#0e7490", createdAt: "05/30/2024", description: "Changemakers experimenting with community-led social impact projects.", avatarUrl: dummyAvatar("g8"), coverUrl: dummyCover("g8") },
+  { id: "g9", name: "Backend_Wizards",          category: "Tech",     privacy: "Private", owner: { name: "Chen Wei",       initials: "CW" },                                                                                                members:  2100, posts:  15600, status: "ACTIVE",    iconColor: "#1d4ed8", createdAt: "02/11/2024", description: "Deep dives into distributed systems, databases, and backend architecture.", avatarUrl: dummyAvatar("g9"), coverUrl: dummyCover("g9") },
+  { id: "g10",name: "Creative_Freelancers",     category: "Design",   privacy: "Public",  owner: { name: "Sofia Reyes",    initials: "SR", avatarUrl: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=60&h=60&fit=crop" }, members:  4750, posts:  29700, status: "ACTIVE",    iconColor: "#374151", createdAt: "07/22/2023", description: "Independent creatives sharing gigs, rates, and freelance business advice.", avatarUrl: dummyAvatar("g10"), coverUrl: dummyCover("g10") },
+];
+
+export interface GroupMember {
+  id: string;
+  name: string;
+  avatarUrl?: string;
+  role: "Admin" | "Moderator" | "Member";
+  joinedAt: string;
+}
+
+export const MOCK_GROUP_MEMBERS: GroupMember[] = [
+  { id: "gm1", name: "Elena Voss",     avatarUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=60&h=60&fit=crop", role: "Moderator", joinedAt: "07/11/2023" },
+  { id: "gm2", name: "Ryan Nakamura",  avatarUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=60&h=60&fit=crop", role: "Member",    joinedAt: "08/22/2023" },
+  { id: "gm3", name: "Priya Sharma",   avatarUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=60&h=60&fit=crop",    role: "Member",    joinedAt: "09/03/2023" },
+  { id: "gm4", name: "Chen Wei",                                                                                                      role: "Member",    joinedAt: "10/15/2023" },
+  { id: "gm5", name: "Sofia Reyes",    avatarUrl: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=60&h=60&fit=crop",  role: "Moderator", joinedAt: "11/28/2023" },
+  { id: "gm6", name: "Jake Torres",                                                                                                    role: "Member",    joinedAt: "01/09/2024" },
+  { id: "gm7", name: "Amara Okonkwo",  avatarUrl: "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=60&h=60&fit=crop",  role: "Member",    joinedAt: "02/17/2024" },
+  { id: "gm8", name: "Soren Kierk",    avatarUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=60&h=60&fit=crop",  role: "Member",    joinedAt: "03/30/2024" },
+];
+
+export interface GroupPost {
+  id: string;
+  author: { name: string; avatarUrl?: string };
+  content: string;
+  imageUrl?: string;
+  createdAt: string;
+  likes: number;
+  comments: number;
+}
+
+export const MOCK_GROUP_POSTS: GroupPost[] = [
+  { id: "gp1", author: { name: "Elena Voss", avatarUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=60&h=60&fit=crop" }, content: "Just shipped the new onboarding flow — early metrics show a 12% bump in activation. Full writeup coming soon.", imageUrl: dummyCover("gp1"), createdAt: "06/28/2026", likes: 214, comments: 18 },
+  { id: "gp2", author: { name: "Ryan Nakamura", avatarUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=60&h=60&fit=crop" }, content: "Anyone else hitting rate limits on the staging API today? Looking into it now.", createdAt: "06/25/2026", likes: 42, comments: 9 },
+  { id: "gp3", author: { name: "Priya Sharma", avatarUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=60&h=60&fit=crop" }, content: "Wrapped up user interviews this week — sharing the top 3 pain points at Friday's sync.", imageUrl: dummyCover("gp3"), createdAt: "06/21/2026", likes: 128, comments: 24 },
+  { id: "gp4", author: { name: "Sofia Reyes", avatarUrl: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=60&h=60&fit=crop" }, content: "Reminder: monthly community call is this Thursday at 10am. Drop your agenda items below.", createdAt: "06/17/2026", likes: 76, comments: 12 },
+  { id: "gp5", author: { name: "Chen Wei" }, content: "Published a deep dive on our caching layer redesign — cut p99 latency by 40%.", imageUrl: dummyCover("gp5"), createdAt: "06/12/2026", likes: 301, comments: 37 },
 ];
 
 export const MOCK_GROUP_STATS = {

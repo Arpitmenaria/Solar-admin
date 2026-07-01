@@ -54,9 +54,6 @@ export function ReportDetail({
               <span className={st.text}>{st.label}</span>
             </span>
           </div>
-          <p className="mt-0.5 text-sm text-muted-foreground">
-            {targetLabel} report filed by {report.reportedBy.username}
-          </p>
         </motion.div>
 
         <motion.div
@@ -71,7 +68,7 @@ export function ReportDetail({
             className="flex flex-col gap-5"
           >
             <div className="rounded-xl border border-white/[0.08] bg-[#0d1321] p-6">
-              <p className="text-label mb-3">{targetLabel.toUpperCase()}</p>
+              <p className="text-label mb-3">{targetLabel.toUpperCase()} NAME</p>
               <div className="flex items-center gap-3">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-white/[0.07] bg-white/[0.05]">
                   <TargetIcon size={20} strokeWidth={1.8} className="text-stat-icon" />

@@ -35,6 +35,24 @@ export function useGroup(id: string) {
   });
 }
 
+export function useGroupMembers(id: string) {
+  return useQuery({
+    queryKey: [...groupKeys.detail(id), "members"],
+    queryFn: () => groupsService.getGroupMembers(id),
+    enabled: !!id,
+    staleTime: 30_000,
+  });
+}
+
+export function useGroupPosts(id: string) {
+  return useQuery({
+    queryKey: [...groupKeys.detail(id), "posts"],
+    queryFn: () => groupsService.getGroupPosts(id),
+    enabled: !!id,
+    staleTime: 30_000,
+  });
+}
+
 export function useCreateGroup() {
   const qc = useQueryClient();
   return useMutation({

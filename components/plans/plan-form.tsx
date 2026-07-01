@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { CreatePlanButton } from "@/components/plans/create-plan-button";
+import { BackButton } from "@/components/shared/back-button";
 import type { CreatePlanInput } from "@/services/plans.service";
 import type { Plan, PlanTier } from "@/types";
 
@@ -29,12 +30,11 @@ function periodToDuration(period: string): Duration {
 interface PlanFormProps {
   defaultValues?: Plan;
   submitLabel: string;
-  onDiscard: () => void;
   onSubmit: (input: CreatePlanInput) => void;
   isSubmitting?: boolean;
 }
 
-export function PlanForm({ defaultValues, submitLabel, onDiscard, onSubmit, isSubmitting }: PlanFormProps) {
+export function PlanForm({ defaultValues, submitLabel, onSubmit, isSubmitting }: PlanFormProps) {
   const [name, setName] = useState(defaultValues?.name ?? "");
   const [description, setDescription] = useState(defaultValues?.description ?? "");
   const [price, setPrice] = useState(defaultValues ? String(defaultValues.price) : "");
@@ -80,7 +80,8 @@ export function PlanForm({ defaultValues, submitLabel, onDiscard, onSubmit, isSu
       <div className="sticky top-0 z-20 border-b border-white/[0.06] bg-[#0a0f1a]/90 backdrop-blur-md">
         <div className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-            <h1 className="text-[20px] font-bold text-white sm:text-[26px]">
+            <BackButton href="/dashboard/plans" />
+            <h1 className="mt-3 text-[20px] font-bold text-white sm:text-[26px]">
               {defaultValues ? "Edit Plan" : "Create Plan"}
             </h1>
             <p className="mt-1 text-[12.5px] text-caption sm:text-[13px]">
@@ -89,20 +90,11 @@ export function PlanForm({ defaultValues, submitLabel, onDiscard, onSubmit, isSu
           </motion.div>
 
           <div className="flex shrink-0 items-center gap-2.5 sm:gap-3">
-            <button
-              type="button"
-              onClick={onDiscard}
-              disabled={isSubmitting}
-              className="flex-1 rounded-lg border border-white/[0.12] px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-slate-300 transition-colors hover:border-white/[0.22] hover:text-white active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50 sm:flex-none sm:py-2"
-            >
-              Discard
-            </button>
-            <div className="flex-1 sm:flex-none">
-              <CreatePlanButton
-                label={isSubmitting ? "Saving…" : submitLabel}
-                onClick={isSubmitting ? undefined : handleSubmit}
-              />
-            </div>
+            <CreatePlanButton
+              label={isSubmitting ? "Saving…" : submitLabel}
+              onClick={isSubmitting ? undefined : handleSubmit}
+              showIcon={false}
+            />
           </div>
         </div>
       </div>
@@ -179,18 +171,8 @@ export function PlanForm({ defaultValues, submitLabel, onDiscard, onSubmit, isSu
         </motion.div>
 
         <div className="pointer-events-none sticky bottom-0 left-0 right-0 mt-6 flex justify-center sm:hidden">
-          <div className="pointer-events-auto flex w-full max-w-3xl gap-2.5 rounded-xl border border-white/[0.08] bg-[#0a0f1a]/95 p-3 backdrop-blur-md">
-            <button
-              type="button"
-              onClick={onDiscard}
-              disabled={isSubmitting}
-              className="flex-1 rounded-lg border border-white/[0.12] px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-slate-300 active:scale-[0.97] disabled:opacity-50"
-            >
-              Discard
-            </button>
-            <div className="flex-1">
-              <CreatePlanButton label={isSubmitting ? "Saving…" : submitLabel} onClick={isSubmitting ? undefined : handleSubmit} />
-            </div>
+          <div className="pointer-events-auto flex w-full max-w-3xl rounded-xl border border-white/[0.08] bg-[#0a0f1a]/95 p-3 backdrop-blur-md">
+            <CreatePlanButton label={isSubmitting ? "Saving…" : submitLabel} onClick={isSubmitting ? undefined : handleSubmit} className="w-full justify-center" showIcon={false} />
           </div>
         </div>
       </main>
