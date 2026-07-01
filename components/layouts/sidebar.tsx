@@ -11,9 +11,9 @@ import {
   TbCreditCard,
   TbChevronLeft,
   TbChevronRight,
+  TbChevronDown,
   TbX,
-  TbFlag,
-  TbCalendarExclamation,
+  TbCalendarEvent,
 } from "react-icons/tb";
 
 import { FaRegStar } from "react-icons/fa";
@@ -27,54 +27,66 @@ type IconKey =
   | "Dashboard"
   | "Users"
   | "Groups"
-  | "GroupReports"
-  | "EventReports"
+  | "Events"
   | "Plans";
+
+interface NavChild {
+  label: string;
+  href: string;
+}
+
+interface NavLinkItem {
+  type: "link";
+  label: string;
+  href: string;
+  icon: IconKey;
+}
+
+interface NavGroupItem {
+  type: "group";
+  label: string;
+  icon: IconKey;
+  children: NavChild[];
+}
+
+type NavEntry = NavLinkItem | NavGroupItem;
 
 const SYSTEM_NAME = "Kick Analyst";
 
-const NAV_ITEMS = [
+const NAV_ITEMS: NavEntry[] = [
+  { type: "link", label: "Dashboard", href: "/dashboard", icon: "Dashboard" },
+  { type: "link", label: "User Management", href: "/dashboard/users", icon: "Users" },
   {
-    label: "Dashboard",
-    href: "/dashboard",
-    icon: "Dashboard",
-  },
-  {
-    label: "Users",
-    href: "/dashboard/users",
-    icon: "Users",
-  },
-  {
-    label: "Groups",
-    href: "/dashboard/groups",
+    type: "group",
+    label: "Group Management",
     icon: "Groups",
+    children: [
+      { label: "Groups", href: "/dashboard/groups" },
+      { label: "Reported Groups", href: "/dashboard/group-reports" },
+    ],
   },
   {
-    label: "Group Reports",
-    href: "/dashboard/group-reports",
-    icon: "GroupReports",
+    type: "group",
+    label: "Event Management",
+    icon: "Events",
+    children: [
+      { label: "Events", href: "/dashboard/events" },
+      { label: "Reported Events", href: "/dashboard/event-reports" },
+    ],
   },
-  {
-    label: "Event Reports",
-    href: "/dashboard/event-reports",
-    icon: "EventReports",
-  },
-  {
-    label: "Plans & Subscriptions",
-    href: "/dashboard/plans",
-    icon: "Plans",
-  },
-] as const;
+  { type: "link", label: "Plans & Subscriptions", href: "/dashboard/plans", icon: "Plans" },
+];
 
 const ICON_MAP: Record<IconKey, ElementType> = {
   Dashboard: TbLayoutDashboard,
   Users: TbUsers,
   Groups: TbUsersGroup,
-  GroupReports: TbFlag,
-  EventReports: TbCalendarExclamation,
+  Events: TbCalendarEvent,
   Plans: TbCreditCard,
 };
 
+const isPathActive = (href: string, pathname: string) =>
+  href === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(href);
 
 /* ── Animated icon ─────────────────────────── */
 function AnimatedIcon({ icon: Icon, active, collapsed }: {
@@ -244,13 +256,140 @@ function NavItem({
   );
 }
 
+/* ── Collapsible nav group (Groups / Events) ── */
+function NavGroup({
+  item, collapsed, pillId, index, pathname,
+}: {
+  item: NavGroupItem; collapsed: boolean; pillId: string; index: number; pathname: string;
+}) {
+  const Icon = ICON_MAP[item.icon];
+  const { setMobileOpen } = useUIStore();
+  const [hovered, setHovered] = useState(false);
+  const childActive = item.children.some((c) => isPathActive(c.href, pathname));
+  // Manually-toggled open state, OR'd with childActive so the section can't be
+  // collapsed while one of its routes is active.
+  const [manuallyOpen, setManuallyOpen] = useState(false);
+  const open = manuallyOpen || childActive;
+
+  if (collapsed) {
+    // No room for a submenu in icon-rail mode — link straight to the first child.
+    return (
+      <NavItem
+        label={item.label}
+        href={item.children[0].href}
+        icon={item.icon}
+        active={childActive}
+        collapsed={collapsed}
+        pillId={pillId}
+        index={index}
+      />
+    );
+  }
+
+  return (
+    <motion.div
+      className="relative"
+      initial={{ opacity: 0, x: -10 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: index * 0.045, type: "spring", stiffness: 380, damping: 30 }}
+      onHoverStart={() => setHovered(true)}
+      onHoverEnd={() => setHovered(false)}
+    >
+      <button
+        type="button"
+        onClick={() => setManuallyOpen((v) => !v)}
+        aria-expanded={open}
+        className={cn(
+          "relative flex w-full items-center gap-3 overflow-hidden rounded-lg px-3 py-[9px] transition-colors duration-150",
+          childActive ? "text-nav-active" : "text-nav-inactive"
+        )}
+        style={{
+          fontFamily: "var(--font-pjs), 'Plus Jakarta Sans', sans-serif",
+          fontSize: 13,
+          fontWeight: 500,
+          letterSpacing: "0.15px",
+        }}
+      >
+        <motion.span
+          className="absolute inset-0 rounded-lg"
+          animate={{ opacity: hovered && !childActive ? 1 : 0 }}
+          transition={{ duration: 0.12 }}
+          style={{ background: "rgba(255,255,255,0.03)", zIndex: -1 }}
+        />
+
+        {childActive && (
+          <motion.span
+            layoutId={pillId}
+            className="absolute inset-0 rounded-lg"
+            style={{ background: "#3E465C", zIndex: -1 }}
+            transition={{ type: "spring", stiffness: 400, damping: 36 }}
+          />
+        )}
+
+        {childActive && (
+          <motion.span
+            layoutId={`${pillId}-stripe`}
+            className="absolute left-0 top-2 bottom-2 w-[2.5px] rounded-full bg-blue-500"
+            initial={{ scaleY: 0 }}
+            animate={{ scaleY: 1 }}
+            transition={{ type: "spring", stiffness: 500, damping: 30 }}
+          />
+        )}
+
+        <AnimatedIcon icon={Icon} active={childActive} collapsed={false} />
+
+        <span className="flex-1 overflow-hidden whitespace-nowrap text-left leading-none">
+          {item.label}
+        </span>
+
+        <motion.span
+          animate={{ rotate: open ? 0 : -90 }}
+          transition={{ duration: 0.16 }}
+          className="shrink-0"
+        >
+          <TbChevronDown size={13} />
+        </motion.span>
+      </button>
+
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.18, ease: "easeInOut" }}
+            className="overflow-hidden"
+          >
+            <div className="ml-[27px] mt-[2px] space-y-[2px] border-l border-white/[0.08] pl-3">
+              {item.children.map((child) => {
+                const active = isPathActive(child.href, pathname);
+                return (
+                  <Link
+                    key={child.href}
+                    href={child.href}
+                    onClick={() => setMobileOpen(false)}
+                    className={cn(
+                      "block rounded-lg px-2.5 py-[7px] text-[12.5px] transition-colors duration-150",
+                      active ? "bg-white/[0.06] text-nav-active" : "text-nav-inactive hover:bg-white/[0.03] hover:text-slate-300"
+                    )}
+                    style={{ fontFamily: "var(--font-pjs), 'Plus Jakarta Sans', sans-serif", letterSpacing: "0.15px" }}
+                  >
+                    {child.label}
+                  </Link>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
 /* ── Sidebar content ────────────────────────── */
 function SidebarContent({ collapsed, instanceId }: { collapsed: boolean; instanceId: string }) {
   const pathname = usePathname();
   const pillId = `nav-pill-${instanceId}`;
-
-  const isActive = (href: string) =>
-    href === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(href);
 
   return (
     <div className="flex h-full flex-col">
@@ -293,18 +432,29 @@ function SidebarContent({ collapsed, instanceId }: { collapsed: boolean; instanc
 
       {/* Main nav */}
       <nav className="flex-1 space-y-[2px] overflow-y-auto px-2 py-2">
-        {NAV_ITEMS.map((item, i) => (
-          <NavItem
-            key={item.href}
-            index={i}
-            label={item.label}
-            href={item.href}
-            icon={item.icon as IconKey}
-            active={isActive(item.href)}
-            collapsed={collapsed}
-            pillId={pillId}
-          />
-        ))}
+        {NAV_ITEMS.map((item, i) =>
+          item.type === "link" ? (
+            <NavItem
+              key={item.href}
+              index={i}
+              label={item.label}
+              href={item.href}
+              icon={item.icon}
+              active={isPathActive(item.href, pathname)}
+              collapsed={collapsed}
+              pillId={pillId}
+            />
+          ) : (
+            <NavGroup
+              key={item.label}
+              index={i}
+              item={item}
+              collapsed={collapsed}
+              pillId={pillId}
+              pathname={pathname}
+            />
+          )
+        )}
       </nav>
     </div>
   );

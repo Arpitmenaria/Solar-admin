@@ -1,0 +1,236 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import Link from "next/link";
+import { TbPencil, TbBan, TbCircleCheck, TbTrash, TbMapPin } from "react-icons/tb";
+import { Search, CalendarDays } from "lucide-react";
+
+import { BackButton } from "@/components/shared/back-button";
+import { UserAvatar } from "@/components/shared/user-avatar";
+import { Skeleton } from "@/components/shared/loading-skeleton";
+import { useEvent, useEventAttendees } from "@/hooks/use-events";
+import { formatDate, formatNumberFull, cn } from "@/lib/utils";
+import { STATUS_STYLES } from "@/components/events/event-meta";
+import { EventActionDialog, type PendingEventAction } from "@/components/events/event-action-dialog";
+import type { EventAttendee } from "@/constants/mock-data";
+
+const fadeUp = { hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } };
+
+const RSVP_BADGE: Record<EventAttendee["status"], string> = {
+  Going: "border-blue-500/30 text-blue-300 bg-blue-500/10",
+  "Checked In": "border-emerald-500/30 text-emerald-300 bg-emerald-500/10",
+  Interested: "border-white/[0.12] text-slate-300 bg-white/[0.03]",
+};
+
+const TABS = [
+  { value: "about", label: "About" },
+  { value: "attendees", label: "Attendees" },
+] as const;
+
+type TabValue = (typeof TABS)[number]["value"];
+
+export default function EventDetailPage() {
+  const { id } = useParams<{ id: string }>();
+  const router = useRouter();
+  const { data: event, isLoading } = useEvent(id);
+  const { data: attendees, isLoading: attendeesLoading } = useEventAttendees(id);
+  const [pendingAction, setPendingAction] = useState<PendingEventAction | null>(null);
+  const [tab, setTab] = useState<TabValue>("about");
+  const [attendeeSearch, setAttendeeSearch] = useState("");
+
+  const filteredAttendees = useMemo(() => {
+    const q = attendeeSearch.trim().toLowerCase();
+    if (!q) return attendees ?? [];
+    return (attendees ?? []).filter((a) => a.name.toLowerCase().includes(q));
+  }, [attendees, attendeeSearch]);
+
+  if (isLoading) {
+    return (
+      <div className="flex-1 space-y-5 p-4 md:p-6">
+        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-36 rounded-xl" />
+        <Skeleton className="h-64 rounded-xl" />
+      </div>
+    );
+  }
+
+  if (!event) {
+    return (
+      <div className="flex flex-1 flex-col">
+        <div className="flex flex-1 items-center justify-center text-muted-foreground">Event not found</div>
+      </div>
+    );
+  }
+
+  const st = STATUS_STYLES[event.status];
+
+  return (
+    <div className="flex flex-1 flex-col">
+      <main className="flex-1 space-y-5 p-4 md:p-6">
+        <motion.div variants={fadeUp} initial="hidden" animate="show">
+          <BackButton href="/dashboard/events" />
+        </motion.div>
+
+        {/* Cover image + overlapping avatar */}
+        <motion.div variants={fadeUp} initial="hidden" animate="show" className="relative">
+          <div className="relative h-32 overflow-hidden rounded-xl border border-white/[0.08] sm:h-40">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={event.coverUrl} alt="" className="h-full w-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+          </div>
+          <div className="absolute -bottom-8 left-6 h-20 w-20 shrink-0 overflow-hidden rounded-2xl border-4 border-[#080c16] sm:h-24 sm:w-24">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={event.avatarUrl} alt="" className="h-full w-full object-cover" />
+          </div>
+        </motion.div>
+
+        {/* Title row + manage actions */}
+        <motion.div
+          variants={fadeUp}
+          initial="hidden"
+          animate="show"
+          className="flex flex-col gap-4 pl-0 pt-8 sm:flex-row sm:items-start sm:justify-between sm:pl-[136px] sm:pt-0"
+        >
+          <div>
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="text-2xl font-bold text-white">{event.name}</h1>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.10] px-2.5 py-1 text-[11px] font-semibold">
+                <span className={`h-1.5 w-1.5 rounded-full ${st.dot}`} />
+                <span className={st.text}>{st.label}</span>
+              </span>
+            </div>
+            <p className="mt-1 flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
+              {formatNumberFull(event.attendees)} attending
+              <span className="flex items-center gap-1"><TbMapPin size={13} /> {event.location}</span>
+              <span className="flex items-center gap-1"><CalendarDays size={13} /> {event.eventDate}</span>
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-2.5">
+            <Link
+              href={`/dashboard/events/${event.id}/edit`}
+              className="flex items-center gap-1.5 rounded-lg border border-white/[0.10] bg-white/[0.03] px-3.5 py-2 text-[12px] font-medium text-slate-300 transition-colors hover:bg-white/[0.06] hover:text-white"
+            >
+              <TbPencil size={14} /> Edit Event
+            </Link>
+
+            {event.status === "CANCELLED" ? (
+              <button
+                onClick={() => setPendingAction({ action: "REINSTATE", eventId: event.id, eventName: event.name })}
+                className="flex items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-2 text-[12px] font-medium text-emerald-400 transition-colors hover:bg-emerald-500/20"
+              >
+                <TbCircleCheck size={14} /> Reinstate
+              </button>
+            ) : (
+              <button
+                onClick={() => setPendingAction({ action: "CANCEL", eventId: event.id, eventName: event.name })}
+                className="flex items-center gap-1.5 rounded-lg border border-orange-500/30 bg-orange-500/10 px-3.5 py-2 text-[12px] font-medium text-orange-400 transition-colors hover:bg-orange-500/20"
+              >
+                <TbBan size={14} /> Cancel
+              </button>
+            )}
+
+            <button
+              onClick={() => setPendingAction({ action: "DELETE", eventId: event.id, eventName: event.name })}
+              className="flex items-center gap-1.5 rounded-lg border border-red-500/30 bg-red-500/10 px-3.5 py-2 text-[12px] font-medium text-red-400 transition-colors hover:bg-red-500/20"
+            >
+              <TbTrash size={14} /> Delete Event
+            </button>
+          </div>
+        </motion.div>
+
+        {/* Tabs */}
+        <motion.div variants={fadeUp} initial="hidden" animate="show" className="relative border-b border-white/[0.08]">
+          <div className="flex gap-6">
+            {TABS.map((t) => {
+              const active = tab === t.value;
+              return (
+                <button
+                  key={t.value}
+                  onClick={() => setTab(t.value)}
+                  className={cn(
+                    "relative pb-3 text-xs font-semibold uppercase tracking-wider transition-colors",
+                    active ? "text-blue-400" : "text-caption hover:text-white"
+                  )}
+                >
+                  {t.label}
+                  {active && <span className="absolute -bottom-px left-0 h-[2px] w-full bg-blue-500" />}
+                </button>
+              );
+            })}
+          </div>
+        </motion.div>
+
+        {tab === "about" && (
+          <motion.div variants={fadeUp} initial="hidden" animate="show" className="rounded-xl border border-white/[0.08] bg-[#0d1321] p-6">
+            <div className="mb-3 flex items-center gap-2">
+              <CalendarDays size={16} className="text-blue-400" />
+              <h2 className="text-sm font-semibold text-white">About this Event</h2>
+            </div>
+            <p className="text-sm leading-relaxed text-slate-300">
+              {event.description ?? "No description has been provided for this event yet."}
+            </p>
+          </motion.div>
+        )}
+
+        {tab === "attendees" && (
+          <motion.div variants={fadeUp} initial="hidden" animate="show" className="rounded-xl border border-white/[0.08] bg-[#0d1321]">
+            <div className="flex items-center gap-3 border-b border-white/[0.06] p-4">
+              <div className="relative w-full max-w-[280px]">
+                <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#3a4d6a]" />
+                <input
+                  type="text"
+                  value={attendeeSearch}
+                  onChange={(e) => setAttendeeSearch(e.target.value)}
+                  placeholder="Search attendees..."
+                  aria-label="Search attendees"
+                  className="w-full rounded-lg border border-white/[0.08] bg-white/[0.03] py-2 pl-9 pr-3 text-[12px] text-slate-200 placeholder:text-[#2e3d57] transition-all focus:border-blue-500/40 focus:bg-white/[0.05] focus:outline-none"
+                />
+              </div>
+              <span className="ml-auto text-[11px] text-caption">
+                {attendeesLoading ? "Loading…" : `${filteredAttendees.length} shown`}
+              </span>
+            </div>
+
+            <div>
+              {attendeesLoading ? (
+                <div className="space-y-3 p-4">
+                  {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-12 rounded-lg" />)}
+                </div>
+              ) : filteredAttendees.length === 0 ? (
+                <div className="py-12 text-center text-sm text-caption">No attendees match your search.</div>
+              ) : (
+                filteredAttendees.map((attendee, i) => (
+                  <motion.div
+                    key={attendee.id}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: i * 0.03 }}
+                    className="flex items-center gap-3 border-b border-white/[0.04] px-4 py-3 last:border-b-0"
+                  >
+                    <UserAvatar name={attendee.name} src={attendee.avatarUrl} size="sm" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-white">{attendee.name}</p>
+                      <p className="text-[11px] text-caption">RSVP&apos;d {formatDate(attendee.rsvpAt)}</p>
+                    </div>
+                    <span className={cn("inline-flex w-fit items-center rounded border px-2 py-0.5 text-[10px] font-semibold tracking-wide", RSVP_BADGE[attendee.status])}>
+                      {attendee.status}
+                    </span>
+                  </motion.div>
+                ))
+              )}
+            </div>
+          </motion.div>
+        )}
+      </main>
+
+      <EventActionDialog
+        pending={pendingAction}
+        onClose={() => setPendingAction(null)}
+        onSuccess={(action) => { if (action === "DELETE") router.push("/dashboard/events"); }}
+      />
+    </div>
+  );
+}

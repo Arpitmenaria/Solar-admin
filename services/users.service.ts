@@ -36,6 +36,14 @@ export const usersService = {
     if (!user) throw new Error("User not found");
     return { ...user, ...values };
   },
+
+  async blockUser(id: string): Promise<User> {
+    await delay(400);
+    const user = MOCK_USERS.find((u) => u.id === id);
+    if (!user) throw new Error("User not found");
+    user.status = "FLAGGED";
+    return { ...user };
+  },
 };
 
 export const dashboardService = {

@@ -85,7 +85,7 @@ export const MOCK_USERS: User[] = [
     relationshipStatus: "Single",
     dateOfBirth: "1995-07-28",
     avatarUrl: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop",
-    status: "NEW",
+    status: "INACTIVE",
     accountTier: "FREE",
     registrationDate: "2024-05-20",
     stats: { friends: 124, followers: 432, following: 12, reportedPosts: 0, createdPosts: 12, profileViews: 540 },
@@ -220,6 +220,64 @@ export const MOCK_GROUP_STATS = {
   suspended:          13,
   newlyCreated24h:    76,
 };
+
+export type EventStatus   = "UPCOMING" | "ONGOING" | "COMPLETED" | "CANCELLED";
+export type EventCategory = "Music" | "Tech" | "Business" | "Art" | "Workshop" | "Social";
+
+export interface EventItem {
+  id: string;
+  name: string;
+  category: EventCategory;
+  location: string;
+  host: { name: string; avatarUrl?: string; initials: string };
+  attendees: number;
+  capacity: number;
+  status: EventStatus;
+  iconColor: string;
+  eventDate: string;
+  createdAt: string;
+  description?: string;
+  avatarUrl?: string;
+  coverUrl?: string;
+}
+
+export const MOCK_EVENTS: EventItem[] = [
+  { id: "e1", name: "Neon Beats: Electronic Night",   category: "Music",    location: "Austin, TX",      host: { name: "Marcus Thorne",  initials: "MT", avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=60&h=60&fit=crop" }, attendees: 1200, capacity: 1600, status: "UPCOMING",  iconColor: "#7c3aed", eventDate: "10/24/2026", createdAt: "01/15/2026", description: "Austin's most anticipated underground electronic music event, featuring headlining DJs and an immersive 360-degree audio-visual experience.", avatarUrl: dummyAvatar("e1"), coverUrl: dummyCover("e1") },
+  { id: "e2", name: "Future of AI: Innovation Summit", category: "Tech",     location: "San Francisco, CA", host: { name: "Elena Voss",    initials: "EV", avatarUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=60&h=60&fit=crop" }, attendees: 2500, capacity: 2620, status: "UPCOMING",  iconColor: "#1d4ed8", eventDate: "11/15/2026", createdAt: "02/02/2026", description: "Industry leaders dive deep into the next generation of artificial intelligence and technology.", avatarUrl: dummyAvatar("e2"), coverUrl: dummyCover("e2") },
+  { id: "e3", name: "Executive Networking Mixer",      category: "Business", location: "New York, NY",    host: { name: "Ryan Nakamura", initials: "RN", avatarUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=60&h=60&fit=crop" }, attendees:  800, capacity:  825, status: "UPCOMING",  iconColor: "#065f46", eventDate: "12/02/2026", createdAt: "03/10/2026", description: "An exclusive evening for senior executives and entrepreneurs to connect in a premium setting.", avatarUrl: dummyAvatar("e3"), coverUrl: dummyCover("e3") },
+  { id: "e4", name: "Canvas & Color Workshop",         category: "Art",      location: "London, UK",      host: { name: "Priya Sharma",  initials: "PS", avatarUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=60&h=60&fit=crop" }, attendees:  64,  capacity:  80,  status: "UPCOMING",  iconColor: "#be185d", eventDate: "12/12/2026", createdAt: "03/28/2026", description: "A hands-on painting workshop exploring color theory and mixed-media technique.", avatarUrl: dummyAvatar("e4"), coverUrl: dummyCover("e4") },
+  { id: "e5", name: "Late Night Gaming Tournament",    category: "Social",   location: "Chicago, IL",     host: { name: "Jake Torres",   initials: "JT" },                                                                                                    attendees: 340,  capacity:  400, status: "ONGOING",   iconColor: "#92400e", eventDate: "07/04/2026", createdAt: "04/05/2026", description: "Bracket-style esports tournament with cash prizes across three game titles.", avatarUrl: dummyAvatar("e5"), coverUrl: dummyCover("e5") },
+  { id: "e6", name: "Design Systems Workshop",         category: "Workshop", location: "Berlin, DE",      host: { name: "Sofia Reyes",   initials: "SR", avatarUrl: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=60&h=60&fit=crop" }, attendees: 180,  capacity:  200, status: "COMPLETED", iconColor: "#6b21a8", eventDate: "07/09/2026", createdAt: "01/20/2026", description: "A full-day intensive on scaling design systems across product teams.", avatarUrl: dummyAvatar("e6"), coverUrl: dummyCover("e6") },
+  { id: "e7", name: "Underground Trading Signals",     category: "Business", location: "Miami, FL",       host: { name: "Unknown Entity", initials: "UK" },                                                                                                    attendees:  92,  capacity:  500, status: "CANCELLED", iconColor: "#b91c1c", eventDate: "07/13/2026", createdAt: "02/18/2026", description: "Event removed after organizer misrepresented a celebrity guest appearance.", avatarUrl: dummyAvatar("e7"), coverUrl: dummyCover("e7") },
+  { id: "e8", name: "Community Karaoke Night",         category: "Social",   location: "Seattle, WA",     host: { name: "Amara Okonkwo", initials: "AO", avatarUrl: "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=60&h=60&fit=crop" }, attendees: 210,  capacity:  250, status: "COMPLETED", iconColor: "#0e7490", eventDate: "07/19/2026", createdAt: "03/01/2026", description: "A monthly community favorite — casual karaoke, snacks, and good company.", avatarUrl: dummyAvatar("e8"), coverUrl: dummyCover("e8") },
+];
+
+export const MOCK_EVENT_STATS = {
+  totalEvents:  1482,
+  upcoming:      612,
+  ongoing:        48,
+  completed:     742,
+  cancelled:      80,
+};
+
+export interface EventAttendee {
+  id: string;
+  name: string;
+  avatarUrl?: string;
+  status: "Going" | "Interested" | "Checked In";
+  rsvpAt: string;
+}
+
+export const MOCK_EVENT_ATTENDEES: EventAttendee[] = [
+  { id: "ea1", name: "Elena Voss",     avatarUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=60&h=60&fit=crop", status: "Going",       rsvpAt: "07/11/2026" },
+  { id: "ea2", name: "Ryan Nakamura",  avatarUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=60&h=60&fit=crop", status: "Checked In",  rsvpAt: "08/22/2026" },
+  { id: "ea3", name: "Priya Sharma",   avatarUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=60&h=60&fit=crop",    status: "Going",       rsvpAt: "09/03/2026" },
+  { id: "ea4", name: "Chen Wei",                                                                                                      status: "Interested",  rsvpAt: "10/15/2026" },
+  { id: "ea5", name: "Sofia Reyes",    avatarUrl: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=60&h=60&fit=crop",  status: "Going",       rsvpAt: "11/28/2026" },
+  { id: "ea6", name: "Jake Torres",                                                                                                    status: "Checked In",  rsvpAt: "01/09/2026" },
+  { id: "ea7", name: "Amara Okonkwo",  avatarUrl: "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=60&h=60&fit=crop",  status: "Interested",  rsvpAt: "02/17/2026" },
+  { id: "ea8", name: "Soren Kierk",    avatarUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=60&h=60&fit=crop",  status: "Going",       rsvpAt: "03/30/2026" },
+];
 
 export const MOCK_GROUP_REPORTS: Report[] = [
   { id: "gr1", target: { id: "g7", name: "Esports_Arena_Pro", meta: "28,400 members" }, reportedBy: { username: "@johndoe_92" }, category: "Hate Speech", description: "Multiple members posting targeted slurs in the general channel during tournament chat.", status: "PENDING", reportedAt: "2026-06-29" },

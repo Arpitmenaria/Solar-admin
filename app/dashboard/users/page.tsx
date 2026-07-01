@@ -1,34 +1,127 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { toast } from "sonner";
 import { StatCard } from "@/components/shared/stat-card";
-import { CustomSelect } from "@/components/shared/custom-select";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { StatCardSkeleton, TableRowSkeleton } from "@/components/shared/loading-skeleton";
 import { PaginationButton } from "@/components/shared/pagination-button";
-import { useUsers, useDashboardStats } from "@/hooks/use-users";
+import {
+  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
+} from "@/components/ui/alert-dialog";
+import { useUsers, useDashboardStats, useBlockUser } from "@/hooks/use-users";
 import { USER_FILTER_TABS } from "@/constants/users";
-import { formatNumberFull, formatDate } from "@/lib/utils";
-import type { UserStatus } from "@/types";
+import { formatNumberFull, formatDate, cn } from "@/lib/utils";
+import type { User, UserStatus } from "@/types";
 import {
   Search, Download,
   ChevronFirst, ChevronLast, ChevronLeft, ChevronRight,
   Flag, UserPlus, Users, Crown,
+  MoreVertical, Eye, Ban,
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { motion } from "framer-motion";
 
 /* Figma column layout: USER NODE wide, STATUS compact, rest fixed */
 const COLS = "grid-cols-[minmax(220px,2.5fr)_130px_140px_130px_90px_110px]";
+
+/* ── ActionMenu (portal, fixed) ─────────────── */
+function ActionMenu({ user, onBlock }: { user: User; onBlock: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [pos, setPos]   = useState({ top: 0, right: 0 });
+  const btnRef  = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  const handleOpen = () => {
+    if (btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect();
+      setPos({ top: r.bottom + 6, right: window.innerWidth - r.right });
+    }
+    setOpen((v) => !v);
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: MouseEvent) => {
+      if (
+        menuRef.current && !menuRef.current.contains(e.target as Node) &&
+        btnRef.current  && !btnRef.current.contains(e.target as Node)
+      ) setOpen(false);
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [open]);
+
+  return (
+    <div className="flex justify-end">
+      <button
+        ref={btnRef}
+        onClick={handleOpen}
+        aria-label={`Actions for ${user.displayName}`}
+        className={cn(
+          "flex h-7 w-7 items-center justify-center rounded-lg transition-colors",
+          open ? "bg-white/[0.12] text-white" : "text-caption hover:bg-white/[0.08] hover:text-white"
+        )}
+      >
+        <MoreVertical size={15} />
+      </button>
+
+      {typeof window !== "undefined" && createPortal(
+        <AnimatePresence>
+          {open && (
+            <motion.div
+              ref={menuRef}
+              initial={{ opacity: 0, scale: 0.88, y: -8 }}
+              animate={{ opacity: 1, scale: 1,    y: 0  }}
+              exit={{    opacity: 0, scale: 0.88, y: -8 }}
+              transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
+              style={{ position: "fixed", top: pos.top, right: pos.right, transformOrigin: "top right", zIndex: 40 }}
+              className="w-44 overflow-hidden rounded-xl border border-white/[0.10] bg-[#0d1424] shadow-2xl shadow-black/70"
+            >
+              <Link
+                href={`/dashboard/users/${user.id}`}
+                onClick={() => setOpen(false)}
+                className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-[12px] font-medium text-white transition-colors hover:bg-[rgba(255,255,255,0.07)]"
+              >
+                <Eye size={14} /> View Details
+              </Link>
+              <button
+                onClick={() => { setOpen(false); onBlock(); }}
+                className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-[12px] font-medium text-red-400 transition-colors hover:bg-[rgba(239,68,68,0.12)]"
+              >
+                <Ban size={14} /> Block User
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
+    </div>
+  );
+}
 
 export default function UsersPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<UserStatus | "ALL">("ALL");
   const [page, setPage] = useState(1);
+  const [pendingBlock, setPendingBlock] = useState<User | null>(null);
 
   const { data: users, isLoading: usersLoading } = useUsers({ search, status: statusFilter, page });
   const { data: stats, isLoading: statsLoading } = useDashboardStats();
+  const blockUser = useBlockUser();
+
+  const confirmBlock = () => {
+    if (!pendingBlock) return;
+    const { id, displayName } = pendingBlock;
+    blockUser.mutate(id, {
+      onSuccess: () => toast.success(`"${displayName}" has been blocked.`),
+      onError: () => toast.error("Couldn't block this user. Please try again."),
+    });
+    setPendingBlock(null);
+  };
 
   return (
     <div className="flex flex-col flex-1">
@@ -39,8 +132,8 @@ export default function UsersPage() {
             Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)
           ) : (
             <>
-              <StatCard label="TOTAL USERS"    value={formatNumberFull(stats?.totalUsers ?? 0)}    icon={Users} badge="+12%" />
-              <StatCard label="PREMIUM USERS"  value={formatNumberFull(stats?.premiumUsers ?? 0)}  icon={Crown} dot />
+              <StatCard label="TOTAL USERS"    value={formatNumberFull(stats?.totalUsers ?? 0)}    icon={Users} />
+              <StatCard label="PREMIUM USERS"  value={formatNumberFull(stats?.premiumUsers ?? 0)}  icon={Crown} />
               <StatCard label="NEW SIGN UP"     value={formatNumberFull(stats?.newSignups ?? 0)}    icon={UserPlus} sub="Today" />
               <StatCard label="FLAGGED USERS"   value={formatNumberFull(stats?.flaggedUsers ?? 0)}  icon={Flag} sub="Needs review" />
             </>
@@ -85,22 +178,8 @@ export default function UsersPage() {
               ))}
             </div>
 
-            {/* Sort By */}
-            <CustomSelect
-              size="sm"
-              className="ml-auto shrink-0"
-              value="Registration Date"
-              onChange={() => {}}
-              options={[
-                { value: "Registration Date", label: "Registration Date" },
-                { value: "Followers",         label: "Followers"         },
-                { value: "Name",              label: "Name"              },
-                { value: "Status",            label: "Status"            },
-              ]}
-            />
-
             {/* Export CSV */}
-            <button className="flex shrink-0 items-center gap-1.5 rounded-lg border border-white/[0.10] bg-white/[0.03] px-3.5 py-2 text-[12px] font-medium text-slate-300 transition-colors hover:bg-white/[0.06]">
+            <button className="ml-auto flex shrink-0 items-center gap-1.5 rounded-lg border border-white/[0.10] bg-white/[0.03] px-3.5 py-2 text-[12px] font-medium text-slate-300 transition-colors hover:bg-white/[0.06]">
               <Download size={12} />
               Export CSV
             </button>
@@ -116,7 +195,7 @@ export default function UsersPage() {
               <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400">REGISTRATION</span>
               <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400 text-center">FOLLOWERS</span>
               <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400 text-center">POSTS</span>
-              <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400 text-right">VIEW DETAIL</span>
+              <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400 text-right">ACTIONS</span>
             </div>
 
             {/* Table body */}
@@ -167,14 +246,7 @@ export default function UsersPage() {
                       {formatNumberFull(user.stats.createdPosts)}
                     </span>
 
-                    <div className="flex justify-end">
-                      <Link
-                        href={`/dashboard/users/${user.id}`}
-                        className="text-[12px] font-medium text-[#99CBFF] transition-colors hover:text-white"
-                      >
-                        View →
-                      </Link>
-                    </div>
+                    <ActionMenu user={user} onBlock={() => setPendingBlock(user)} />
                   </motion.div>
                 ))}
               </div>
@@ -221,6 +293,23 @@ export default function UsersPage() {
           </div>
         </div>
       </main>
+
+      <AlertDialog open={!!pendingBlock} onOpenChange={(open) => { if (!open) setPendingBlock(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Block this user?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingBlock && `This restricts "${pendingBlock.displayName}" from accessing the platform until unblocked.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" onClick={confirmBlock}>
+              Block User
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

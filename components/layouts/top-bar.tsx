@@ -220,7 +220,7 @@ export function TopBar() {
             onClick={() => router.push("/login")}
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.96 }}
-            className="group relative flex items-center gap-1.5 overflow-hidden rounded-lg border border-red-500/20 bg-red-500/[0.06] px-3.5 py-1.5 text-[12px] font-semibold text-red-400 shadow-sm transition-all hover:border-red-500/40 hover:bg-red-500/[0.12] hover:text-red-300 hover:shadow-red-500/10"
+            className="group relative flex items-center gap-1.5 overflow-hidden rounded-lg bg-red-600 px-3.5 py-1.5 text-[12px] font-semibold text-white shadow-sm shadow-red-600/20 transition-all hover:bg-red-700 hover:shadow-md hover:shadow-red-600/30"
           >
             <LogOut size={13} className="transition-transform group-hover:-translate-x-[1px] group-hover:rotate-[-4deg]" />
             Logout

@@ -1,4 +1,4 @@
-export type UserStatus = "ACTIVE" | "NEW" | "FLAGGED" | "PREMIUM";
+export type UserStatus = "ACTIVE" | "INACTIVE" | "NEW" | "FLAGGED" | "PREMIUM";
 export type AccountTier = "FREE" | "PREMIUM" | "ENTERPRISE";
 export type SubscriptionStatus = "ACTIVE" | "EXPIRED" | "CANCELLED";
 

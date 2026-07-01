@@ -38,6 +38,14 @@ export function useUpdateUser(id: string) {
   });
 }
 
+export function useBlockUser() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => usersService.blockUser(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: userKeys.all }),
+  });
+}
+
 export function useDashboardStats() {
   return useQuery({
     queryKey: ["dashboard", "stats"],

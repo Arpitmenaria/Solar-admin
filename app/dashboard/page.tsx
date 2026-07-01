@@ -56,10 +56,10 @@ export default function DashboardPage() {
         ) : (
           <>
             <motion.div variants={fadeUp} className="flex">
-              <StatCard label="Total Users" value={formatNumber(stats?.totalUsers ?? 0)} icon={Users} badge="+12%" className="flex-1" />
+              <StatCard label="Total Users" value={formatNumber(stats?.totalUsers ?? 0)} icon={Users} className="flex-1" />
             </motion.div>
             <motion.div variants={fadeUp} className="flex">
-              <StatCard label="Premium Users" value={formatNumber(stats?.premiumUsers ?? 0)} icon={UserCheck} dot className="flex-1" />
+              <StatCard label="Premium Users" value={formatNumber(stats?.premiumUsers ?? 0)} icon={UserCheck} className="flex-1" />
             </motion.div>
             <motion.div variants={fadeUp} className="flex">
               <StatCard label="New Sign Up" value={formatNumber(stats?.newSignups ?? 0)} icon={UserPlus} sub="Today" className="flex-1" />
