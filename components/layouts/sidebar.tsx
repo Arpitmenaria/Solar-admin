@@ -245,7 +245,7 @@ function NavItem({
               animate={{ opacity: 1, width: "auto" }}
               exit={{ opacity: 0, width: 0 }}
               transition={{ duration: 0.18, ease: "easeInOut" }}
-              className="overflow-hidden whitespace-nowrap leading-none"
+              className="overflow-hidden whitespace-nowrap leading-[1.4]"
             >
               {label}
             </motion.span>
@@ -338,7 +338,7 @@ function NavGroup({
 
         <AnimatedIcon icon={Icon} active={childActive} collapsed={false} />
 
-        <span className="flex-1 overflow-hidden whitespace-nowrap text-left leading-none">
+        <span className="flex-1 overflow-hidden whitespace-nowrap text-left leading-[1.4]">
           {item.label}
         </span>
 
@@ -482,7 +482,7 @@ export function Sidebar() {
         transition={{ type: "spring", stiffness: 340, damping: 32 }}
         title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         className="fixed z-50 hidden h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full border border-white/[0.18] bg-[#0e1625] text-[#5a7090] shadow-md transition-colors hover:border-blue-500/60 hover:bg-[#111f36] hover:text-blue-400 lg:flex"
-        style={{ top: "calc(52px + (100vh - 52px) / 2)" }}
+        style={{ top: 136 }}
         whileHover={{ scale: 1.2 }}
         whileTap={{ scale: 0.88 }}
       >
