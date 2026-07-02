@@ -14,6 +14,7 @@ import {
   TbChevronDown,
   TbX,
   TbCalendarEvent,
+  TbSchool,
 } from "react-icons/tb";
 
 import { FaRegStar } from "react-icons/fa";
@@ -28,6 +29,7 @@ type IconKey =
   | "Users"
   | "Groups"
   | "Events"
+  | "Education"
   | "Plans";
 
 interface NavChild {
@@ -74,6 +76,16 @@ const NAV_ITEMS: NavEntry[] = [
       { label: "Reported Events", href: "/dashboard/event-reports" },
     ],
   },
+  {
+    type: "group",
+    label: "Education",
+    icon: "Education",
+    children: [
+      { label: "Courses", href: "/dashboard/education/courses" },
+      { label: "Library", href: "/dashboard/education/library" },
+      { label: "Activity Log", href: "/dashboard/education/activity" },
+    ],
+  },
   { type: "link", label: "Plans & Subscriptions", href: "/dashboard/plans", icon: "Plans" },
 ];
 
@@ -82,6 +94,7 @@ const ICON_MAP: Record<IconKey, ElementType> = {
   Users: TbUsers,
   Groups: TbUsersGroup,
   Events: TbCalendarEvent,
+  Education: TbSchool,
   Plans: TbCreditCard,
 };
 
