@@ -20,7 +20,6 @@ export default function LoginPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!email || !password) return;
     setLoading(true);
     await new Promise((r) => setTimeout(r, 700));
     router.push("/dashboard");

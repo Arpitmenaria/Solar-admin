@@ -83,7 +83,6 @@ const NAV_ITEMS: NavEntry[] = [
     children: [
       { label: "Courses", href: "/dashboard/education/courses" },
       { label: "Library", href: "/dashboard/education/library" },
-      { label: "Activity Log", href: "/dashboard/education/activity" },
     ],
   },
   { type: "link", label: "Plans & Subscriptions", href: "/dashboard/plans", icon: "Plans" },
@@ -279,10 +278,9 @@ function NavGroup({
   const { setMobileOpen } = useUIStore();
   const [hovered, setHovered] = useState(false);
   const childActive = item.children.some((c) => isPathActive(c.href, pathname));
-  // Manually-toggled open state, OR'd with childActive so the section can't be
-  // collapsed while one of its routes is active.
-  const [manuallyOpen, setManuallyOpen] = useState(false);
-  const open = manuallyOpen || childActive;
+  // Starts expanded if a child route is already active (e.g. on page load),
+  // but the user can freely collapse/expand afterward regardless of route.
+  const [open, setOpen] = useState(() => childActive);
 
   if (collapsed) {
     // No room for a submenu in icon-rail mode — link straight to the first child.
@@ -310,7 +308,7 @@ function NavGroup({
     >
       <button
         type="button"
-        onClick={() => setManuallyOpen((v) => !v)}
+        onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         className={cn(
           "relative flex w-full items-center gap-3 overflow-hidden rounded-lg px-3 py-[9px] transition-colors duration-150",

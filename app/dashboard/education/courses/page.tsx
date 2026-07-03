@@ -20,8 +20,6 @@ import { CourseActionDialog, type PendingCourseAction } from "@/components/educa
 const STATUS_TABS: { label: string; id: "ALL" | CourseStatus }[] = [
   { label: "All Courses", id: "ALL" },
   { label: "Published", id: "PUBLISHED" },
-  { label: "Draft", id: "DRAFT" },
-  { label: "Archived", id: "ARCHIVED" },
 ];
 
 function enrolledCount(courseId: string): number {
@@ -146,10 +144,7 @@ export default function CoursesPage() {
     return true;
   });
 
-  const statValue =
-    activeTab === "ALL" ? stats?.totalCourses ?? 0 :
-    activeTab === "PUBLISHED" ? stats?.published ?? 0 :
-    activeTab === "DRAFT" ? stats?.draft ?? 0 : stats?.archived ?? 0;
+  const statValue = activeTab === "ALL" ? stats?.totalCourses ?? 0 : stats?.published ?? 0;
 
   return (
     <div className="flex flex-col flex-1">
