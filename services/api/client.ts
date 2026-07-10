@@ -1,6 +1,6 @@
 import { useAuthStore } from "@/store/auth.store";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "https://kick-analyst-backend-production.up.railway.app";
 
 interface RequestOptions {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
