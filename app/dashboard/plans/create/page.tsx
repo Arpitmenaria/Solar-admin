@@ -13,10 +13,10 @@ export default function CreatePlanPage() {
   const handleSubmit = (input: CreatePlanInput) => {
     createPlan.mutate(input, {
       onSuccess: (plan) => {
-        toast.success(`"${plan.name}" plan created.`);
+        toast.success(`${plan.tier} plan created.`);
         router.push("/dashboard/plans");
       },
-      onError: () => toast.error("Couldn't create the plan. Please try again."),
+      onError: (err) => toast.error(err.message || "Couldn't create the plan. Please try again."),
     });
   };
 

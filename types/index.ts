@@ -153,18 +153,18 @@ export interface ProfileFormValues {
   bio: string;
 }
 
-export type PlanTier = "free" | "gold" | "premium";
+export type PlanTier = "free" | "gold" | "platinum";
+export type PlanBillingType = "weekly" | "monthly" | "quarterly" | "yearly";
 
 export interface Plan {
   id: string;
-  name: string;
-  description?: string;
   tier: PlanTier;
+  type: PlanBillingType;
   price: number;
-  currency: string;
-  billingPeriod: string;
   features: string[];
-  sortOrder: number;
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface PlanMetricBreakdown {

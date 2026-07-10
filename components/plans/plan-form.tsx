@@ -5,26 +5,23 @@ import { motion } from "framer-motion";
 import { CreatePlanButton } from "@/components/plans/create-plan-button";
 import { BackButton } from "@/components/shared/back-button";
 import type { CreatePlanInput } from "@/services/plans.service";
-import type { Plan, PlanTier } from "@/types";
+import type { Plan, PlanTier, PlanBillingType } from "@/types";
 
-const DURATION_OPTIONS = [
-  { value: "weekly", label: "Weekly", period: "/WEEK" },
-  { value: "monthly", label: "Monthly", period: "/MONTH" },
-  { value: "quarterly", label: "Quarterly", period: "/QUARTER" },
-  { value: "yearly", label: "Yearly", period: "/YEAR" },
-] as const;
+const DURATION_OPTIONS: { value: PlanBillingType; label: string }[] = [
+  { value: "weekly", label: "Weekly" },
+  { value: "monthly", label: "Monthly" },
+  { value: "quarterly", label: "Quarterly" },
+  { value: "yearly", label: "Yearly" },
+];
 
 const TIER_OPTIONS: { value: PlanTier; label: string }[] = [
   { value: "free", label: "Free" },
   { value: "gold", label: "Gold" },
-  { value: "premium", label: "Premium" },
+  { value: "platinum", label: "Platinum" },
 ];
 
-type Duration = (typeof DURATION_OPTIONS)[number]["value"];
-
-function periodToDuration(period: string): Duration {
-  const match = DURATION_OPTIONS.find((d) => d.period === period);
-  return match?.value ?? "monthly";
+function tierLabel(tier: PlanTier): string {
+  return tier.charAt(0).toUpperCase() + tier.slice(1);
 }
 
 interface PlanFormProps {
@@ -35,24 +32,15 @@ interface PlanFormProps {
 }
 
 export function PlanForm({ defaultValues, submitLabel, onSubmit, isSubmitting }: PlanFormProps) {
-  const [name, setName] = useState(defaultValues?.name ?? "");
-  const [description, setDescription] = useState(defaultValues?.description ?? "");
   const [price, setPrice] = useState(defaultValues ? String(defaultValues.price) : "");
   const [featuresText, setFeaturesText] = useState(defaultValues?.features.join("\n") ?? "");
-  const [duration, setDuration] = useState<Duration>(
-    defaultValues ? periodToDuration(defaultValues.billingPeriod) : "monthly"
-  );
+  const [duration, setDuration] = useState<PlanBillingType>(defaultValues?.type ?? "monthly");
   const [tier, setTier] = useState<PlanTier>(defaultValues?.tier ?? "free");
   const [error, setError] = useState("");
 
   const handleSubmit = () => {
-    const trimmedName = name.trim();
     const parsedPrice = Number(price);
 
-    if (!trimmedName) {
-      setError("Plan name is required.");
-      return;
-    }
     if (price === "" || Number.isNaN(parsedPrice) || parsedPrice < 0) {
       setError("Enter a valid, non-negative price.");
       return;
@@ -63,14 +51,16 @@ export function PlanForm({ defaultValues, submitLabel, onSubmit, isSubmitting }:
       .map((f) => f.trim())
       .filter(Boolean);
 
+    if (features.length === 0) {
+      setError("Add at least one feature.");
+      return;
+    }
+
     setError("");
     onSubmit({
-      name: trimmedName,
-      description: description.trim() || undefined,
       tier,
+      type: duration,
       price: parsedPrice,
-      currency: "$",
-      billingPeriod: DURATION_OPTIONS.find((d) => d.value === duration)!.period,
       features,
     });
   };
@@ -85,7 +75,7 @@ export function PlanForm({ defaultValues, submitLabel, onSubmit, isSubmitting }:
               {defaultValues ? "Edit Plan" : "Create Plan"}
             </h1>
             <p className="mt-1 text-[12.5px] text-caption sm:text-[13px]">
-              {defaultValues ? `Update the "${defaultValues.name}" subscription tier.` : "Define a new subscription tier for your platform."}
+              {defaultValues ? `Update the "${tierLabel(defaultValues.tier)}" subscription tier.` : "Define a new subscription tier for your platform."}
             </p>
           </motion.div>
 
@@ -113,42 +103,20 @@ export function PlanForm({ defaultValues, submitLabel, onSubmit, isSubmitting }:
               </div>
             )}
 
-            <div className="grid grid-cols-1 gap-7 sm:grid-cols-2">
-              <Field label="Plan Name">
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Enterprise Production Node"
-                  className="w-full rounded-lg border border-white/[0.10] bg-[#0d1320] px-3.5 py-2.5 text-[13px] text-white placeholder:text-slate-500 outline-none transition-colors focus:border-blue-500/60 focus:ring-2 focus:ring-blue-500/15"
-                />
-              </Field>
-
-              <Field label="Price (USD)">
-                <input
-                  type="number"
-                  min={0}
-                  step="0.01"
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  placeholder="49"
-                  className="w-full rounded-lg border border-white/[0.10] bg-[#0d1320] px-3.5 py-2.5 text-[13px] text-white placeholder:text-slate-500 outline-none transition-colors focus:border-blue-500/60 focus:ring-2 focus:ring-blue-500/15"
-                />
-              </Field>
-            </div>
+            <Field label="Price (USD)">
+              <input
+                type="number"
+                min={0}
+                step="0.01"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                placeholder="49"
+                className="w-full rounded-lg border border-white/[0.10] bg-[#0d1320] px-3.5 py-2.5 text-[13px] text-white placeholder:text-slate-500 outline-none transition-colors focus:border-blue-500/60 focus:ring-2 focus:ring-blue-500/15"
+              />
+            </Field>
 
             <Field label="Tier">
               <SelectGroup options={TIER_OPTIONS} value={tier} onChange={(v) => setTier(v)} layout="row" />
-            </Field>
-
-            <Field label="Description">
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Define the primary purpose and scope of this tier..."
-                rows={3}
-                className="w-full resize-none rounded-lg border border-white/[0.10] bg-[#0d1320] px-3.5 py-2.5 text-[13px] text-white placeholder:text-slate-500 outline-none transition-colors focus:border-blue-500/60 focus:ring-2 focus:ring-blue-500/15"
-              />
             </Field>
 
             <Field label="Core Features">

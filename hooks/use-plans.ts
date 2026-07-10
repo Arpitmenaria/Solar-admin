@@ -2,6 +2,8 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { plansService, type CreatePlanInput, type UpdatePlanInput } from "@/services/plans.service";
+import type { ApiError } from "@/services/api/client";
+import type { Plan } from "@/types";
 
 export const planKeys = {
   all: ["plans"] as const,
@@ -37,7 +39,7 @@ export function usePlan(id: string) {
 
 export function useCreatePlan() {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutation<Plan, ApiError, CreatePlanInput>({
     mutationFn: (input: CreatePlanInput) => plansService.createPlan(input),
     onSuccess: () => qc.invalidateQueries({ queryKey: planKeys.all }),
   });
@@ -45,7 +47,7 @@ export function useCreatePlan() {
 
 export function useUpdatePlan(id: string) {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutation<Plan, ApiError, UpdatePlanInput>({
     mutationFn: (input: UpdatePlanInput) => plansService.updatePlan(id, input),
     onSuccess: () => qc.invalidateQueries({ queryKey: planKeys.all }),
   });
@@ -53,7 +55,7 @@ export function useUpdatePlan(id: string) {
 
 export function useDeletePlan() {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutation<void, ApiError, string>({
     mutationFn: (id: string) => plansService.deletePlan(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: planKeys.all }),
   });

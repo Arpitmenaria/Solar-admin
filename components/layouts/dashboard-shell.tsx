@@ -1,15 +1,27 @@
 "use client";
 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Sidebar } from "./sidebar";
 import { TopBar } from "./top-bar";
 import { useUIStore } from "@/store/ui.store";
+import { useAuthStore, useAuthHydrated } from "@/store/auth.store";
 
 /* Figma: content area has a rgba(63,72,82,0.10) → transparent gradient overlay */
 const CONTENT_GRADIENT = "linear-gradient(180deg, rgba(63,72,82,0.10) 0%, rgba(63,72,82,0) 100%)";
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const { sidebarCollapsed } = useUIStore();
+  const router = useRouter();
+  const hydrated = useAuthHydrated();
+  const token = useAuthStore((s) => s.token);
+
+  useEffect(() => {
+    if (hydrated && !token) router.replace("/login");
+  }, [hydrated, token, router]);
+
+  if (!hydrated || !token) return null;
 
   return (
     <div className="min-h-screen bg-background">

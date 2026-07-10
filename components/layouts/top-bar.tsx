@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Bell, Menu, LogOut, CheckCheck, Zap, Users, ShieldAlert, CreditCard } from "lucide-react";
 import { useUIStore } from "@/store/ui.store";
+import { useAuthStore } from "@/store/auth.store";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { createPortal } from "react-dom";
@@ -160,6 +161,7 @@ function NotificationPortal({
 
 export function TopBar() {
   const { setMobileOpen } = useUIStore();
+  const logout = useAuthStore((s) => s.logout);
   const router = useRouter();
   const [notifOpen, setNotifOpen] = useState(false);
   const bellRef = useRef<HTMLButtonElement>(null);
@@ -217,7 +219,7 @@ export function TopBar() {
           {/* Logout */}
           <motion.button
             aria-label="Logout"
-            onClick={() => router.push("/login")}
+            onClick={() => { logout(); router.push("/login"); }}
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.96 }}
             className="group relative flex items-center gap-1.5 overflow-hidden rounded-lg bg-red-600 px-3.5 py-1.5 text-[12px] font-semibold text-white shadow-sm shadow-red-600/20 transition-all hover:bg-red-700 hover:shadow-md hover:shadow-red-600/30"

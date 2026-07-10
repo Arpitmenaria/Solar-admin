@@ -16,10 +16,10 @@ export default function EditPlanPage() {
   const handleSubmit = (input: CreatePlanInput) => {
     updatePlan.mutate(input, {
       onSuccess: (updated) => {
-        toast.success(`"${updated.name}" plan updated.`);
+        toast.success(`${updated.tier} plan updated.`);
         router.push("/dashboard/plans");
       },
-      onError: () => toast.error("Couldn't update the plan. Please try again."),
+      onError: (err) => toast.error(err.message || "Couldn't update the plan. Please try again."),
     });
   };
 

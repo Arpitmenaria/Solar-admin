@@ -4,6 +4,17 @@ import { motion } from "framer-motion";
 import { TbCheck, TbPencil, TbTrash } from "react-icons/tb";
 import type { Plan } from "@/types";
 
+const BILLING_SUFFIX: Record<Plan["type"], string> = {
+  weekly: "/WEEK",
+  monthly: "/MONTH",
+  quarterly: "/QUARTER",
+  yearly: "/YEAR",
+};
+
+function tierLabel(tier: Plan["tier"]): string {
+  return tier.charAt(0).toUpperCase() + tier.slice(1);
+}
+
 interface PlanCardProps {
   plan: Plan;
   index?: number;
@@ -12,7 +23,8 @@ interface PlanCardProps {
 }
 
 export function PlanCard({ plan, index = 0, onEdit, onDelete }: PlanCardProps) {
-  const formattedPrice = `${plan.currency}${plan.price.toLocaleString()}`;
+  const planName = `${tierLabel(plan.tier)} Plan`;
+  const formattedPrice = `$${plan.price.toLocaleString()}`;
 
   return (
     <motion.article
@@ -24,17 +36,14 @@ export function PlanCard({ plan, index = 0, onEdit, onDelete }: PlanCardProps) {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <h2 className="text-xl font-bold uppercase tracking-wide text-white md:text-2xl">
-            {plan.name}
+            {planName}
           </h2>
-          {plan.description && (
-            <p className="mt-1.5 max-w-md text-[12.5px] text-caption">{plan.description}</p>
-          )}
           <p className="mt-3 flex flex-wrap items-baseline gap-1">
             <span className="text-4xl font-bold tracking-tight text-[#99CBFF] md:text-5xl">
               {formattedPrice}
             </span>
             <span className="text-sm font-semibold uppercase tracking-wider text-caption">
-              {plan.billingPeriod}
+              {BILLING_SUFFIX[plan.type]}
             </span>
           </p>
         </div>
@@ -44,7 +53,7 @@ export function PlanCard({ plan, index = 0, onEdit, onDelete }: PlanCardProps) {
             type="button"
             onClick={() => onEdit?.(plan)}
             className="flex items-center gap-1.5 rounded-lg border border-white/[0.10] bg-white/[0.03] px-3.5 py-1.5 text-[11px] font-medium text-slate-300 transition-colors hover:bg-white/[0.06] hover:text-white"
-            aria-label={`Edit ${plan.name}`}
+            aria-label={`Edit ${planName}`}
           >
             <TbPencil size={12} /> Edit
           </button>
@@ -52,7 +61,7 @@ export function PlanCard({ plan, index = 0, onEdit, onDelete }: PlanCardProps) {
             type="button"
             onClick={() => onDelete?.(plan)}
             className="flex items-center gap-1.5 rounded-lg border border-white/[0.10] bg-white/[0.03] px-3.5 py-1.5 text-[11px] font-medium text-slate-300 transition-colors hover:bg-white/[0.06] hover:text-red-400"
-            aria-label={`Delete ${plan.name}`}
+            aria-label={`Delete ${planName}`}
           >
             <TbTrash size={12} /> Delete
           </button>

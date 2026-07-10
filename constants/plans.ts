@@ -1,57 +1,6 @@
-import type { Plan, PlanMetric } from "@/types";
+import type { PlanMetric } from "@/types";
 
-export const MOCK_PLANS: Plan[] = [
-  {
-    id: "plan-free",
-    name: "Free Infrastructure",
-    description: "Get started with the essentials, no cost.",
-    tier: "free",
-    price: 0,
-    currency: "$",
-    billingPeriod: "/MONTH",
-    sortOrder: 1,
-    features: [
-      "Basic Node Access",
-      "Standard API Rate Limits",
-      "Community Support",
-      "Core Analytics Dashboard",
-    ],
-  },
-  {
-    id: "plan-gold",
-    name: "Gold Infrastructure",
-    description: "Priority scaling and support for growing teams.",
-    tier: "gold",
-    price: 49,
-    currency: "$",
-    billingPeriod: "/MONTH",
-    sortOrder: 2,
-    features: [
-      "Advanced Node Support",
-      "Priority API Scaling",
-      "99.9% Uptime Guarantee",
-      "Dedicated Tech Account Manager",
-    ],
-  },
-  {
-    id: "plan-premium",
-    name: "Premium Infrastructure",
-    description: "Enterprise-grade throughput, SLA, and white-glove support.",
-    tier: "premium",
-    price: 99,
-    currency: "$",
-    billingPeriod: "/MONTH",
-    sortOrder: 3,
-    features: [
-      "Unlimited Node Provisioning",
-      "Enterprise API Throughput",
-      "99.99% Uptime SLA",
-      "24/7 Priority Support",
-      "Custom Integration Support",
-    ],
-  },
-];
-
+// No metrics endpoint exists yet — placeholder until the backend exposes one.
 export const MOCK_PLAN_METRICS: PlanMetric[] = [
   {
     id: "total-subscribers",

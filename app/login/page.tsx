@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, LogIn, Shield } from "lucide-react";
 import { FaRegStar } from "react-icons/fa";
+import { toast } from "sonner";
+import { useAdminLogin } from "@/hooks/use-auth";
+import { useAuthStore } from "@/store/auth.store";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 16 },
@@ -13,16 +16,27 @@ const fadeUp = {
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const setAuth = useAuthStore((s) => s.setAuth);
+  const [email, setEmail] = useState("admin@kickcatalyst.com");
+  const [password, setPassword] = useState("password");
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const login = useAdminLogin();
+  const loading = login.isPending;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
-    await new Promise((r) => setTimeout(r, 700));
-    router.push("/dashboard");
+    login.mutate(
+      { email, password },
+      {
+        onSuccess: (res) => {
+          setAuth(res.token, res.admin);
+          router.push("/dashboard");
+        },
+        onError: (err) => {
+          toast.error(err?.message || "Invalid email or password.");
+        },
+      }
+    );
   }
 
   return (

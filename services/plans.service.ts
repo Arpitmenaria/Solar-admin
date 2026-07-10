@@ -1,52 +1,72 @@
-import type { Plan, PlanMetric } from "@/types";
-import { MOCK_PLANS, MOCK_PLAN_METRICS } from "@/constants/plans";
+import type { Plan, PlanMetric, PlanTier, PlanBillingType } from "@/types";
+import { MOCK_PLAN_METRICS } from "@/constants/plans";
+import { apiClient } from "@/services/api/client";
 
 const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-function slugify(name: string): string {
-  return name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "plan";
+const TIER_ORDER: Record<PlanTier, number> = { free: 0, gold: 1, platinum: 2 };
+
+interface ApiPlan {
+  _id: string;
+  type: string;
+  tier: PlanTier;
+  price: number;
+  features: string[];
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export type CreatePlanInput = Omit<Plan, "id" | "sortOrder">;
+function mapApiPlan(p: ApiPlan): Plan {
+  return {
+    id: p._id,
+    tier: p.tier,
+    type: p.type as PlanBillingType,
+    price: p.price,
+    // API entries can bundle multiple features into one newline-joined string
+    features: p.features.flatMap((f) => f.split("\n")).map((f) => f.trim()).filter(Boolean),
+    isActive: p.isActive,
+    createdAt: p.createdAt,
+    updatedAt: p.updatedAt,
+  };
+}
+
+export interface CreatePlanInput {
+  tier: PlanTier;
+  type: PlanBillingType;
+  price: number;
+  features: string[];
+}
 export type UpdatePlanInput = Partial<CreatePlanInput>;
 
 export const plansService = {
   async getPlans(): Promise<Plan[]> {
-    await delay(250);
-    return MOCK_PLANS.map((p) => ({ ...p })).sort((a, b) => a.sortOrder - b.sortOrder);
+    const res = await apiClient.get<{ success: boolean; plans: ApiPlan[] }>("/api/admin/plans");
+    return res.plans.map(mapApiPlan).sort((a, b) => TIER_ORDER[a.tier] - TIER_ORDER[b.tier]);
   },
 
   async getPlanMetrics(): Promise<PlanMetric[]> {
+    // No metrics endpoint yet — placeholder until the backend exposes one.
     await delay(200);
     return MOCK_PLAN_METRICS;
   },
 
   async getPlanById(id: string): Promise<Plan | null> {
-    await delay(200);
-    const plan = MOCK_PLANS.find((p) => p.id === id);
-    return plan ? { ...plan } : null;
+    const plans = await this.getPlans();
+    return plans.find((p) => p.id === id) ?? null;
   },
 
   async createPlan(input: CreatePlanInput): Promise<Plan> {
-    await delay(400);
-    const sortOrder = MOCK_PLANS.reduce((max, p) => Math.max(max, p.sortOrder), 0) + 1;
-    const plan: Plan = { ...input, id: `plan-${slugify(input.name)}-${Date.now().toString(36)}`, sortOrder };
-    MOCK_PLANS.push(plan);
-    return { ...plan };
+    const res = await apiClient.post<{ success: boolean; plan: ApiPlan }>("/api/admin/plans", input);
+    return mapApiPlan(res.plan);
   },
 
   async updatePlan(id: string, input: UpdatePlanInput): Promise<Plan> {
-    await delay(400);
-    const plan = MOCK_PLANS.find((p) => p.id === id);
-    if (!plan) throw new Error("Plan not found");
-    Object.assign(plan, input);
-    return { ...plan };
+    const res = await apiClient.put<{ success: boolean; plan: ApiPlan }>(`/api/admin/plans/${id}`, input);
+    return mapApiPlan(res.plan);
   },
 
   async deletePlan(id: string): Promise<void> {
-    await delay(300);
-    const index = MOCK_PLANS.findIndex((p) => p.id === id);
-    if (index === -1) throw new Error("Plan not found");
-    MOCK_PLANS.splice(index, 1);
+    await apiClient.delete(`/api/admin/plans/${id}`);
   },
 };

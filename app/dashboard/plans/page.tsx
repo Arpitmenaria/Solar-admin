@@ -14,12 +14,16 @@ import {
 import { usePlans, usePlanMetrics, useDeletePlan } from "@/hooks/use-plans";
 import type { Plan, PlanTier } from "@/types";
 
+function tierLabel(tier: PlanTier): string {
+  return tier.charAt(0).toUpperCase() + tier.slice(1);
+}
+
 export default function PlansPage() {
   const router = useRouter();
   const { data: plans = [], isLoading: plansLoading } = usePlans();
   const { data: metrics = [], isLoading: metricsLoading } = usePlanMetrics();
-  const [pendingDelete, setPendingDelete] = useState<Plan | null>(null);
   const [activeTier, setActiveTier] = useState<PlanTier>("gold");
+  const [pendingDelete, setPendingDelete] = useState<Plan | null>(null);
   const deletePlan = useDeletePlan();
   const filteredPlans = plans.filter((p) => p.tier === activeTier);
 
@@ -33,10 +37,10 @@ export default function PlansPage() {
 
   const confirmDelete = () => {
     if (!pendingDelete) return;
-    const { id, name } = pendingDelete;
+    const { id, tier } = pendingDelete;
     deletePlan.mutate(id, {
-      onSuccess: () => toast.success(`"${name}" plan deleted.`),
-      onError: () => toast.error("Couldn't delete the plan. Please try again."),
+      onSuccess: () => toast.success(`${tierLabel(tier)} plan deleted.`),
+      onError: (err) => toast.error(err.message || "Couldn't delete the plan. Please try again."),
     });
     setPendingDelete(null);
   };
@@ -75,7 +79,7 @@ export default function PlansPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete this plan?</AlertDialogTitle>
             <AlertDialogDescription>
-              {pendingDelete && `This permanently removes "${pendingDelete.name}" from your subscription tiers. Subscribers already on this plan are not affected.`}
+              {pendingDelete && `This permanently removes the "${tierLabel(pendingDelete.tier)}" subscription tier. Subscribers already on this plan are not affected.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

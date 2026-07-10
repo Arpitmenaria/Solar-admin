@@ -7,7 +7,7 @@ import type { PlanTier } from "@/types";
 const TABS: { value: PlanTier; label: string; recommended: boolean }[] = [
   { value: "free", label: "Free Tier", recommended: false },
   { value: "gold", label: "Gold Tier", recommended: true },
-  { value: "premium", label: "Premium Tier", recommended: false },
+  { value: "platinum", label: "Platinum Tier", recommended: false },
 ];
 
 interface PlanTabsProps {

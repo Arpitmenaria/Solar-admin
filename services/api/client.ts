@@ -1,3 +1,5 @@
+import { useAuthStore } from "@/store/auth.store";
+
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
 
 interface RequestOptions {
@@ -13,15 +15,27 @@ export interface ApiError {
 
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { method = "GET", body, headers = {} } = options;
+  const token = useAuthStore.getState().token;
 
   const res = await fetch(`${BASE_URL}${path}`, {
     method,
-    headers: { "Content-Type": "application/json", ...headers },
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...headers,
+    },
     body: body != null ? JSON.stringify(body) : undefined,
   });
 
   if (!res.ok) {
-    const error: ApiError = { message: res.statusText, status: res.status };
+    let message = res.statusText;
+    try {
+      const data = await res.json();
+      if (data?.message) message = data.message;
+    } catch {
+      // response had no JSON body — fall back to statusText
+    }
+    const error: ApiError = { message, status: res.status };
     throw error;
   }
 
