@@ -20,8 +20,20 @@ export function formatCurrency(n: number): string {
   return "$" + n.toLocaleString();
 }
 
-export function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString("en-US", {
+/** Shown wherever the backend has no value for a field. */
+export const NA = "NA";
+
+/** Falls back to NA for null, undefined, or blank strings. */
+export function na(value: string | null | undefined): string {
+  return value && value.trim() ? value : NA;
+}
+
+export function formatDate(dateStr: string | null | undefined): string {
+  if (!dateStr) return NA;
+  const date = new Date(dateStr);
+  // An unparseable date would otherwise render the string "Invalid Date".
+  if (Number.isNaN(date.getTime())) return NA;
+  return date.toLocaleDateString("en-US", {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",

@@ -1,16 +1,20 @@
 "use client";
 
+import { useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import {
-  Pencil, Users, Eye, FileText, Flag, CreditCard, Calendar
-} from "lucide-react";
+import { toast } from "sonner";
+import { Users, CreditCard, Calendar, ArrowUpRight, Ban, RotateCcw } from "lucide-react";
 import { BackButton } from "@/components/shared/back-button";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { StatusBadge } from "@/components/shared/status-badge";
-import { useUser } from "@/hooks/use-users";
-import { formatNumberFull, formatDate } from "@/lib/utils";
+import {
+  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
+} from "@/components/ui/alert-dialog";
+import { useUser, useToggleSuspend } from "@/hooks/use-users";
+import { formatNumberFull, na, cn } from "@/lib/utils";
 import { Skeleton } from "@/components/shared/loading-skeleton";
 import { SYSTEM_VERSION } from "@/constants/nav";
 
@@ -19,6 +23,28 @@ const fadeUp = { hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } };
 export default function UserDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { data: user, isLoading } = useUser(id);
+  const toggleSuspend = useToggleSuspend();
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
+  const suspended = !!user?.isSuspended;
+
+  const confirmToggle = () => {
+    if (!user) return;
+    const name = na(user.displayName);
+    toggleSuspend.mutate(user.id, {
+      onSuccess: (nowSuspended) =>
+        toast.success(
+          nowSuspended ? `"${name}" has been suspended.` : `"${name}" has been reactivated.`
+        ),
+      onError: () =>
+        toast.error(
+          suspended
+            ? "Couldn't reactivate this account. Please try again."
+            : "Couldn't suspend this account. Please try again."
+        ),
+    });
+    setConfirmOpen(false);
+  };
 
   if (isLoading) return <UserDetailSkeleton />;
   if (!user) return (
@@ -31,9 +57,9 @@ export default function UserDetailPage() {
         {/* Back button above title */}
         <motion.div variants={fadeUp} initial="hidden" animate="show">
           <BackButton />
-          <h1 className="mt-3 text-2xl font-bold text-white">{user.displayName}</h1>
+          <h1 className="mt-3 text-2xl font-bold text-white">{na(user.displayName)}</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Manage user profile, permissions, location, and moderation history.
+            View user profile, location, and moderation history.
           </p>
         </motion.div>
 
@@ -46,27 +72,36 @@ export default function UserDetailPage() {
         >
           {/* Profile card */}
           <motion.div variants={fadeUp} className="rounded-xl border border-white/[0.08] bg-[#0d1321] p-6 flex flex-col gap-5">
-            {/* Avatar */}
+            {/* Profile fields are read-only — suspension is the only action
+                admins can take on a user from here. */}
             <div className="flex flex-col items-center gap-3">
               <div className="rounded-full p-[3px] bg-gradient-to-br from-blue-500/60 via-blue-400/30 to-transparent">
                 <UserAvatar src={user.avatarUrl} name={user.displayName} size="xl" />
               </div>
-              <Link
-                href={`/dashboard/users/${user.id}/edit`}
-                className="flex items-center gap-1.5 rounded-lg bg-[#2563eb] px-4 py-2 text-xs font-semibold text-white hover:bg-blue-600 transition-colors"
+              <button
+                onClick={() => setConfirmOpen(true)}
+                disabled={toggleSuspend.isPending}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-semibold text-white transition-colors",
+                  "disabled:cursor-not-allowed disabled:opacity-60",
+                  suspended
+                    ? "bg-emerald-600 hover:bg-emerald-500"
+                    : "bg-red-600 hover:bg-red-500"
+                )}
               >
-                <Pencil size={12} />
-                Edit Profile
-              </Link>
+                {suspended
+                  ? <><RotateCcw size={12} /> Reactivate Account</>
+                  : <><Ban size={12} /> Suspend Account</>}
+              </button>
             </div>
 
             {/* Fields */}
             <div className="space-y-4">
               <ProfileField label="USERNAME" value={user.username} />
               <ProfileField label="DISPLAY NAME" value={user.displayName} />
-              <ProfileField label="BIO" value={user.bio || "—"} italic={!!user.bio} />
-              <ProfileField label="LOCATION" value={user.location || "—"} />
-              <ProfileField label="PROFESSION" value={user.profession || "—"} />
+              <ProfileField label="BIO" value={user.bio} />
+              <ProfileField label="LOCATION" value={user.location} />
+              <ProfileField label="PROFESSION" value={user.profession} />
             </div>
           </motion.div>
 
@@ -77,7 +112,11 @@ export default function UserDetailPage() {
               <MiniStat label="FRIENDS"        value={formatNumberFull(user.stats.friends)} />
               <MiniStat label="FOLLOWERS"      value={formatNumberFull(user.stats.followers)} />
               <MiniStat label="FOLLOWING"      value={formatNumberFull(user.stats.following)} />
-              <MiniStat label="REPORTED POSTS" value={formatNumberFull(user.stats.reportedPosts)} />
+              <MiniStat
+                label="REPORTED POSTS"
+                value={formatNumberFull(user.stats.reportedPosts)}
+                href="/dashboard/post-reports"
+              />
               <MiniStat label="CREATED POSTS"  value={formatNumberFull(user.stats.createdPosts)} />
               <MiniStat label="PROFILE VIEWS"  value={formatNumberFull(user.stats.profileViews)} />
             </motion.div>
@@ -138,67 +177,109 @@ export default function UserDetailPage() {
                 </div>
               </div>
 
-              {/* Subscription */}
+              {/* Subscription — absent for users who never subscribed, and
+                  validity/payment stay null until billing is wired up. */}
               <div className="rounded-xl border border-white/[0.08] bg-[#0d1321] p-5 space-y-3">
                 <div className="flex items-center justify-between">
                   <p className="text-label">SUBSCRIPTION PLAN</p>
-                  <span className={`flex items-center gap-1.5 text-[10px] font-bold rounded-full px-2 py-0.5 border ${
-                    user.subscription.status === "ACTIVE"
-                      ? "bg-blue-500/10 text-blue-400 border-blue-500/30"
-                      : "bg-red-500/10 text-red-400 border-red-500/30"
-                  }`}>
-                    <span className={`h-1.5 w-1.5 rounded-full ${user.subscription.status === "ACTIVE" ? "bg-blue-400" : "bg-red-400"}`} />
-                    {user.subscription.status}
-                  </span>
+                  {user.subscription && (
+                    <span className={`flex items-center gap-1.5 text-[10px] font-bold rounded-full px-2 py-0.5 border ${
+                      user.subscription.status === "ACTIVE"
+                        ? "bg-blue-500/10 text-blue-400 border-blue-500/30"
+                        : "bg-red-500/10 text-red-400 border-red-500/30"
+                    }`}>
+                      <span className={`h-1.5 w-1.5 rounded-full ${user.subscription.status === "ACTIVE" ? "bg-blue-400" : "bg-red-400"}`} />
+                      {user.subscription.status}
+                    </span>
+                  )}
                 </div>
-                <p className="text-sm font-bold text-[#3b82f6]">{user.subscription.plan}</p>
-                <div className="border-t border-white/[0.05] pt-3 grid grid-cols-2 gap-2">
-                  <div>
-                    <p className="text-label">VALIDITY</p>
-                    <p className="text-xs text-slate-200 mt-1">Expires {user.subscription.validUntil}</p>
-                  </div>
-                  <div>
-                    <p className="text-label">PAYMENT</p>
-                    <p className="text-xs text-slate-200 mt-1 flex items-center gap-1">
-                      <CreditCard size={11} className="text-muted-foreground shrink-0" />
-                      <span className="truncate">{user.subscription.paymentMethod}</span>
-                    </p>
-                  </div>
-                </div>
+
+                {user.subscription ? (
+                  <>
+                    <p className="text-sm font-bold text-[#3b82f6]">{na(user.subscription.plan)}</p>
+                    <div className="border-t border-white/[0.05] pt-3 grid grid-cols-2 gap-2">
+                      <div>
+                        <p className="text-label">VALIDITY</p>
+                        <p className="text-xs text-slate-200 mt-1">
+                          {user.subscription.validUntil ? `Expires ${user.subscription.validUntil}` : "NA"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-label">PAYMENT</p>
+                        <p className="text-xs text-slate-200 mt-1 flex items-center gap-1">
+                          <CreditCard size={11} className="text-muted-foreground shrink-0" />
+                          <span className="truncate">{na(user.subscription.paymentMethod)}</span>
+                        </p>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-xs text-muted-foreground">No active subscription.</p>
+                )}
               </div>
             </motion.div>
           </div>
         </motion.div>
       </main>
 
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {suspended ? "Reactivate this account?" : "Suspend this account?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {suspended
+                ? `This restores "${na(user.displayName)}"'s access to the platform.`
+                : `This blocks "${na(user.displayName)}" from the platform and signs them out of any active session. You can reactivate the account later.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              variant={suspended ? "default" : "destructive"}
+              onClick={confirmToggle}
+            >
+              {suspended ? "Reactivate Account" : "Suspend Account"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Status bar */}
-      <footer className="flex items-center justify-between border-t border-white/[0.06] px-6 py-2.5 text-[10px] text-[#3a4a6a]">
+      {/* <footer className="flex items-center justify-between border-t border-white/[0.06] px-6 py-2.5 text-[10px] text-[#3a4a6a]">
         <span className="flex items-center gap-2">
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-          System Secure: Latency 24ms
         </span>
         <span>UID: {user.id.toUpperCase()} &nbsp;&nbsp; {SYSTEM_VERSION}</span>
-      </footer>
+      </footer> */}
     </div>
   );
 }
 
-function ProfileField({ label, value, italic }: { label: string; value: string; italic?: boolean }) {
+function ProfileField({ label, value }: { label: string; value?: string | null }) {
+  const missing = !value || !value.trim();
   return (
     <div>
       <p className="text-label mb-1">{label}</p>
-      <p className={`text-sm text-slate-200 ${italic ? "italic" : ""}`}>{value}</p>
+      <p className={missing ? "text-sm italic text-muted-foreground" : "text-sm text-slate-200"}>
+        {na(value)}
+      </p>
     </div>
   );
 }
 
-function MiniStat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-xl border border-white/[0.08] bg-[#0d1321] p-4">
-      <p className="text-label mb-2">{label}</p>
+function MiniStat({ label, value, href }: { label: string; value: string; href?: string }) {
+  const card = (
+    <div className={`rounded-xl border border-white/[0.08] bg-[#0d1321] p-4 ${href ? "transition-colors hover:border-blue-500/40 hover:bg-blue-500/[0.04]" : ""}`}>
+      <p className="text-label mb-2 flex items-center gap-1">
+        {label}
+        {href && <ArrowUpRight size={11} className="text-caption" />}
+      </p>
       <p className="text-2xl font-bold text-[#99CBFF]">{value}</p>
     </div>
   );
+  return href ? <Link href={href}>{card}</Link> : card;
 }
 
 function UserDetailSkeleton() {

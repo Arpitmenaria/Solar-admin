@@ -57,7 +57,15 @@ const SYSTEM_NAME = "Kick Analyst";
 
 const NAV_ITEMS: NavEntry[] = [
   { type: "link", label: "Dashboard", href: "/dashboard", icon: "Dashboard" },
-  { type: "link", label: "User Management", href: "/dashboard/users", icon: "Users" },
+  {
+    type: "group",
+    label: "User Management",
+    icon: "Users",
+    children: [
+      { label: "Users", href: "/dashboard/users" },
+      { label: "Reported Posts", href: "/dashboard/post-reports" },
+    ],
+  },
   {
     type: "group",
     label: "Group Management",

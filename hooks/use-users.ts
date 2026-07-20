@@ -2,12 +2,13 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { usersService, dashboardService } from "@/services/users.service";
-import type { UserFilters, ProfileFormValues } from "@/types";
+import type { UserFilters } from "@/types";
 
 export const userKeys = {
   all: ["users"] as const,
   list: (filters: Partial<UserFilters>) => ["users", "list", filters] as const,
   detail: (id: string) => ["users", "detail", id] as const,
+  stats: ["users", "stats"] as const,
 };
 
 export function useUsers(filters: Partial<UserFilters> = {}) {
@@ -27,21 +28,22 @@ export function useUser(id: string) {
   });
 }
 
-export function useUpdateUser(id: string) {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (values: Partial<ProfileFormValues>) => usersService.updateUser(id, values),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: userKeys.detail(id) });
-      qc.invalidateQueries({ queryKey: userKeys.all });
-    },
+export function useUserStats() {
+  return useQuery({
+    queryKey: userKeys.stats,
+    queryFn: usersService.getUserStats,
+    staleTime: 60_000,
   });
 }
 
-export function useBlockUser() {
+/**
+ * The endpoint toggles isSuspended rather than setting it, so callers must
+ * check the user's current state to know which direction a click will go.
+ */
+export function useToggleSuspend() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => usersService.blockUser(id),
+    mutationFn: (id: string) => usersService.toggleSuspend(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: userKeys.all }),
   });
 }

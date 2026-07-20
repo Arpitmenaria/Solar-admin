@@ -19,12 +19,20 @@ export interface User {
   avatarUrl: string;
   coverUrl?: string;
   status: UserStatus;
+  /**
+   * Backing field for the suspend toggle. `status` is derived server-side and
+   * INACTIVE currently means "suspended", but deriving a mutation's direction
+   * from a display string breaks the moment a second INACTIVE rule is added —
+   * so the toggle reads this instead.
+   */
+  isSuspended: boolean;
   accountTier: AccountTier;
   registrationDate: string;
   stats: UserStats;
   groups: GroupStats;
   events: EventStats;
-  subscription: Subscription;
+  /** null for users who have never subscribed. */
+  subscription: Subscription | null;
 }
 
 export interface UserStats {
@@ -51,8 +59,18 @@ export interface EventStats {
 export interface Subscription {
   plan: string;
   status: SubscriptionStatus;
-  validUntil: string;
-  paymentMethod: string;
+  /** null until a payment system is wired up on the backend. */
+  validUntil: string | null;
+  paymentMethod: string | null;
+}
+
+/** The four cards above the user directory. */
+export interface UserStatsSummary {
+  totalUsers: number;
+  premiumUsers: number;
+  /** Registrations in the last 30 days. */
+  newSignups: number;
+  flaggedUsers: number;
 }
 
 export interface DashboardStats {
@@ -151,6 +169,62 @@ export interface ProfileFormValues {
   phone: string;
   website: string;
   bio: string;
+}
+
+/* ── Reported posts ─────────────────────────── */
+
+/** The API uses lowercase; mapped to these at the service boundary. */
+export type PostReportStatus = "PENDING" | "RESOLVED";
+
+export interface PostMedia {
+  url: string;
+  type: string;
+}
+
+/** Reporter or post author — the API returns the same shape for both. */
+export interface PostReportPerson {
+  id: string;
+  fullName: string;
+  avatarUrl: string;
+}
+
+export interface ReportedPost {
+  id: string;
+  caption: string;
+  media: PostMedia[];
+  author: PostReportPerson;
+}
+
+export interface PostReport {
+  reportId: string;
+  postId: string;
+  status: PostReportStatus;
+  /**
+   * The post row is gone, but `post` is still populated from the snapshot
+   * captured when the report was filed.
+   */
+  postDeleted: boolean;
+  /** Reports are grouped per post; this is how many were filed against it. */
+  reportCount: number;
+  reasons: string[];
+  reportedAt: string;
+  /** Every unique reporter for this post, not just the first. */
+  reporters: PostReportPerson[];
+  post: ReportedPost;
+}
+
+export interface PostReportStats {
+  total: number;
+  pending: number;
+  resolved: number;
+}
+
+export interface PaginatedPostReports {
+  data: PostReport[];
+  total: number;
+  page: number;
+  totalPages: number;
+  stats: PostReportStats;
 }
 
 export type PlanTier = "free" | "gold" | "platinum";

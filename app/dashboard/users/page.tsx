@@ -12,15 +12,15 @@ import {
   AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
   AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-import { useUsers, useDashboardStats, useBlockUser } from "@/hooks/use-users";
+import { useUsers, useUserStats, useToggleSuspend } from "@/hooks/use-users";
 import { USER_FILTER_TABS } from "@/constants/users";
-import { formatNumberFull, formatDate, cn } from "@/lib/utils";
+import { formatNumberFull, formatDate, na, cn } from "@/lib/utils";
 import type { User, UserStatus } from "@/types";
 import {
   Search, Download,
   ChevronFirst, ChevronLast, ChevronLeft, ChevronRight,
   Flag, UserPlus, Users, Crown,
-  MoreVertical, Eye, Ban,
+  MoreVertical, Eye, Ban, RotateCcw,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
@@ -28,8 +28,16 @@ import Link from "next/link";
 /* Figma column layout: USER NODE wide, STATUS compact, rest fixed */
 const COLS = "grid-cols-[minmax(220px,2.5fr)_130px_140px_130px_90px_110px]";
 
+/* Up to three page buttons, sliding to keep the current page in view. */
+function pageWindow(current: number, total: number): number[] {
+  const start = Math.max(1, Math.min(current - 1, total - 2));
+  return Array.from({ length: Math.min(3, total) }, (_, i) => start + i);
+}
+
 /* ── ActionMenu (portal, fixed) ─────────────── */
-function ActionMenu({ user, onBlock }: { user: User; onBlock: () => void }) {
+function ActionMenu({
+  user, onToggleSuspend, pending,
+}: { user: User; onToggleSuspend: () => void; pending: boolean }) {
   const [open, setOpen] = useState(false);
   const [pos, setPos]   = useState({ top: 0, right: 0 });
   const btnRef  = useRef<HTMLButtonElement>(null);
@@ -88,11 +96,22 @@ function ActionMenu({ user, onBlock }: { user: User; onBlock: () => void }) {
               >
                 <Eye size={14} /> View Details
               </Link>
+              {/* The endpoint toggles, so the label has to follow the user's
+                  current state — a fixed "Suspend" would silently reinstate
+                  an already-suspended account. */}
               <button
-                onClick={() => { setOpen(false); onBlock(); }}
-                className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-[12px] font-medium text-red-400 transition-colors hover:bg-[rgba(239,68,68,0.12)]"
+                onClick={() => { setOpen(false); onToggleSuspend(); }}
+                disabled={pending}
+                className={cn(
+                  "flex w-full items-center gap-2.5 px-3.5 py-2.5 text-[12px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50",
+                  user.isSuspended
+                    ? "text-emerald-400 hover:bg-[rgba(16,185,129,0.12)]"
+                    : "text-red-400 hover:bg-[rgba(239,68,68,0.12)]"
+                )}
               >
-                <Ban size={14} /> Block User
+                {user.isSuspended
+                  ? <><RotateCcw size={14} /> Reactivate Account</>
+                  : <><Ban size={14} /> Suspend Account</>}
               </button>
             </motion.div>
           )}
@@ -107,20 +126,34 @@ export default function UsersPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<UserStatus | "ALL">("ALL");
   const [page, setPage] = useState(1);
-  const [pendingBlock, setPendingBlock] = useState<User | null>(null);
+  const [pageSize, setPageSize] = useState(10);
+  const [pendingSuspend, setPendingSuspend] = useState<User | null>(null);
 
-  const { data: users, isLoading: usersLoading } = useUsers({ search, status: statusFilter, page });
-  const { data: stats, isLoading: statsLoading } = useDashboardStats();
-  const blockUser = useBlockUser();
+  const { data: users, isLoading: usersLoading } = useUsers({ search, status: statusFilter, page, pageSize });
+  const { data: stats, isLoading: statsLoading } = useUserStats();
+  const toggleSuspend = useToggleSuspend();
 
-  const confirmBlock = () => {
-    if (!pendingBlock) return;
-    const { id, displayName } = pendingBlock;
-    blockUser.mutate(id, {
-      onSuccess: () => toast.success(`"${displayName}" has been blocked.`),
-      onError: () => toast.error("Couldn't block this user. Please try again."),
+  const totalPages = users?.totalPages ?? 1;
+
+  const confirmSuspend = () => {
+    if (!pendingSuspend) return;
+    const { id, displayName, isSuspended } = pendingSuspend;
+    toggleSuspend.mutate(id, {
+      // Report the state the server landed on, not the one we predicted.
+      onSuccess: (nowSuspended) =>
+        toast.success(
+          nowSuspended
+            ? `"${displayName}" has been suspended.`
+            : `"${displayName}" has been reactivated.`
+        ),
+      onError: () =>
+        toast.error(
+          isSuspended
+            ? "Couldn't reactivate this user. Please try again."
+            : "Couldn't suspend this user. Please try again."
+        ),
     });
-    setPendingBlock(null);
+    setPendingSuspend(null);
   };
 
   return (
@@ -134,7 +167,7 @@ export default function UsersPage() {
             <>
               <StatCard label="TOTAL USERS"    value={formatNumberFull(stats?.totalUsers ?? 0)}    icon={Users} />
               <StatCard label="PREMIUM USERS"  value={formatNumberFull(stats?.premiumUsers ?? 0)}  icon={Crown} />
-              <StatCard label="NEW SIGN UP"     value={formatNumberFull(stats?.newSignups ?? 0)}    icon={UserPlus} sub="Today" />
+              <StatCard label="NEW SIGN UP"     value={formatNumberFull(stats?.newSignups ?? 0)}    icon={UserPlus} sub="Last 30 days" />
               <StatCard label="FLAGGED USERS"   value={formatNumberFull(stats?.flaggedUsers ?? 0)}  icon={Flag} sub="Needs review" />
             </>
           )}
@@ -201,7 +234,7 @@ export default function UsersPage() {
             {/* Table body */}
             {usersLoading ? (
               <div className="px-6">
-                {Array.from({ length: 5 }).map((_, i) => <TableRowSkeleton key={i} />)}
+                {Array.from({ length: Math.min(pageSize, 10) }).map((_, i) => <TableRowSkeleton key={i} />)}
               </div>
             ) : (
               <div>
@@ -222,9 +255,9 @@ export default function UsersPage() {
                         online={user.status === "ACTIVE" || user.status === "PREMIUM"}
                       />
                       <div className="min-w-0">
-                        <p className="truncate text-[13px] font-semibold text-white">{user.displayName}</p>
+                        <p className="truncate text-[13px] font-semibold text-white">{na(user.displayName)}</p>
                         <p className={`truncate text-[11px] mt-0.5 ${user.status === "FLAGGED" ? "text-red-400" : "text-caption"}`}>
-                          {user.email}
+                          {na(user.email)}
                         </p>
                       </div>
                     </div>
@@ -246,9 +279,19 @@ export default function UsersPage() {
                       {formatNumberFull(user.stats.createdPosts)}
                     </span>
 
-                    <ActionMenu user={user} onBlock={() => setPendingBlock(user)} />
+                    <ActionMenu
+                      user={user}
+                      onToggleSuspend={() => setPendingSuspend(user)}
+                      pending={toggleSuspend.isPending}
+                    />
                   </motion.div>
                 ))}
+
+                {(users?.data.length ?? 0) === 0 && (
+                  <p className="px-6 py-12 text-center text-[12px] text-caption">
+                    No users match these filters.
+                  </p>
+                )}
               </div>
             )}
 
@@ -256,19 +299,31 @@ export default function UsersPage() {
             <div className="flex items-center justify-between px-6 py-4">
               <div className="flex items-center gap-2.5 text-[11px] text-caption">
                 <span className="font-medium">Rows:</span>
-                <input
-                  type="number"
-                  defaultValue={50}
+                {/* A select rather than a number input: discrete values mean one
+                    request per change, and no way to type 0 or 99999. */}
+                <select
+                  value={pageSize}
+                  onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
                   aria-label="Rows per page"
-                  className="w-14 rounded border border-white/[0.08] bg-transparent px-2 py-1 text-center text-[11px] text-slate-300 focus:outline-none focus:border-blue-500/40"
-                />
+                  className="rounded border border-white/[0.08] bg-transparent px-2 py-1 text-[11px] text-slate-300 focus:outline-none focus:border-blue-500/40"
+                >
+                  {[10, 25, 50, 100].map((n) => (
+                    <option key={n} value={n} className="bg-[#0d1424] text-slate-300">{n}</option>
+                  ))}
+                </select>
+                {users && users.total > 0 && (
+                  <span className="ml-1">
+                    {formatNumberFull((page - 1) * pageSize + 1)}–
+                    {formatNumberFull(Math.min(page * pageSize, users.total))} of {formatNumberFull(users.total)}
+                  </span>
+                )}
               </div>
 
               <div className="flex items-center gap-0.5">
                 <PaginationButton label="First page"    icon={<ChevronFirst size={13} />} onClick={() => setPage(1)}                    disabled={page === 1} />
                 <PaginationButton label="Previous page" icon={<ChevronLeft size={13} />}  onClick={() => setPage(Math.max(1, page - 1))} disabled={page === 1} />
 
-                {[1, 2, 3].map((n) => (
+                {pageWindow(page, totalPages).map((n) => (
                   <button
                     key={n}
                     onClick={() => setPage(n)}
@@ -283,10 +338,12 @@ export default function UsersPage() {
                   </button>
                 ))}
 
-                <span className="px-2 text-[11px] text-caption">… 24,970</span>
+                {totalPages > 3 && (
+                  <span className="px-2 text-[11px] text-caption">… {formatNumberFull(totalPages)}</span>
+                )}
 
-                <PaginationButton label="Next page" icon={<ChevronRight size={13} />} onClick={() => setPage(page + 1)} disabled={false} />
-                <PaginationButton label="Last page"  icon={<ChevronLast size={13} />}  onClick={() => setPage(24970)}     disabled={false} />
+                <PaginationButton label="Next page" icon={<ChevronRight size={13} />} onClick={() => setPage(Math.min(totalPages, page + 1))} disabled={page >= totalPages} />
+                <PaginationButton label="Last page"  icon={<ChevronLast size={13} />}  onClick={() => setPage(totalPages)}                     disabled={page >= totalPages} />
               </div>
             </div>
 
@@ -294,18 +351,25 @@ export default function UsersPage() {
         </div>
       </main>
 
-      <AlertDialog open={!!pendingBlock} onOpenChange={(open) => { if (!open) setPendingBlock(null); }}>
+      <AlertDialog open={!!pendingSuspend} onOpenChange={(open) => { if (!open) setPendingSuspend(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Block this user?</AlertDialogTitle>
+            <AlertDialogTitle>
+              {pendingSuspend?.isSuspended ? "Reactivate this account?" : "Suspend this account?"}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              {pendingBlock && `This restricts "${pendingBlock.displayName}" from accessing the platform until unblocked.`}
+              {pendingSuspend && (pendingSuspend.isSuspended
+                ? `This restores "${pendingSuspend.displayName}"'s access to the platform.`
+                : `This blocks "${pendingSuspend.displayName}" from the platform and signs them out of any active session. You can reactivate the account later.`)}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction variant="destructive" onClick={confirmBlock}>
-              Block User
+            <AlertDialogAction
+              variant={pendingSuspend?.isSuspended ? "default" : "destructive"}
+              onClick={confirmSuspend}
+            >
+              {pendingSuspend?.isSuspended ? "Reactivate Account" : "Suspend Account"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
