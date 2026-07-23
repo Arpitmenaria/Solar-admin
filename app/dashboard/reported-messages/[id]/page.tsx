@@ -87,8 +87,6 @@ export default function ConversationReportDetailPage() {
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
             {data.reports.length} report{data.reports.length === 1 ? "" : "s"} filed against this conversation
-            {pendingCount > 0 && ` · ${pendingCount} pending`}
-            {data.chat.type === "group" && data.memberCount != null && ` · ${data.memberCount} members`}
           </p>
         </motion.div>
 
