@@ -227,6 +227,77 @@ export interface PaginatedPostReports {
   stats: PostReportStats;
 }
 
+/* ── Reported conversations ─────────────────────────── */
+
+/** The API uses lowercase; mapped to these at the service boundary. */
+export type ConversationReportStatus = "PENDING" | "RESOLVED";
+
+/** A conversation is either a group chat or a 1:1 direct chat. */
+export type ChatType = "group" | "direct";
+
+/** Reporter or any other referenced person — the API returns the same shape for all of them. */
+export interface MessageReportPerson {
+  id: string;
+  fullName: string;
+  avatarUrl: string;
+}
+
+/** A reporter on the conversation-list view, with the reason they gave. */
+export interface ConversationReporter extends MessageReportPerson {
+  reason: string;
+}
+
+export interface MessageChatContext {
+  type: ChatType;
+  id: string;
+  /** Group name for group chats; the other participant's name for DMs. */
+  name: string;
+}
+
+/** One row in the reported-conversations list — reports merged per conversation. */
+export interface ConversationReportSummary {
+  conversationId: string;
+  chat: MessageChatContext;
+  status: ConversationReportStatus;
+  /** Total reports filed against this conversation. */
+  reportCount: number;
+  /** Group chats only — undefined for direct messages. */
+  memberCount?: number;
+  /** Every reporter, each with the reason they gave. */
+  reporters: ConversationReporter[];
+  lastReportedAt: string;
+}
+
+export interface ConversationReportStats {
+  total: number;
+  pending: number;
+  resolved: number;
+}
+
+export interface PaginatedConversationReports {
+  data: ConversationReportSummary[];
+  total: number;
+  page: number;
+  totalPages: number;
+  stats: ConversationReportStats;
+}
+
+/** One filed report within a conversation's report detail view. */
+export interface ConversationMessageReport {
+  reportId: string;
+  reason: string;
+  reportedAt: string;
+  status: ConversationReportStatus;
+  reporter: MessageReportPerson;
+}
+
+export interface ConversationReportDetail {
+  conversationId: string;
+  chat: MessageChatContext;
+  memberCount?: number;
+  reports: ConversationMessageReport[];
+}
+
 export type PlanTier = "free" | "gold" | "platinum";
 export type PlanBillingType = "weekly" | "monthly" | "quarterly" | "yearly";
 

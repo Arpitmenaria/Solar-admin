@@ -64,6 +64,7 @@ const NAV_ITEMS: NavEntry[] = [
     children: [
       { label: "Users", href: "/dashboard/users" },
       { label: "Reported Posts", href: "/dashboard/post-reports" },
+      { label: "Reported Messages", href: "/dashboard/reported-messages" },
     ],
   },
   {
