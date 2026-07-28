@@ -91,7 +91,7 @@ export default function UserDetailPage() {
               >
                 {suspended
                   ? <><RotateCcw size={12} /> Reactivate Account</>
-                  : <><Ban size={12} /> Suspend Account</>}
+                  : <><Ban size={12} /> Make Account Suspend</>}
               </button>
             </div>
 
@@ -99,7 +99,7 @@ export default function UserDetailPage() {
             <div className="space-y-4">
               <ProfileField label="USERNAME" value={user.username} />
               <ProfileField label="DISPLAY NAME" value={user.displayName} />
-              <ProfileField label="BIO" value={user.bio} />
+              <ProfileField label="BIO" value={user.bio} expandable />
               <ProfileField label="LOCATION" value={user.location} />
               <ProfileField label="PROFESSION" value={user.profession} />
             </div>
@@ -109,7 +109,7 @@ export default function UserDetailPage() {
           <div className="space-y-5">
             {/* 6 stat cards */}
             <motion.div variants={fadeUp} className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              <MiniStat label="FRIENDS"        value={formatNumberFull(user.stats.friends)} />
+              <MiniStat label="CONNECTIONS"    value={formatNumberFull(user.stats.friends)} />
               <MiniStat label="FOLLOWERS"      value={formatNumberFull(user.stats.followers)} />
               <MiniStat label="FOLLOWING"      value={formatNumberFull(user.stats.following)} />
               <MiniStat
@@ -171,7 +171,7 @@ export default function UserDetailPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="text-sm font-semibold text-white">Account Status</h4>
-                    <p className="text-xs text-muted-foreground mt-0.5">Current Tier: {user.accountTier}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5 capitalize">Current Tier: {user.accountTier}</p>
                   </div>
                   <StatusBadge status={user.status} />
                 </div>
@@ -185,10 +185,10 @@ export default function UserDetailPage() {
                   {user.subscription && (
                     <span className={`flex items-center gap-1.5 text-[10px] font-bold rounded-full px-2 py-0.5 border ${
                       user.subscription.status === "ACTIVE"
-                        ? "bg-blue-500/10 text-blue-400 border-blue-500/30"
+                        ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
                         : "bg-red-500/10 text-red-400 border-red-500/30"
                     }`}>
-                      <span className={`h-1.5 w-1.5 rounded-full ${user.subscription.status === "ACTIVE" ? "bg-blue-400" : "bg-red-400"}`} />
+                      <span className={`h-1.5 w-1.5 rounded-full ${user.subscription.status === "ACTIVE" ? "bg-emerald-400" : "bg-red-400"}`} />
                       {user.subscription.status}
                     </span>
                   )}
@@ -240,7 +240,7 @@ export default function UserDetailPage() {
               variant={suspended ? "default" : "destructive"}
               onClick={confirmToggle}
             >
-              {suspended ? "Reactivate Account" : "Suspend Account"}
+              {suspended ? "Reactivate Account" : "Make Account Suspend"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -257,14 +257,33 @@ export default function UserDetailPage() {
   );
 }
 
-function ProfileField({ label, value }: { label: string; value?: string | null }) {
+function ProfileField({ label, value, expandable }: { label: string; value?: string | null; expandable?: boolean }) {
+  const [expanded, setExpanded] = useState(false);
   const missing = !value || !value.trim();
+  // Only bother with a toggle when the text is actually long enough to clamp.
+  const clampable = expandable && !missing && value!.trim().length > 160;
+
   return (
     <div>
       <p className="text-label mb-1">{label}</p>
-      <p className={missing ? "text-sm italic text-muted-foreground" : "text-sm text-slate-200"}>
+      <p
+        className={cn(
+          "text-sm break-words",
+          missing ? "italic text-muted-foreground" : "text-slate-200",
+          clampable && !expanded && "line-clamp-3"
+        )}
+      >
         {na(value)}
       </p>
+      {clampable && (
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          className="mt-1 text-xs font-semibold text-blue-400 transition-colors hover:text-blue-300"
+        >
+          {expanded ? "Show less" : "Show more"}
+        </button>
+      )}
     </div>
   );
 }

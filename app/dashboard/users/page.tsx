@@ -111,7 +111,7 @@ function ActionMenu({
               >
                 {user.isSuspended
                   ? <><RotateCcw size={14} /> Reactivate Account</>
-                  : <><Ban size={14} /> Suspend Account</>}
+                  : <><Ban size={14} /> Make Account Suspend</>}
               </button>
             </motion.div>
           )}
@@ -369,7 +369,7 @@ export default function UsersPage() {
               variant={pendingSuspend?.isSuspended ? "default" : "destructive"}
               onClick={confirmSuspend}
             >
-              {pendingSuspend?.isSuspended ? "Reactivate Account" : "Suspend Account"}
+              {pendingSuspend?.isSuspended ? "Reactivate Account" : "Make Account Suspend"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

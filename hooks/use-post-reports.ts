@@ -17,10 +17,10 @@ export function usePostReports(filters: Partial<PostReportFilters> = {}) {
 }
 
 /** Both actions resolve the post's reports, so both invalidate the same list. */
-export function useDeleteReportedPost() {
+export function useHidePost() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (postId: string) => postReportsService.deletePost(postId),
+    mutationFn: (postId: string) => postReportsService.hidePost(postId),
     onSuccess: () => qc.invalidateQueries({ queryKey: postReportKeys.all }),
   });
 }

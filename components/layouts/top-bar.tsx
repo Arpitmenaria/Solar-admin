@@ -181,7 +181,7 @@ export function TopBar() {
             <Menu size={18} />
           </button>
           <span className="text-[15px] font-bold tracking-[-0.2px] text-blue-500">
-            Social Platform Admin
+            Kink Analyst Admin
           </span>
         </div>
 

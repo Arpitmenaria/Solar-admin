@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import {
-  Flag, Clock, CheckCircle2, MoreVertical, Eye, Trash2, ShieldCheck,
+  Flag, Clock, CheckCircle2, MoreVertical, Eye, EyeOff, Trash2, ShieldCheck,
   FileText, Play, X, Search, ImageOff,
   ChevronFirst, ChevronLast, ChevronLeft, ChevronRight,
 } from "lucide-react";
@@ -18,7 +18,7 @@ import {
   AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
   AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-import { usePostReports, useDeleteReportedPost, useDismissPostReports } from "@/hooks/use-post-reports";
+import { usePostReports, useHidePost, useDismissPostReports } from "@/hooks/use-post-reports";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { formatNumberFull, formatDate, na, cn } from "@/lib/utils";
 import type { PostReport, PostReportStatus } from "@/types";
@@ -37,7 +37,7 @@ const STATUS_STYLES: Record<PostReportStatus, { label: string; dot: string; text
   RESOLVED: { label: "Resolved", dot: "bg-emerald-400", text: "text-emerald-300" },
 };
 
-type PendingAction = { kind: "delete" | "dismiss"; report: PostReport };
+type PendingAction = { kind: "hide" | "dismiss"; report: PostReport };
 
 /* ── Report count — the queue's primary signal, so it scales with severity ── */
 function ReportCount({ count }: { count: number }) {
@@ -126,7 +126,7 @@ function ActionMenu({
 }: {
   report: PostReport;
   onPreview: () => void;
-  onAction: (kind: "delete" | "dismiss") => void;
+  onAction: (kind: "hide" | "dismiss") => void;
   pending: boolean;
 }) {
   const [open, setOpen] = useState(false);
@@ -194,18 +194,18 @@ function ActionMenu({
               {!resolved && (
                 <>
                   <button
-                    onClick={() => { setOpen(false); onAction("dismiss"); }}
+                    onClick={() => { setOpen(false); onAction("hide"); }}
                     disabled={pending}
-                    className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-[12px] font-medium text-emerald-400 transition-colors hover:bg-[rgba(16,185,129,0.12)] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-[12px] font-medium text-amber-400 transition-colors hover:bg-[rgba(245,158,11,0.12)] disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    <ShieldCheck size={14} /> Dismiss Reports
+                    <EyeOff size={14} /> Hide Post from Feed
                   </button>
                   <button
-                    onClick={() => { setOpen(false); onAction("delete"); }}
+                    onClick={() => { setOpen(false); onAction("dismiss"); }}
                     disabled={pending}
-                    className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-[12px] font-medium text-red-400 transition-colors hover:bg-[rgba(239,68,68,0.12)] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-[12px] font-medium text-slate-300 transition-colors hover:bg-[rgba(255,255,255,0.07)] disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    <Trash2 size={14} /> Delete Post
+                    <ShieldCheck size={14} /> No Action
                   </button>
                 </>
               )}
@@ -276,6 +276,15 @@ function PostPreview({ report, onClose }: { report: PostReport | null; onClose: 
                 </div>
               )}
 
+              {report.postHidden && !report.postDeleted && (
+                <div className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/[0.10] px-3 py-2">
+                  <EyeOff size={13} className="shrink-0 text-amber-300" />
+                  <p className="text-[11px] text-amber-200">
+                    This post is hidden from the public feed. Admins can still view it here.
+                  </p>
+                </div>
+              )}
+
               {report.post.caption.trim() ? (
                 <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-slate-200">
                   {report.post.caption}
@@ -329,7 +338,7 @@ function PostPreview({ report, onClose }: { report: PostReport | null; onClose: 
 }
 
 export default function PostReportsPage() {
-  const [status, setStatus] = useState<PostReportStatus | "ALL">("PENDING");
+  const [status, setStatus] = useState<PostReportStatus | "ALL">("ALL");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [preview, setPreview] = useState<PostReport | null>(null);
@@ -340,28 +349,28 @@ export default function PostReportsPage() {
   const debouncedSearch = useDebouncedValue(search);
 
   const { data, isLoading } = usePostReports({ status, search: debouncedSearch, page, limit: 10 });
-  const deletePost = useDeleteReportedPost();
+  const hidePost = useHidePost();
   const dismissReports = useDismissPostReports();
 
   const stats = data?.stats;
   const reports = data?.data ?? [];
   const totalPages = data?.totalPages ?? 1;
-  const busy = deletePost.isPending || dismissReports.isPending;
+  const busy = hidePost.isPending || dismissReports.isPending;
 
   const confirmAction = () => {
     if (!pendingAction) return;
     const { kind, report } = pendingAction;
     const author = na(report.post.author.fullName);
 
-    if (kind === "delete") {
-      deletePost.mutate(report.postId, {
-        onSuccess: () => toast.success(`Post by "${author}" deleted and its reports resolved.`),
-        onError: () => toast.error("Couldn't delete this post. Please try again."),
+    if (kind === "hide") {
+      hidePost.mutate(report.postId, {
+        onSuccess: () => toast.success(`Post by "${author}" hidden from the feed and its reports resolved.`),
+        onError: () => toast.error("Couldn't hide this post. Please try again."),
       });
     } else {
       dismissReports.mutate(report.postId, {
-        onSuccess: () => toast.success(`Reports on "${author}"'s post dismissed.`),
-        onError: () => toast.error("Couldn't dismiss these reports. Please try again."),
+        onSuccess: () => toast.success(`No action taken on "${author}"'s post; reports resolved.`),
+        onError: () => toast.error("Couldn't resolve these reports. Please try again."),
       });
     }
     setPendingAction(null);
@@ -373,7 +382,7 @@ export default function PostReportsPage() {
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
           <h1 className="text-2xl font-bold text-white">Reported Posts</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Review posts reported by users, then remove the post or dismiss the reports.
+            Review posts reported by users, then hide the post from the feed or take no action.
           </p>
         </motion.div>
 
@@ -492,6 +501,11 @@ export default function PostReportsPage() {
                                 DELETED
                               </span>
                             )}
+                            {report.postHidden && !report.postDeleted && (
+                              <span className="shrink-0 rounded border border-amber-500/30 bg-amber-500/[0.12] px-1.5 py-[2px] text-[9px] font-bold tracking-wide text-amber-300">
+                                HIDDEN
+                              </span>
+                            )}
                           </div>
                           {/* No author is better than "by NA". */}
                           {author && (
@@ -586,21 +600,21 @@ export default function PostReportsPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {pendingAction?.kind === "delete" ? "Delete this post?" : "Dismiss these reports?"}
+              {pendingAction?.kind === "hide" ? "Hide this post from the feed?" : "Take no action on these reports?"}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {pendingAction && (pendingAction.kind === "delete"
-                ? `This removes the post by "${na(pendingAction.report.post.author.fullName)}" and resolves all ${pendingAction.report.reportCount} report(s) against it.`
-                : `This keeps the post visible and marks all ${pendingAction.report.reportCount} pending report(s) as resolved.`)}
+              {pendingAction && (pendingAction.kind === "hide"
+                ? `This hides the post by "${na(pendingAction.report.post.author.fullName)}" from the public feed (it is not deleted) and resolves all ${pendingAction.report.reportCount} report(s) against it.`
+                : `This keeps the post visible and marks all ${pendingAction.report.reportCount} pending report(s) as resolved, with no action taken on the post.`)}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              variant={pendingAction?.kind === "delete" ? "destructive" : "default"}
+              variant={pendingAction?.kind === "hide" ? "destructive" : "default"}
               onClick={confirmAction}
             >
-              {pendingAction?.kind === "delete" ? "Delete Post" : "Dismiss Reports"}
+              {pendingAction?.kind === "hide" ? "Hide Post" : "No Action"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

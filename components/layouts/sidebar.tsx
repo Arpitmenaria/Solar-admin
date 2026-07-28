@@ -53,7 +53,7 @@ interface NavGroupItem {
 
 type NavEntry = NavLinkItem | NavGroupItem;
 
-const SYSTEM_NAME = "Kick Analyst";
+const SYSTEM_NAME = "Kink Analyst Admin";
 
 const NAV_ITEMS: NavEntry[] = [
   { type: "link", label: "Dashboard", href: "/dashboard", icon: "Dashboard" },
@@ -64,6 +64,7 @@ const NAV_ITEMS: NavEntry[] = [
     children: [
       { label: "Users", href: "/dashboard/users" },
       { label: "Reported Posts", href: "/dashboard/post-reports" },
+      { label: "Reported Comments", href: "/dashboard/reported-comments" },
       { label: "Reported Messages", href: "/dashboard/reported-messages" },
     ],
   },

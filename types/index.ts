@@ -1,5 +1,4 @@
 export type UserStatus = "ACTIVE" | "INACTIVE" | "NEW" | "FLAGGED" | "PREMIUM";
-export type AccountTier = "FREE" | "PREMIUM" | "ENTERPRISE";
 export type SubscriptionStatus = "ACTIVE" | "EXPIRED" | "CANCELLED";
 
 export interface User {
@@ -26,7 +25,7 @@ export interface User {
    * so the toggle reads this instead.
    */
   isSuspended: boolean;
-  accountTier: AccountTier;
+  accountTier: PlanTier;
   registrationDate: string;
   stats: UserStats;
   groups: GroupStats;
@@ -204,6 +203,8 @@ export interface PostReport {
    * captured when the report was filed.
    */
   postDeleted: boolean;
+  /** Hidden from the public feed by an admin, but not deleted. */
+  postHidden: boolean;
   /** Reports are grouped per post; this is how many were filed against it. */
   reportCount: number;
   reasons: string[];
@@ -225,6 +226,54 @@ export interface PaginatedPostReports {
   page: number;
   totalPages: number;
   stats: PostReportStats;
+}
+
+/* ── Reported comments ─────────────────────────── */
+
+/** The API uses lowercase; mapped to these at the service boundary. */
+export type CommentReportStatus = "PENDING" | "RESOLVED";
+
+export interface ReportedComment {
+  id: string;
+  text: string;
+  author: PostReportPerson;
+  postId: string;
+  /** Snippet of the parent post's caption, for context. */
+  postCaption: string;
+}
+
+export interface CommentReport {
+  reportId: string;
+  commentId: string;
+  status: CommentReportStatus;
+  /**
+   * The comment row is gone, but `comment` is still populated from the
+   * snapshot captured when the report was filed.
+   */
+  commentDeleted: boolean;
+  /** Hidden from the public feed by an admin, but not deleted. */
+  commentHidden: boolean;
+  /** Reports are grouped per comment; this is how many were filed against it. */
+  reportCount: number;
+  reasons: string[];
+  reportedAt: string;
+  /** Every unique reporter for this comment, not just the first. */
+  reporters: PostReportPerson[];
+  comment: ReportedComment;
+}
+
+export interface CommentReportStats {
+  total: number;
+  pending: number;
+  resolved: number;
+}
+
+export interface PaginatedCommentReports {
+  data: CommentReport[];
+  total: number;
+  page: number;
+  totalPages: number;
+  stats: CommentReportStats;
 }
 
 /* ── Reported conversations ─────────────────────────── */

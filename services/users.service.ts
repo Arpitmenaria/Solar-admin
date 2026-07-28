@@ -1,6 +1,6 @@
 import type {
   User, UserFilters, PaginatedUsers,
-  UserStatus, AccountTier, UserStatsSummary, Subscription,
+  UserStatus, PlanTier, UserStatsSummary, Subscription, SubscriptionStatus,
 } from "@/types";
 import { MOCK_DASHBOARD_STATS, MOCK_MODERATION, MOCK_CHART_DATA } from "@/constants/mock-data";
 import { apiClient, type ApiError } from "@/services/api/client";
@@ -8,7 +8,16 @@ import { apiClient, type ApiError } from "@/services/api/client";
 const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 const STATUSES: UserStatus[] = ["ACTIVE", "INACTIVE", "NEW", "FLAGGED", "PREMIUM"];
-const TIERS: AccountTier[] = ["FREE", "PREMIUM", "ENTERPRISE"];
+// The account tier shares the Plans vocabulary (free/gold/platinum), not the
+// old FREE/PREMIUM/ENTERPRISE set — the API sends it lowercase.
+const TIERS: PlanTier[] = ["free", "gold", "platinum"];
+const SUBSCRIPTION_STATUSES: SubscriptionStatus[] = ["ACTIVE", "EXPIRED", "CANCELLED"];
+
+// The API sends this lowercase too.
+function normalizeSubscriptionStatus(s?: string): SubscriptionStatus {
+  const upper = s?.toUpperCase();
+  return SUBSCRIPTION_STATUSES.includes(upper as SubscriptionStatus) ? (upper as SubscriptionStatus) : "EXPIRED";
+}
 
 interface ApiUser {
   _id?: string;
@@ -67,7 +76,7 @@ function mapApiUser(u: ApiUser): User {
     // Prefer the explicit flag; fall back to the derived status until the
     // backend adds `isSuspended` to the payload.
     isSuspended: u.isSuspended ?? status === "INACTIVE",
-    accountTier: TIERS.includes(u.accountTier as AccountTier) ? (u.accountTier as AccountTier) : "FREE",
+    accountTier: TIERS.includes(u.accountTier?.toLowerCase() as PlanTier) ? (u.accountTier!.toLowerCase() as PlanTier) : "free",
     registrationDate: u.registrationDate ?? "",
     stats: {
       friends: num(u.stats?.friends),
@@ -90,7 +99,7 @@ function mapApiUser(u: ApiUser): User {
     subscription: u.subscription
       ? {
           plan: u.subscription.plan ?? "—",
-          status: u.subscription.status ?? "EXPIRED",
+          status: normalizeSubscriptionStatus(u.subscription.status),
           validUntil: u.subscription.validUntil ?? null,
           paymentMethod: u.subscription.paymentMethod ?? null,
         }

@@ -69,7 +69,7 @@ export default function LoginPage() {
             <FaRegStar size={20} color="#fff" />
           </div>
           <div className="text-center">
-            <h1 className="text-[18px] font-bold tracking-tight text-white">Social Platform Admin</h1>
+            <h1 className="text-[18px] font-bold tracking-tight text-white">Kink Analyst Admin</h1>
             <p className="mt-1 text-[12px] text-[#4a5a7a]">Sign in to your admin account</p>
           </div>
         </motion.div>
@@ -147,7 +147,7 @@ export default function LoginPage() {
 
       {/* Version tag */}
       <p className="absolute bottom-5 left-1/2 -translate-x-1/2 text-[10px] text-[#1e2d45]">
-        v1.0.0 · Social Platform Admin
+        v1.0.0 · Kink Analyst Admin
       </p>
     </div>
   );

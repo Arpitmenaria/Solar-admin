@@ -12,7 +12,7 @@ export default function ProfilePage() {
     joinedDate: "01 Jan 2026",
     location: "Rajkot, Gujarat",
     timezone: "Asia/Kolkata",
-    company: "Kick Analyst",
+    company: "Kink Analyst Admin",
     username: "jay_admin",
     language: "English",
     lastLogin: "Today • 03:42 PM",

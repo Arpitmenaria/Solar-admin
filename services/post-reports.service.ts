@@ -17,6 +17,7 @@ interface ApiPostReport {
   postId?: string;
   status?: string;
   postDeleted?: boolean;
+  postHidden?: boolean;
   reportCount?: number;
   reasons?: string[];
   reportedAt?: string;
@@ -56,6 +57,7 @@ function mapReport(r: ApiPostReport): PostReport {
     // everywhere else in the app.
     status: r.status?.toUpperCase() === "RESOLVED" ? "RESOLVED" : "PENDING",
     postDeleted: r.postDeleted ?? false,
+    postHidden: r.postHidden ?? false,
     reportCount: r.reportCount ?? 0,
     reasons: r.reasons ?? [],
     reportedAt: r.reportedAt ?? "",
@@ -100,12 +102,12 @@ export const postReportsService = {
     };
   },
 
-  /** Deletes the post and resolves every report filed against it. */
-  async deletePost(postId: string): Promise<void> {
-    await apiClient.delete(`${BASE}/${postId}`);
+  /** Hides the post from the public feed (not deleted) and resolves its reports. */
+  async hidePost(postId: string): Promise<void> {
+    await apiClient.patch(`${BASE}/${postId}/hide`, {});
   },
 
-  /** Keeps the post, resolves its pending reports. */
+  /** Takes no action on the post, resolves its pending reports. */
   async dismissReports(postId: string): Promise<void> {
     await apiClient.patch(`${BASE}/${postId}/dismiss`, {});
   },

@@ -40,6 +40,8 @@ const CATEGORY_OPTS: ("ALL" | ReportCategory)[] = [
   "ALL", "Spam", "Harassment", "Inappropriate Content", "Scam / Fraud", "Fake or Misleading", "Hate Speech", "Other",
 ];
 
+const PAGE_SIZE = 10;
+
 /* ── ActionMenu (portal, fixed) ─────────────── */
 function ActionMenu({
   report, detailHref, onAction,
@@ -168,6 +170,9 @@ export function ReportsDirectory({
     return true;
   });
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   return (
     <div className="flex flex-col flex-1">
       <main className="flex-1 space-y-6 p-4 md:p-6">
@@ -264,7 +269,7 @@ export function ReportsDirectory({
               </div>
             ) : (
               <div className="min-w-[980px]">
-                {filtered.map((report, i) => {
+                {paginated.map((report, i) => {
                   const st = STATUS_STYLES[report.status];
                   return (
                     <motion.div
@@ -311,7 +316,7 @@ export function ReportsDirectory({
                   );
                 })}
 
-                {filtered.length === 0 && (
+                {paginated.length === 0 && (
                   <div className="py-12 text-center text-sm text-caption">No reports match the current filters.</div>
                 )}
               </div>
@@ -319,13 +324,18 @@ export function ReportsDirectory({
 
             {/* Pagination */}
             <div className="flex items-center justify-between px-6 py-4">
-              <p className="text-[11px] text-caption">Showing {filtered.length} of {formatNumberFull(stats?.total ?? filtered.length)} reports</p>
+              <p className="text-[11px] text-caption">
+                {filtered.length > 0
+                  ? `Showing ${formatNumberFull((page - 1) * PAGE_SIZE + 1)}–${formatNumberFull(Math.min(page * PAGE_SIZE, filtered.length))} of ${formatNumberFull(filtered.length)} reports`
+                  : "No reports match the current filters"}
+              </p>
               <div className="flex items-center gap-0.5">
-                <PaginationButton label="First page"    icon={<ChevronFirst size={13} />} onClick={() => setPage(1)}                    disabled={page === 1} />
-                <PaginationButton label="Previous page" icon={<ChevronLeft size={13} />}  onClick={() => setPage(Math.max(1, page - 1))} disabled={page === 1} />
+                <PaginationButton label="First page"    icon={<ChevronFirst size={13} />} onClick={() => setPage(1)}                              disabled={page === 1} />
+                <PaginationButton label="Previous page" icon={<ChevronLeft size={13} />}  onClick={() => setPage(Math.max(1, page - 1))}           disabled={page === 1} />
                 <span className="h-7 min-w-7 rounded-full bg-blue-600 px-2 text-center text-xs font-medium leading-7 text-white">{page}</span>
-                <PaginationButton label="Next page" icon={<ChevronRight size={13} />} onClick={() => setPage(page + 1)} disabled={false} />
-                <PaginationButton label="Last page"  icon={<ChevronLast size={13} />}  onClick={() => setPage(page)}     disabled={false} />
+                <span className="px-2 text-[11px] text-caption">of {formatNumberFull(totalPages)}</span>
+                <PaginationButton label="Next page" icon={<ChevronRight size={13} />} onClick={() => setPage(Math.min(totalPages, page + 1))} disabled={page >= totalPages} />
+                <PaginationButton label="Last page"  icon={<ChevronLast size={13} />}  onClick={() => setPage(totalPages)}                     disabled={page >= totalPages} />
               </div>
             </div>
           </div>

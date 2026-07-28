@@ -11,5 +11,5 @@ export const NAV_BOTTOM = [
 ] as const;
 
 export const SYSTEM_VERSION = "v1.4.2-STABLE";
-export const SYSTEM_NAME    = "Social Platform Admin";
+export const SYSTEM_NAME    = "Kink Analyst Admin";
 export const SYSTEM_SUBTITLE = "Admin Control Plane";

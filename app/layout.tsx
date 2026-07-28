@@ -18,7 +18,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Social Platform Admin",
+  title: "Kink Analyst Admin",
   description: "Infrastructure admin panel for Social Flow platform",
 };
 
