@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -14,17 +14,32 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import { useUser, useToggleSuspend } from "@/hooks/use-users";
-import { formatNumberFull, na, cn } from "@/lib/utils";
+import { RelationsModal } from "@/components/users/relations-modal";
+import { ReportedByModal } from "@/components/users/reported-by-modal";
+import { formatNumberFull, formatDate, na, cn } from "@/lib/utils";
 import { Skeleton } from "@/components/shared/loading-skeleton";
 import { SYSTEM_VERSION } from "@/constants/nav";
+import type { RelationKind } from "@/types";
 
 const fadeUp = { hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } };
+
+/* Tier chip styling — keyed by the lowercased plan name, with a neutral
+   fallback for anything unexpected. */
+const TIER_CHIP: Record<string, string> = {
+  gold:     "bg-gradient-to-r from-amber-500/25 to-yellow-500/10 text-amber-300 border-amber-500/40",
+  platinum: "bg-gradient-to-r from-slate-200/20 to-cyan-400/10 text-cyan-200 border-cyan-400/30",
+  free:     "bg-white/[0.05] text-slate-300 border-white/[0.14]",
+};
+const tierChipClass = (plan: string) =>
+  TIER_CHIP[plan.trim().toLowerCase()] ?? "bg-blue-500/15 text-blue-300 border-blue-500/30";
 
 export default function UserDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { data: user, isLoading } = useUser(id);
   const toggleSuspend = useToggleSuspend();
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [relationKind, setRelationKind] = useState<RelationKind | null>(null);
+  const [reportedByOpen, setReportedByOpen] = useState(false);
 
   const suspended = !!user?.isSuspended;
 
@@ -78,26 +93,32 @@ export default function UserDetailPage() {
               <div className="rounded-full p-[3px] bg-gradient-to-br from-blue-500/60 via-blue-400/30 to-transparent">
                 <UserAvatar src={user.avatarUrl} name={user.displayName} size="xl" />
               </div>
+
+              {/* Account state, right under the avatar so it reads before the action. */}
+              <StatusBadge status={suspended ? "INACTIVE" : "ACTIVE"} />
+
+              {/* Outline/ghost styling so the destructive action reads as a
+                  deliberate choice, not a primary CTA. */}
               <button
                 onClick={() => setConfirmOpen(true)}
                 disabled={toggleSuspend.isPending}
                 className={cn(
-                  "flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-semibold text-white transition-colors",
+                  "flex items-center gap-1.5 rounded-lg border px-4 py-2 text-xs font-semibold transition-colors",
                   "disabled:cursor-not-allowed disabled:opacity-60",
                   suspended
-                    ? "bg-emerald-600 hover:bg-emerald-500"
-                    : "bg-red-600 hover:bg-red-500"
+                    ? "border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/10 hover:border-emerald-500/60"
+                    : "border-red-500/40 text-red-300 hover:bg-red-500/10 hover:border-red-500/60"
                 )}
               >
                 {suspended
                   ? <><RotateCcw size={12} /> Reactivate Account</>
-                  : <><Ban size={12} /> Make Account Suspend</>}
+                  : <><Ban size={12} /> Suspend Account</>}
               </button>
             </div>
 
-            {/* Fields */}
+            {/* Fields — username is omitted; the backend has no separate handle,
+                so it just duplicates the display name. */}
             <div className="space-y-4">
-              <ProfileField label="USERNAME" value={user.username} />
               <ProfileField label="DISPLAY NAME" value={user.displayName} />
               <ProfileField label="BIO" value={user.bio} expandable />
               <ProfileField label="LOCATION" value={user.location} />
@@ -107,18 +128,35 @@ export default function UserDetailPage() {
 
           {/* Right column: stats + groups/events + account/subscription */}
           <div className="space-y-5">
-            {/* 6 stat cards */}
+            {/* Stat cards */}
             <motion.div variants={fadeUp} className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              <MiniStat label="CONNECTIONS"    value={formatNumberFull(user.stats.friends)} />
-              <MiniStat label="FOLLOWERS"      value={formatNumberFull(user.stats.followers)} />
-              <MiniStat label="FOLLOWING"      value={formatNumberFull(user.stats.following)} />
+              {/* Clickable only when there's at least one to show. */}
+              <MiniStat
+                label="CONNECTIONS"
+                value={formatNumberFull(user.stats.friends)}
+                onClick={user.stats.friends > 0 ? () => setRelationKind("connections") : undefined}
+              />
+              <MiniStat
+                label="FOLLOWERS"
+                value={formatNumberFull(user.stats.followers)}
+                onClick={user.stats.followers > 0 ? () => setRelationKind("followers") : undefined}
+              />
+              <MiniStat
+                label="FOLLOWING"
+                value={formatNumberFull(user.stats.following)}
+                onClick={user.stats.following > 0 ? () => setRelationKind("following") : undefined}
+              />
               <MiniStat
                 label="REPORTED POSTS"
                 value={formatNumberFull(user.stats.reportedPosts)}
                 href="/dashboard/post-reports"
               />
+              <MiniStat
+                label="REPORTED BY"
+                value={formatNumberFull(user.stats.reportedByCount)}
+                onClick={user.stats.reportedByCount > 0 ? () => setReportedByOpen(true) : undefined}
+              />
               <MiniStat label="CREATED POSTS"  value={formatNumberFull(user.stats.createdPosts)} />
-              <MiniStat label="PROFILE VIEWS"  value={formatNumberFull(user.stats.profileViews)} />
             </motion.div>
 
             {/* Groups + Events */}
@@ -164,19 +202,9 @@ export default function UserDetailPage() {
               </div>
             </motion.div>
 
-            {/* Account Status + Subscription — same row, same height */}
-            <motion.div variants={fadeUp} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Account status */}
-              <div className="rounded-xl border border-white/[0.08] bg-[#0d1321] p-5">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="text-sm font-semibold text-white">Account Status</h4>
-                    <p className="text-xs text-muted-foreground mt-0.5 capitalize">Current Tier: {user.accountTier}</p>
-                  </div>
-                  <StatusBadge status={user.status} />
-                </div>
-              </div>
-
+            {/* Subscription. (The former Account Status card was dropped — the
+                state badge sits under the avatar and the tier is the plan below.) */}
+            <motion.div variants={fadeUp} className="grid grid-cols-1 gap-4">
               {/* Subscription — absent for users who never subscribed, and
                   validity/payment stay null until billing is wired up. */}
               <div className="rounded-xl border border-white/[0.08] bg-[#0d1321] p-5 space-y-3">
@@ -196,22 +224,36 @@ export default function UserDetailPage() {
 
                 {user.subscription ? (
                   <>
-                    <p className="text-sm font-bold text-[#3b82f6]">{na(user.subscription.plan)}</p>
-                    <div className="border-t border-white/[0.05] pt-3 grid grid-cols-2 gap-2">
-                      <div>
-                        <p className="text-label">VALIDITY</p>
-                        <p className="text-xs text-slate-200 mt-1">
-                          {user.subscription.validUntil ? `Expires ${user.subscription.validUntil}` : "NA"}
-                        </p>
+                    <span className={cn(
+                      "inline-flex w-fit items-center rounded-md border px-2.5 py-1 text-[12px] font-bold uppercase tracking-[0.1em]",
+                      tierChipClass(user.subscription.plan)
+                    )}>
+                      {na(user.subscription.plan).toUpperCase()}
+                    </span>
+                    {/* Validity/payment are null for manually-granted tiers.
+                        Show the grid only when there's real data; otherwise just
+                        the plan + status above stand on their own. */}
+                    {(user.subscription.validUntil || user.subscription.paymentMethod) && (
+                      <div className="border-t border-white/[0.05] pt-3 grid grid-cols-2 gap-2">
+                        {user.subscription.validUntil && (
+                          <div>
+                            <p className="text-label">VALIDITY</p>
+                            <p className="text-xs text-slate-200 mt-1">
+                              Expires {formatDate(user.subscription.validUntil)}
+                            </p>
+                          </div>
+                        )}
+                        {user.subscription.paymentMethod && (
+                          <div>
+                            <p className="text-label">PAYMENT</p>
+                            <p className="text-xs text-slate-200 mt-1 flex items-center gap-1">
+                              <CreditCard size={11} className="text-muted-foreground shrink-0" />
+                              <span className="truncate">{user.subscription.paymentMethod}</span>
+                            </p>
+                          </div>
+                        )}
                       </div>
-                      <div>
-                        <p className="text-label">PAYMENT</p>
-                        <p className="text-xs text-slate-200 mt-1 flex items-center gap-1">
-                          <CreditCard size={11} className="text-muted-foreground shrink-0" />
-                          <span className="truncate">{na(user.subscription.paymentMethod)}</span>
-                        </p>
-                      </div>
-                    </div>
+                    )}
                   </>
                 ) : (
                   <p className="text-xs text-muted-foreground">No active subscription.</p>
@@ -221,6 +263,20 @@ export default function UserDetailPage() {
           </div>
         </motion.div>
       </main>
+
+      <RelationsModal
+        userId={user.id}
+        kind={relationKind}
+        open={!!relationKind}
+        onClose={() => setRelationKind(null)}
+      />
+
+      <ReportedByModal
+        userId={user.id}
+        userName={user.displayName}
+        open={reportedByOpen}
+        onClose={() => setReportedByOpen(false)}
+      />
 
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
@@ -240,7 +296,7 @@ export default function UserDetailPage() {
               variant={suspended ? "default" : "destructive"}
               onClick={confirmToggle}
             >
-              {suspended ? "Reactivate Account" : "Make Account Suspend"}
+              {suspended ? "Reactivate Account" : "Suspend Account"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -259,46 +315,67 @@ export default function UserDetailPage() {
 
 function ProfileField({ label, value, expandable }: { label: string; value?: string | null; expandable?: boolean }) {
   const [expanded, setExpanded] = useState(false);
+  const [overflows, setOverflows] = useState(false);
+  const textRef = useRef<HTMLParagraphElement>(null);
   const missing = !value || !value.trim();
-  // Only bother with a toggle when the text is actually long enough to clamp.
-  const clampable = expandable && !missing && value!.trim().length > 160;
+
+  // Show the toggle only when the text genuinely exceeds three lines. Measured
+  // against the clamped element, so it's driven by real layout — not a
+  // character-count guess that ignores wrapping and line breaks. `expanded` is
+  // deliberately excluded: re-measuring once the clamp is lifted would read no
+  // overflow and hide the "Show less" button.
+  useEffect(() => {
+    const el = textRef.current;
+    if (!expandable || missing || !el) { setOverflows(false); return; }
+    setOverflows(el.scrollHeight > el.clientHeight + 1);
+  }, [expandable, missing, value]);
 
   return (
     <div>
       <p className="text-label mb-1">{label}</p>
       <p
+        ref={textRef}
         className={cn(
           "text-sm break-words",
           missing ? "italic text-muted-foreground" : "text-slate-200",
-          clampable && !expanded && "line-clamp-3"
+          expandable && !expanded && "line-clamp-3"
         )}
       >
         {na(value)}
       </p>
-      {clampable && (
+      {overflows && (
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
           className="mt-1 text-xs font-semibold text-blue-400 transition-colors hover:text-blue-300"
         >
-          {expanded ? "Show less" : "Show more"}
+          {expanded ? "See less" : "See more"}
         </button>
       )}
     </div>
   );
 }
 
-function MiniStat({ label, value, href }: { label: string; value: string; href?: string }) {
+function MiniStat({ label, value, href, onClick }: {
+  label: string; value: string; href?: string; onClick?: () => void;
+}) {
+  const interactive = !!href || !!onClick;
   const card = (
-    <div className={`rounded-xl border border-white/[0.08] bg-[#0d1321] p-4 ${href ? "transition-colors hover:border-blue-500/40 hover:bg-blue-500/[0.04]" : ""}`}>
+    <div className={cn(
+      "rounded-xl border border-white/[0.08] bg-[#0d1321] p-4 text-left",
+      interactive && "transition-colors hover:border-blue-500/40 hover:bg-blue-500/[0.04]"
+    )}>
       <p className="text-label mb-2 flex items-center gap-1">
         {label}
-        {href && <ArrowUpRight size={11} className="text-caption" />}
+        {interactive && <ArrowUpRight size={11} className="text-caption" />}
       </p>
       <p className="text-2xl font-bold text-[#99CBFF]">{value}</p>
     </div>
   );
-  return href ? <Link href={href}>{card}</Link> : card;
+
+  if (href) return <Link href={href}>{card}</Link>;
+  if (onClick) return <button type="button" onClick={onClick} className="w-full">{card}</button>;
+  return card;
 }
 
 function UserDetailSkeleton() {

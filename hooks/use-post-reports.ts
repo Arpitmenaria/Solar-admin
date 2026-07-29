@@ -6,6 +6,7 @@ import { postReportsService, type PostReportFilters } from "@/services/post-repo
 export const postReportKeys = {
   all: ["post-reports"] as const,
   list: (filters: Partial<PostReportFilters>) => ["post-reports", "list", filters] as const,
+  authors: ["post-reports", "authors"] as const,
 };
 
 export function usePostReports(filters: Partial<PostReportFilters> = {}) {
@@ -13,6 +14,15 @@ export function usePostReports(filters: Partial<PostReportFilters> = {}) {
     queryKey: postReportKeys.list(filters),
     queryFn: () => postReportsService.getReportedPosts(filters),
     staleTime: 30_000,
+  });
+}
+
+/** Authors who have reported posts — populates the author filter dropdown. */
+export function usePostReportAuthors() {
+  return useQuery({
+    queryKey: postReportKeys.authors,
+    queryFn: () => postReportsService.getAuthors(),
+    staleTime: 60_000,
   });
 }
 

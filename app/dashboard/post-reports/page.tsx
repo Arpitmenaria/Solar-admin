@@ -18,7 +18,8 @@ import {
   AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
   AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-import { usePostReports, useHidePost, useDismissPostReports } from "@/hooks/use-post-reports";
+import { usePostReports, usePostReportAuthors, useHidePost, useDismissPostReports } from "@/hooks/use-post-reports";
+import { CustomSelect } from "@/components/shared/custom-select";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { formatNumberFull, formatDate, na, cn } from "@/lib/utils";
 import type { PostReport, PostReportStatus } from "@/types";
@@ -340,6 +341,7 @@ function PostPreview({ report, onClose }: { report: PostReport | null; onClose: 
 export default function PostReportsPage() {
   const [status, setStatus] = useState<PostReportStatus | "ALL">("ALL");
   const [search, setSearch] = useState("");
+  const [authorId, setAuthorId] = useState("");
   const [page, setPage] = useState(1);
   const [preview, setPreview] = useState<PostReport | null>(null);
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
@@ -348,7 +350,8 @@ export default function PostReportsPage() {
   // per keystroke.
   const debouncedSearch = useDebouncedValue(search);
 
-  const { data, isLoading } = usePostReports({ status, search: debouncedSearch, page, limit: 10 });
+  const { data, isLoading } = usePostReports({ status, search: debouncedSearch, authorId, page, limit: 10 });
+  const { data: authors } = usePostReportAuthors();
   const hidePost = useHidePost();
   const dismissReports = useDismissPostReports();
 
@@ -435,7 +438,19 @@ export default function PostReportsPage() {
               ))}
             </div>
 
-            <p className="ml-auto text-[11px] text-caption">Most reported first</p>
+            {/* Author filter — narrows to one author's reported posts. */}
+            <CustomSelect
+              size="sm"
+              className="ml-auto"
+              value={authorId}
+              onChange={(v) => { setAuthorId(v); setPage(1); }}
+              options={[
+                { value: "", label: "All authors" },
+                ...(authors ?? []).map((a) => ({ value: a.id, label: a.name })),
+              ]}
+            />
+
+            <p className="text-[11px] text-caption">Most reported first</p>
           </div>
 
           {/* Table */}

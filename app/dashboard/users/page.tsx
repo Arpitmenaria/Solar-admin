@@ -262,9 +262,12 @@ export default function UsersPage() {
                       </div>
                     </div>
 
-                    {/* Status — div wrapper prevents CSS Grid blockification */}
+                    {/* Status is account state only — active vs suspended.
+                        Tier (PREMIUM) and recency (NEW) are separate axes and
+                        don't belong in this column, so drive it off isSuspended
+                        rather than the derived status. */}
                     <div className="flex items-center">
-                      <StatusBadge status={user.status} />
+                      <StatusBadge status={user.isSuspended ? "INACTIVE" : "ACTIVE"} />
                     </div>
 
                     <span className="text-[12px] text-slate-300">

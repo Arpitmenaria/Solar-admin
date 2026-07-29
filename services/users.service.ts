@@ -1,6 +1,8 @@
 import type {
   User, UserFilters, PaginatedUsers,
   UserStatus, PlanTier, UserStatsSummary, Subscription, SubscriptionStatus,
+  RelationKind, RelationUser, PaginatedRelations,
+  Reporter, PaginatedReporters,
 } from "@/types";
 import { MOCK_DASHBOARD_STATS, MOCK_MODERATION, MOCK_CHART_DATA } from "@/constants/mock-data";
 import { apiClient, type ApiError } from "@/services/api/client";
@@ -85,6 +87,7 @@ function mapApiUser(u: ApiUser): User {
       reportedPosts: num(u.stats?.reportedPosts),
       createdPosts: num(u.stats?.createdPosts),
       profileViews: num(u.stats?.profileViews),
+      reportedByCount: num(u.stats?.reportedByCount),
     },
     groups: {
       total: num(u.groups?.total),
@@ -114,6 +117,59 @@ interface ApiUserList {
   page: number;
   pageSize: number;
   totalPages: number;
+}
+
+interface ApiRelationUser {
+  _id?: string;
+  id?: string;
+  fullName?: string;
+  name?: string;
+  username?: string;
+  avatarUrl?: string;
+  avatar?: string;
+  isSuspended?: boolean;
+}
+
+interface ApiRelationList {
+  success: boolean;
+  users: ApiRelationUser[];
+  total: number;
+  page: number;
+  totalPages: number;
+}
+
+function mapRelationUser(u: ApiRelationUser): RelationUser {
+  const fullName = u.fullName ?? u.name ?? "";
+  return {
+    id: u._id ?? u.id ?? "",
+    fullName,
+    // Single-name backend: fall back so the handle line never renders empty.
+    username: u.username ?? fullName,
+    avatarUrl: u.avatarUrl ?? u.avatar ?? "",
+    isSuspended: u.isSuspended ?? false,
+  };
+}
+
+interface ApiReporter extends ApiRelationUser {
+  reason?: string;
+  reportedAt?: string;
+}
+
+interface ApiReporterList {
+  success: boolean;
+  reporters: ApiReporter[];
+  total: number;
+  page: number;
+  totalPages: number;
+}
+
+function mapReporter(u: ApiReporter): Reporter {
+  const base = mapRelationUser(u);
+  return {
+    ...base,
+    reason: u.reason ?? "",
+    reportedAt: u.reportedAt ?? "",
+  };
 }
 
 export const usersService = {
@@ -165,6 +221,39 @@ export const usersService = {
       {}
     );
     return res.isSuspended;
+  },
+
+  /** Paginated list behind a CONNECTIONS / FOLLOWERS / FOLLOWING count. */
+  async getRelations(
+    id: string,
+    kind: RelationKind,
+    page = 1,
+    limit = 20,
+  ): Promise<PaginatedRelations> {
+    const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+    const res = await apiClient.get<ApiRelationList>(
+      `/api/admin/users/${id}/${kind}?${params.toString()}`,
+    );
+    return {
+      data: (res.users ?? []).map(mapRelationUser),
+      total: res.total ?? 0,
+      page: res.page ?? page,
+      totalPages: res.totalPages ?? 1,
+    };
+  },
+
+  /** Paginated list of users who filed reports against this account. */
+  async getReporters(id: string, page = 1, limit = 20): Promise<PaginatedReporters> {
+    const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+    const res = await apiClient.get<ApiReporterList>(
+      `/api/admin/users/${id}/reported-by?${params.toString()}`,
+    );
+    return {
+      data: (res.reporters ?? []).map(mapReporter),
+      total: res.total ?? 0,
+      page: res.page ?? page,
+      totalPages: res.totalPages ?? 1,
+    };
   },
 };
 

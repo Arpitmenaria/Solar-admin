@@ -41,6 +41,8 @@ export interface UserStats {
   reportedPosts: number;
   createdPosts: number;
   profileViews: number;
+  /** How many reports other users have filed against this account. */
+  reportedByCount: number;
 }
 
 export interface GroupStats {
@@ -156,6 +158,47 @@ export interface PaginatedUsers {
   totalPages: number;
 }
 
+/* ── User relations (connections / followers / following) ── */
+
+export type RelationKind = "connections" | "followers" | "following";
+
+/** A person in one of the relation lists — a thin slice of a user. */
+export interface RelationUser {
+  id: string;
+  fullName: string;
+  username: string;
+  avatarUrl: string;
+  isSuspended: boolean;
+}
+
+export interface PaginatedRelations {
+  data: RelationUser[];
+  total: number;
+  page: number;
+  totalPages: number;
+}
+
+/* ── "Reported by" — users who filed reports against this account ── */
+
+export interface Reporter {
+  id: string;
+  fullName: string;
+  username: string;
+  avatarUrl: string;
+  isSuspended: boolean;
+  /** Reason the reporter gave, if any. */
+  reason: string;
+  /** When the report was filed. */
+  reportedAt: string;
+}
+
+export interface PaginatedReporters {
+  data: Reporter[];
+  total: number;
+  page: number;
+  totalPages: number;
+}
+
 export interface ProfileFormValues {
   fullName: string;
   username: string;
@@ -226,6 +269,12 @@ export interface PaginatedPostReports {
   page: number;
   totalPages: number;
   stats: PostReportStats;
+}
+
+/** An author who has at least one reported post — for the author filter. */
+export interface ReportedPostAuthor {
+  id: string;
+  name: string;
 }
 
 /* ── Reported comments ─────────────────────────── */

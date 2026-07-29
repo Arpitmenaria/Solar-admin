@@ -1,6 +1,6 @@
 import type {
   PostReport, PostReportPerson, PostReportStatus, PostMedia,
-  PaginatedPostReports, PostReportStats,
+  PaginatedPostReports, PostReportStats, ReportedPostAuthor,
 } from "@/types";
 import { apiClient } from "@/services/api/client";
 
@@ -76,6 +76,8 @@ export interface PostReportFilters {
   status: PostReportStatus | "ALL";
   /** Matched server-side against the post snapshot's caption and author name. */
   search: string;
+  /** Post author id — narrows to one author's reported posts. "" = all. */
+  authorId: string;
   page: number;
   limit: number;
 }
@@ -90,6 +92,7 @@ export const postReportsService = {
       params.set("status", filters.status.toLowerCase());
     }
     if (filters.search) params.set("search", filters.search);
+    if (filters.authorId) params.set("authorId", filters.authorId);
 
     const res = await apiClient.get<ApiPostReportList>(`${BASE}?${params.toString()}`);
 
@@ -110,5 +113,15 @@ export const postReportsService = {
   /** Takes no action on the post, resolves its pending reports. */
   async dismissReports(postId: string): Promise<void> {
     await apiClient.patch(`${BASE}/${postId}/dismiss`, {});
+  },
+
+  /** Distinct authors who have at least one reported post — for the filter. */
+  async getAuthors(): Promise<ReportedPostAuthor[]> {
+    const res = await apiClient.get<{ success: boolean; authors: { _id?: string; id?: string; fullName?: string; name?: string }[] }>(
+      `${BASE}/authors`,
+    );
+    return (res.authors ?? [])
+      .map((a) => ({ id: a._id ?? a.id ?? "", name: a.fullName ?? a.name ?? "" }))
+      .filter((a) => a.id && a.name);
   },
 };
