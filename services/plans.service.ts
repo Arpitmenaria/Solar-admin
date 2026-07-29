@@ -1,10 +1,34 @@
 import type { Plan, PlanMetric, PlanTier, PlanBillingType } from "@/types";
-import { MOCK_PLAN_METRICS } from "@/constants/plans";
 import { apiClient } from "@/services/api/client";
 
-const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
 const TIER_ORDER: Record<PlanTier, number> = { free: 0, gold: 1, platinum: 2 };
+
+// Backend metric ids match the icon vocabulary 1:1 except "total", which maps
+// to the "subscribers" icon — everything else falls back to "subscribers" too
+// rather than crashing if the backend ever adds a new metric id.
+const METRIC_ICON_MAP: Record<string, PlanMetric["icon"]> = {
+  total: "subscribers",
+  trial: "trial",
+  gold: "gold",
+  premium: "premium",
+};
+
+interface ApiPlanMetric {
+  id: string;
+  label: string;
+  value: number;
+  breakdown: PlanMetric["breakdown"];
+}
+
+function mapApiPlanMetric(m: ApiPlanMetric): PlanMetric {
+  return {
+    id: m.id,
+    label: m.label,
+    value: m.value,
+    icon: METRIC_ICON_MAP[m.id] ?? "subscribers",
+    breakdown: m.breakdown,
+  };
+}
 
 interface ApiPlan {
   _id: string;
@@ -46,9 +70,8 @@ export const plansService = {
   },
 
   async getPlanMetrics(): Promise<PlanMetric[]> {
-    // No metrics endpoint yet — placeholder until the backend exposes one.
-    await delay(200);
-    return MOCK_PLAN_METRICS;
+    const res = await apiClient.get<{ success: boolean; metrics: ApiPlanMetric[] }>("/api/admin/plans/metrics");
+    return (res.metrics ?? []).map(mapApiPlanMetric);
   },
 
   async getPlanById(id: string): Promise<Plan | null> {

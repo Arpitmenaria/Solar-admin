@@ -1,12 +1,21 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { useState } from "react";
 import { StatCard } from "@/components/shared/stat-card";
 import { StatCardSkeleton } from "@/components/shared/loading-skeleton";
 import { useDashboardStats, useChartData } from "@/hooks/use-users";
-import { formatNumber, formatCurrency } from "@/lib/utils";
+import { formatNumber, formatCurrency, cn } from "@/lib/utils";
 import { Users, UserCheck, UserPlus, Flag } from "lucide-react";
 import { motion } from "framer-motion";
+import type { ChartPeriod } from "@/types";
+
+const PERIODS: { key: ChartPeriod; label: string }[] = [
+  { key: "daily",   label: "Daily"   },
+  { key: "weekly",  label: "Weekly"  },
+  { key: "monthly", label: "Monthly" },
+  { key: "yearly",  label: "Yearly"  },
+];
 
 const EngagementChart = dynamic(
   () => import("@/components/shared/engagement-chart").then((m) => m.EngagementChart),
@@ -28,8 +37,9 @@ const FINANCIAL_STATS = (stats: ReturnType<typeof useDashboardStats>["data"]) =>
 ];
 
 export default function DashboardPage() {
+  const [period, setPeriod] = useState<ChartPeriod>("weekly");
   const { data: stats, isLoading: statsLoading } = useDashboardStats();
-  const { data: chart } = useChartData();
+  const { data: chart, isLoading: chartLoading, isError: chartError, error: chartErrorObj } = useChartData(period);
 
   return (
     <main className="flex-1 space-y-5 p-4 md:p-6">
@@ -76,27 +86,62 @@ export default function DashboardPage() {
         variants={fadeUp} initial="hidden" animate="show" transition={{ delay: 0.12 }}
         className="flex w-full flex-col rounded-xl border border-white/[0.07] bg-card p-5"
       >
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h3 className="text-base font-semibold text-white">Engagement Statistics</h3>
-            <p className="mt-0.5 text-xs text-caption">Daily Active User (DAU) trends across all regions</p>
+            <p className="mt-0.5 text-xs text-caption">Total vs. premium user growth across all regions</p>
           </div>
-          <div className="flex items-center gap-3 text-[12px] text-caption">
-            <span className="flex items-center gap-1.5">
-              <span className="h-2 w-2 shrink-0 rounded-full bg-blue-500" /> DAU
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="h-2 w-2 shrink-0 rounded-full bg-cyan-500" /> MAU
-            </span>
+          <div className="flex flex-col items-start gap-2.5 sm:items-end">
+            <div className="flex items-center gap-1 rounded-lg border border-white/[0.07] bg-white/[0.02] p-0.5">
+              {PERIODS.map((p) => (
+                <button
+                  key={p.key}
+                  type="button"
+                  onClick={() => setPeriod(p.key)}
+                  className={cn(
+                    "rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors",
+                    period === p.key
+                      ? "bg-blue-600 text-white"
+                      : "text-caption hover:text-white"
+                  )}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center gap-3 text-[12px] text-caption">
+              <span className="flex items-center gap-1.5">
+                <span className="h-2 w-2 shrink-0 rounded-full bg-blue-500" /> Total Users
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: "#f5b642" }} /> Premium Users
+              </span>
+            </div>
           </div>
         </div>
 
         {/* Chart — flex-1 so it fills remaining card height, no blank gap */}
         <div className="mt-5 flex-1 min-h-[220px]">
-          {chart && chart.length > 0
-            ? <EngagementChart data={chart} />
-            : <div className="h-full animate-pulse rounded-lg bg-white/[0.03]" />
-          }
+          {chartError ? (
+            <div className="flex h-full flex-col items-center justify-center gap-1 rounded-lg border border-red-500/20 bg-red-500/[0.03] text-center">
+              <p className="text-[13px] font-medium text-red-400">Couldn&apos;t load engagement data</p>
+              <p className="max-w-xs text-[12px] text-caption">
+                {(chartErrorObj as { message?: string } | null)?.message || "Unknown error"}
+              </p>
+            </div>
+          ) : chart && chart.length > 0 ? (
+            // key={period} forces a full remount per period — Recharts'
+            // ResponsiveContainer only re-measures on an actual container
+            // resize, so swapping just the `data` prop in place can leave a
+            // stale (or blank) SVG when switching tabs without resizing.
+            <EngagementChart key={period} data={chart} />
+          ) : chartLoading ? (
+            <div className="h-full animate-pulse rounded-lg bg-white/[0.03]" />
+          ) : (
+            <div className="flex h-full items-center justify-center text-[13px] text-caption">
+              No engagement data for this period yet.
+            </div>
+          )}
         </div>
 
         {/* Financial sub-stats — pinned to bottom via mt-auto */}

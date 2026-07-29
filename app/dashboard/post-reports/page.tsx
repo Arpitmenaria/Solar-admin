@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -14,12 +15,12 @@ import { StatCard } from "@/components/shared/stat-card";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { StatCardSkeleton, TableRowSkeleton } from "@/components/shared/loading-skeleton";
 import { PaginationButton } from "@/components/shared/pagination-button";
+import { CustomSelect } from "@/components/shared/custom-select";
 import {
   AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
   AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import { usePostReports, usePostReportAuthors, useHidePost, useDismissPostReports } from "@/hooks/use-post-reports";
-import { CustomSelect } from "@/components/shared/custom-select";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { formatNumberFull, formatDate, na, cn } from "@/lib/utils";
 import type { PostReport, PostReportStatus } from "@/types";
@@ -339,9 +340,21 @@ function PostPreview({ report, onClose }: { report: PostReport | null; onClose: 
 }
 
 export default function PostReportsPage() {
+  return (
+    <Suspense fallback={null}>
+      <PostReportsPageContent />
+    </Suspense>
+  );
+}
+
+function PostReportsPageContent() {
+  // Lets a link like /dashboard/post-reports?authorId=<id> (e.g. from a
+  // user's "Reported Posts" stat) land pre-filtered to that author.
+  const searchParams = useSearchParams();
   const [status, setStatus] = useState<PostReportStatus | "ALL">("ALL");
   const [search, setSearch] = useState("");
-  const [authorId, setAuthorId] = useState("");
+  const [authorId, setAuthorId] = useState(() => searchParams.get("authorId") ?? "");
+  const [reporterFilter, setReporterFilter] = useState("ALL");
   const [page, setPage] = useState(1);
   const [preview, setPreview] = useState<PostReport | null>(null);
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
@@ -350,14 +363,36 @@ export default function PostReportsPage() {
   // per keystroke.
   const debouncedSearch = useDebouncedValue(search);
 
-  const { data, isLoading } = usePostReports({ status, search: debouncedSearch, authorId, page, limit: 10 });
+  // authorId is deliberately NOT sent to the API — that query param 500s the
+  // whole endpoint server-side right now, so this filter is applied
+  // client-side instead, against whatever's already loaded for this page.
+  const { data, isLoading } = usePostReports({ status, search: debouncedSearch, page, limit: 10 });
   const { data: authors } = usePostReportAuthors();
   const hidePost = useHidePost();
   const dismissReports = useDismissPostReports();
 
   const stats = data?.stats;
-  const reports = data?.data ?? [];
+  const allReports = data?.data ?? [];
   const totalPages = data?.totalPages ?? 1;
+
+  // Client-side only — there's no dedicated backend endpoint/param for
+  // reporters yet (unlike authors), so this is derived from whatever
+  // reporters are already present on the currently-loaded page of reports.
+  const reporterOptions = [
+    { value: "ALL", label: "All Reporters" },
+    ...Array.from(
+      new Map(
+        allReports
+          .flatMap((r) => r.reporters)
+          .filter((r) => r.id)
+          .map((r) => [r.id, r.fullName] as const)
+      ).entries()
+    ).map(([id, fullName]) => ({ value: id, label: fullName })),
+  ];
+
+  const reports = allReports
+    .filter((r) => authorId === "" || r.post.author.id === authorId)
+    .filter((r) => reporterFilter === "ALL" || r.reporters.some((rep) => rep.id === reporterFilter));
   const busy = hidePost.isPending || dismissReports.isPending;
 
   const confirmAction = () => {
@@ -448,6 +483,17 @@ export default function PostReportsPage() {
                 { value: "", label: "All authors" },
                 ...(authors ?? []).map((a) => ({ value: a.id, label: a.name })),
               ]}
+            />
+
+            {/* Reported-by filter — client-side only, derived from reporters
+                already present on the currently-loaded page (no dedicated
+                backend endpoint for this yet, unlike authors). */}
+            <CustomSelect
+              size="sm"
+              value={reporterFilter}
+              onChange={setReporterFilter}
+              options={reporterOptions}
+              className="w-[160px] shrink-0"
             />
 
             <p className="text-[11px] text-caption">Most reported first</p>

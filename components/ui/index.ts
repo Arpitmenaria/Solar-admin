@@ -8,3 +8,4 @@ export { Avatar, AvatarImage, AvatarFallback } from "./avatar";
 export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./tooltip";
 export { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./dropdown-menu";
 export { Separator } from "./separator";
+export { Switch } from "./switch";

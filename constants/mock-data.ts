@@ -1,17 +1,4 @@
-import type { DashboardStats, ModerationItem, ChartDataPoint, Report, ReportStats } from "@/types";
-
-
-export const MOCK_DASHBOARD_STATS: DashboardStats = {
-  totalUsers: 1200000,
-  activeUsers: 850000,
-  newRegistrations: 12450,
-  flaggedUsers: 412804,
-  newSignups: 1402,
-  premiumUsers: 142502,
-  totalEarnings: 145200,
-  monthlyEarnings: 3000,
-  totalPremiumUsers: 500000,
-};
+import type { ModerationItem, Report, ReportStats } from "@/types";
 
 export const MOCK_MODERATION: ModerationItem[] = [
   { id: "1", username: "@johndoe_92", reportedAt: "12m ago", type: "Policy Violation", excerpt: '"This is a suspicious link that was flagged by the...' },
@@ -197,12 +184,3 @@ export const MOCK_EVENT_REPORT_STATS: ReportStats = {
   dismissed: 17,
 };
 
-export const MOCK_CHART_DATA: ChartDataPoint[] = [
-  { day: "Mon", dau: 280, mau: 520 },
-  { day: "Tue", dau: 320, mau: 580 },
-  { day: "Wed", dau: 290, mau: 540 },
-  { day: "Thu", dau: 380, mau: 620 },
-  { day: "Fri", dau: 420, mau: 680 },
-  { day: "Sat", dau: 520, mau: 750 },
-  { day: "Sun (Live)", dau: 650, mau: 820 },
-];

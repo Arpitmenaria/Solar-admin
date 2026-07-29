@@ -270,7 +270,7 @@ export default function ReportedMessagesPage() {
     <div className="flex flex-col flex-1">
       <main className="flex-1 space-y-6 p-4 md:p-6">
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-          <h1 className="text-2xl font-bold text-white">Reported Messages</h1>
+          <h1 className="text-2xl font-bold text-white">Reported Chats</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Review conversations reported from group chats and direct messages, then remove the conversation or dismiss the reports.
           </p>

@@ -1,55 +1,71 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Bell, Menu, LogOut, CheckCheck, Zap, Users, ShieldAlert, CreditCard } from "lucide-react";
+import { Bell, Menu, LogOut, CheckCheck, UserPlus, FileWarning, MessageSquareWarning, MailWarning, ShieldAlert, type LucideIcon } from "lucide-react";
 import { useUIStore } from "@/store/ui.store";
 import { useAuthStore } from "@/store/auth.store";
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { createPortal } from "react-dom";
+import { toast } from "sonner";
+import { connectAdminSocket, disconnectAdminSocket } from "@/services/socket";
+import { useAdminNotifications, useMarkNotificationRead, useMarkAllNotificationsRead, notificationsKey } from "@/hooks/use-notifications";
+import type { AdminNotification, AdminNotificationType } from "@/types";
+import type { NotificationsPage } from "@/services/notifications.service";
 
-const NOTIFICATIONS = [
-  {
-    id: 1,
-    icon: ShieldAlert,
-    iconColor: "text-red-400",
-    iconBg: "bg-red-500/10",
-    title: "New flagged user",
-    desc: "User @dark_knight99 was flagged for policy violation.",
-    time: "2m ago",
-    unread: true,
-  },
-  {
-    id: 2,
-    icon: Users,
-    iconColor: "text-blue-400",
-    iconBg: "bg-blue-500/10",
-    title: "Group report submitted",
-    desc: "Group \"Night Owls\" received 3 reports in the last hour.",
-    time: "18m ago",
-    unread: true,
-  },
-  {
-    id: 3,
-    icon: CreditCard,
-    iconColor: "text-emerald-400",
-    iconBg: "bg-emerald-500/10",
-    title: "Premium subscription spike",
-    desc: "Premium upgrades up 24% today vs. yesterday.",
-    time: "1h ago",
-    unread: true,
-  },
-  {
-    id: 4,
-    icon: Zap,
-    iconColor: "text-yellow-400",
-    iconBg: "bg-yellow-500/10",
-    title: "System latency alert",
-    desc: "API response time exceeded 300ms threshold briefly.",
-    time: "3h ago",
-    unread: false,
-  },
-];
+const TYPE_META: Record<AdminNotificationType, { icon: LucideIcon; color: string; bg: string }> = {
+  new_user:       { icon: UserPlus,             color: "text-blue-400",    bg: "bg-blue-500/10"    },
+  post_report:    { icon: FileWarning,          color: "text-red-400",     bg: "bg-red-500/10"     },
+  comment_report: { icon: MessageSquareWarning, color: "text-orange-400",  bg: "bg-orange-500/10"  },
+  message_report: { icon: MailWarning,          color: "text-purple-400",  bg: "bg-purple-500/10"  },
+  group_report:   { icon: ShieldAlert,          color: "text-yellow-400",  bg: "bg-yellow-500/10"  },
+};
+
+function timeAgo(iso: string): string {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diffMs / 60_000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
+}
+
+// Establishes the live socket connection for as long as an admin is logged
+// in — mounted once from TopBar since that's the only consumer of realtime
+// notifications today. Pushes into the same react-query cache the REST list
+// (useAdminNotifications) reads from, so a live event and a page refresh
+// both render through one code path.
+function useAdminNotificationSocket() {
+  const token = useAuthStore((s) => s.token);
+  const qc = useQueryClient();
+
+  useEffect(() => {
+    if (!token) return;
+    const socket = connectAdminSocket(token);
+
+    function handleNotification(data: AdminNotification) {
+      qc.setQueryData<NotificationsPage>(notificationsKey, (prev) => {
+        if (!prev) return prev;
+        if (prev.notifications.some((n) => n.id === data.id)) return prev;
+        return {
+          ...prev,
+          notifications: [data, ...prev.notifications],
+          unreadCount: prev.unreadCount + 1,
+          total: prev.total + 1,
+        };
+      });
+      toast.message(data.title, { description: data.message });
+    }
+
+    socket.on("admin:notification", handleNotification);
+    return () => {
+      socket.off("admin:notification", handleNotification);
+      disconnectAdminSocket();
+    };
+  }, [token, qc]);
+}
 
 function NotificationPortal({
   open,
@@ -62,7 +78,11 @@ function NotificationPortal({
 }) {
   const [pos, setPos] = useState({ top: 0, right: 0 });
   const [mounted, setMounted] = useState(false);
-  const [unreadIds, setUnreadIds] = useState(new Set(NOTIFICATIONS.filter((n) => n.unread).map((n) => n.id)));
+  const { data } = useAdminNotifications();
+  const { mutate: markRead } = useMarkNotificationRead();
+  const { mutate: markAllRead } = useMarkAllNotificationsRead();
+  const notifications = data?.notifications ?? [];
+  const unreadCount = data?.unreadCount ?? 0;
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -103,14 +123,14 @@ function NotificationPortal({
             <div className="flex items-center gap-2">
               <Bell size={13} className="text-blue-400" />
               <span className="text-[12px] font-semibold text-white">Notifications</span>
-              {unreadIds.size > 0 && (
+              {unreadCount > 0 && (
                 <span className="rounded-full bg-blue-600 px-1.5 py-0.5 text-[10px] font-bold text-white leading-none">
-                  {unreadIds.size}
+                  {unreadCount}
                 </span>
               )}
             </div>
             <button
-              onClick={() => setUnreadIds(new Set())}
+              onClick={() => markAllRead()}
               className="flex items-center gap-1 text-[11px] text-[#3a4d6a] transition-colors hover:text-blue-400"
             >
               <CheckCheck size={11} />
@@ -120,37 +140,33 @@ function NotificationPortal({
 
           {/* Items */}
           <div className="divide-y divide-white/[0.05]">
-            {NOTIFICATIONS.map((n) => {
-              const Icon = n.icon;
-              const isUnread = unreadIds.has(n.id);
+            {notifications.length === 0 && (
+              <p className="px-4 py-6 text-center text-[12px] text-[#4a5a7a]">You&apos;re all caught up.</p>
+            )}
+            {notifications.map((n) => {
+              const meta = TYPE_META[n.type];
+              const Icon = meta.icon;
               return (
                 <motion.button
                   key={n.id}
-                  onClick={() => setUnreadIds((prev) => { const s = new Set(prev); s.delete(n.id); return s; })}
+                  onClick={() => !n.read && markRead(n.id)}
                   whileHover={{ backgroundColor: "rgba(255,255,255,0.03)" }}
                   className="flex w-full items-start gap-3 px-4 py-3 text-left transition-colors"
                 >
-                  <div className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${n.iconBg}`}>
-                    <Icon size={14} className={n.iconColor} />
+                  <div className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${meta.bg}`}>
+                    <Icon size={14} className={meta.color} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-[12px] font-semibold text-slate-200 leading-tight">{n.title}</p>
-                      {isUnread && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-blue-500" />}
+                      {!n.read && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-blue-500" />}
                     </div>
-                    <p className="mt-0.5 text-[11px] leading-relaxed text-[#4a5a7a]">{n.desc}</p>
-                    <p className="mt-1 text-[10px] text-[#2e3d57]">{n.time}</p>
+                    <p className="mt-0.5 text-[11px] leading-relaxed text-[#4a5a7a]">{n.message}</p>
+                    <p className="mt-1 text-[10px] text-[#2e3d57]">{timeAgo(n.createdAt)}</p>
                   </div>
                 </motion.button>
               );
             })}
-          </div>
-
-          {/* Footer */}
-          <div className="border-t border-white/[0.07] px-4 py-2.5">
-            <button className="w-full text-center text-[11px] text-[#3a4d6a] transition-colors hover:text-blue-400">
-              View all notifications
-            </button>
           </div>
         </motion.div>
       )}
@@ -165,7 +181,10 @@ export function TopBar() {
   const router = useRouter();
   const [notifOpen, setNotifOpen] = useState(false);
   const bellRef = useRef<HTMLButtonElement>(null);
-  const unreadCount = NOTIFICATIONS.filter((n) => n.unread).length;
+  const { data } = useAdminNotifications();
+  const unreadCount = data?.unreadCount ?? 0;
+
+  useAdminNotificationSocket();
 
   return (
     <>

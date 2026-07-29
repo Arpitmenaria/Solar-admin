@@ -86,6 +86,31 @@ export interface DashboardStats {
   totalPremiumUsers: number;
 }
 
+export interface NotificationSettings {
+  newUser: boolean;
+  postReport: boolean;
+  commentReport: boolean;
+  messageReport: boolean;
+  groupReport: boolean;
+}
+
+export type AdminNotificationType =
+  | "new_user"
+  | "post_report"
+  | "comment_report"
+  | "message_report"
+  | "group_report";
+
+export interface AdminNotification {
+  id: string;
+  type: AdminNotificationType;
+  title: string;
+  message: string;
+  targetId: string | null;
+  read: boolean;
+  createdAt: string;
+}
+
 export interface ModerationItem {
   id: string;
   username: string;
@@ -95,10 +120,12 @@ export interface ModerationItem {
   excerpt: string;
 }
 
+export type ChartPeriod = "daily" | "weekly" | "monthly" | "yearly";
+
 export interface ChartDataPoint {
-  day: string;
-  dau: number;
-  mau: number;
+  label: string;
+  totalUsers: number;
+  premiumUsers: number;
 }
 
 export type ReportStatus = "PENDING" | "RESOLVED" | "DISMISSED";

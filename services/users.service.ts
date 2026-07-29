@@ -3,8 +3,9 @@ import type {
   UserStatus, PlanTier, UserStatsSummary, Subscription, SubscriptionStatus,
   RelationKind, RelationUser, PaginatedRelations,
   Reporter, PaginatedReporters,
+  DashboardStats, ChartDataPoint, ChartPeriod,
 } from "@/types";
-import { MOCK_DASHBOARD_STATS, MOCK_MODERATION, MOCK_CHART_DATA } from "@/constants/mock-data";
+import { MOCK_MODERATION } from "@/constants/mock-data";
 import { apiClient, type ApiError } from "@/services/api/client";
 
 const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -258,17 +259,19 @@ export const usersService = {
 };
 
 export const dashboardService = {
-  // Still mock: no endpoint exposes earnings or the DAU/MAU series yet.
-  async getStats() {
-    await delay(200);
-    return MOCK_DASHBOARD_STATS;
+  async getStats(): Promise<DashboardStats> {
+    const res = await apiClient.get<{ success: boolean; stats: DashboardStats }>("/api/admin/dashboard/stats");
+    return res.stats;
   },
+  // Still mock: no moderation-queue endpoint yet.
   async getModeration() {
     await delay(150);
     return MOCK_MODERATION;
   },
-  async getChartData() {
-    await delay(200);
-    return MOCK_CHART_DATA;
+  async getChartData(period: ChartPeriod = "weekly"): Promise<ChartDataPoint[]> {
+    const res = await apiClient.get<{ success: boolean; points: ChartDataPoint[] }>(
+      `/api/admin/dashboard/engagement?period=${period}`
+    );
+    return res.points ?? [];
   },
 };

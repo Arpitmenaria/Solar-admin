@@ -149,7 +149,7 @@ export default function UserDetailPage() {
               <MiniStat
                 label="REPORTED POSTS"
                 value={formatNumberFull(user.stats.reportedPosts)}
-                href="/dashboard/post-reports"
+                href={`/dashboard/post-reports?authorId=${user.id}`}
               />
               <MiniStat
                 label="REPORTED BY"

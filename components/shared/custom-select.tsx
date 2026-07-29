@@ -21,11 +21,19 @@ interface CustomSelectProps {
   className?: string;
 }
 
+interface MenuPos {
+  top: number;
+  left: number;
+  width: number;
+  maxHeight: number;
+  openUp: boolean;
+}
+
 export function CustomSelect({
   value, onChange, options, hasError, size = "md", className,
 }: CustomSelectProps) {
   const [open, setOpen] = useState(false);
-  const [pos, setPos]   = useState({ top: 0, left: 0, width: 0 });
+  const [pos, setPos]   = useState<MenuPos>({ top: 0, left: 0, width: 0, maxHeight: 288, openUp: false });
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef    = useRef<HTMLDivElement>(null);
 
@@ -34,7 +42,24 @@ export function CustomSelect({
   const handleOpen = () => {
     if (triggerRef.current) {
       const r = triggerRef.current.getBoundingClientRect();
-      setPos({ top: r.bottom + 4, left: r.left, width: r.width });
+      const gap = 4;
+      const spaceBelow = window.innerHeight - r.bottom - gap;
+      const spaceAbove = r.top - gap;
+      // Flip above the trigger when there isn't enough room below — a long
+      // options list (e.g. every user) would otherwise render mostly
+      // off-screen with no way to reach it.
+      const openUp = spaceBelow < 200 && spaceAbove > spaceBelow;
+      // Capped well under the available space on purpose — this floats over
+      // a data table, so a shorter panel that scrolls sooner covers fewer
+      // rows than one that stretches to fill all the room it could.
+      const maxHeight = Math.max(160, Math.min(220, (openUp ? spaceAbove : spaceBelow)));
+      setPos({
+        top: openUp ? r.top - gap : r.bottom + gap,
+        left: r.left,
+        width: r.width,
+        maxHeight,
+        openUp,
+      });
     }
     setOpen((v) => !v);
   };
@@ -84,19 +109,21 @@ export function CustomSelect({
           {open && (
             <motion.div
               ref={menuRef}
-              initial={{ opacity: 0, scale: 0.94, y: -4 }}
+              initial={{ opacity: 0, scale: 0.94, y: pos.openUp ? 4 : -4 }}
               animate={{ opacity: 1, scale: 1,    y: 0  }}
-              exit={{    opacity: 0, scale: 0.94, y: -4 }}
+              exit={{    opacity: 0, scale: 0.94, y: pos.openUp ? 4 : -4 }}
               transition={{ duration: 0.14, ease: [0.16, 1, 0.3, 1] }}
               style={{
                 position: "fixed",
-                top: pos.top,
+                [pos.openUp ? "bottom" : "top"]: pos.openUp ? window.innerHeight - pos.top : pos.top,
                 left: pos.left,
                 minWidth: Math.max(pos.width, 140),
-                transformOrigin: "top left",
+                maxWidth: 280,
+                maxHeight: pos.maxHeight,
+                transformOrigin: pos.openUp ? "bottom left" : "top left",
                 zIndex: 9999,
               }}
-              className="overflow-hidden rounded-xl border border-white/[0.10] bg-[#0d1424] py-1 shadow-2xl shadow-black/70"
+              className="overflow-y-auto rounded-xl border border-white/[0.16] bg-[#0d1424] py-1 shadow-2xl shadow-black/80 ring-1 ring-black/40"
             >
               {options.map((opt) => (
                 <button
@@ -104,11 +131,12 @@ export function CustomSelect({
                   type="button"
                   onClick={() => { onChange(opt.value); setOpen(false); }}
                   className={cn(
-                    "flex w-full items-center px-3.5 py-2.5 text-[12px] font-medium transition-colors text-left whitespace-nowrap",
+                    "flex w-full items-center px-3.5 py-2.5 text-[12px] font-medium transition-colors text-left truncate",
                     value === opt.value
                       ? "text-white bg-blue-500/20"
                       : "text-white hover:bg-[rgba(255,255,255,0.07)]"
                   )}
+                  title={opt.label}
                 >
                   {opt.label}
                 </button>

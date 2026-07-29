@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { usersService, dashboardService } from "@/services/users.service";
-import type { UserFilters, RelationKind } from "@/types";
+import type { UserFilters, RelationKind, ChartPeriod } from "@/types";
 
 export const userKeys = {
   all: ["users"] as const,
@@ -92,10 +92,10 @@ export function useModerationQueue() {
   });
 }
 
-export function useChartData() {
+export function useChartData(period: ChartPeriod = "weekly") {
   return useQuery({
-    queryKey: ["dashboard", "chart"],
-    queryFn: dashboardService.getChartData,
+    queryKey: ["dashboard", "chart", period],
+    queryFn: () => dashboardService.getChartData(period),
     staleTime: 60_000,
   });
 }
