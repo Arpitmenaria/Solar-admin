@@ -14,9 +14,11 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import {
-  useConversationReportDetail, useDeleteConversation, useDismissConversationReports,
+  useConversationReportDetail, useConversationContent,
+  useDeleteConversation, useDismissConversationReports,
 } from "@/hooks/use-message-reports";
 import { formatDate, na, cn } from "@/lib/utils";
+import type { ConversationMessage } from "@/types";
 
 type PendingAction = "delete" | "dismiss";
 
@@ -24,6 +26,7 @@ export default function ConversationReportDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { data, isLoading } = useConversationReportDetail(id);
+  const { data: content, isLoading: contentLoading } = useConversationContent(id);
   const deleteConversation = useDeleteConversation();
   const dismissReports = useDismissConversationReports();
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
@@ -149,6 +152,52 @@ export default function ConversationReportDetailPage() {
             </div>
           )}
         </div>
+
+        {/* Members */}
+        {content && content.members.length > 0 && (
+          <div className="rounded-xl border border-white/[0.08] bg-card p-5">
+            <div className="mb-4 flex items-center gap-2">
+              <Users size={15} className="text-[#3b82f6]" />
+              <h2 className="text-sm font-semibold text-white">Members</h2>
+              <span className="rounded-full bg-white/[0.06] px-2 py-0.5 text-[11px] font-semibold text-caption">
+                {content.members.length}
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {content.members.map((m) => (
+                <div key={m.id} className="flex items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.03] px-2.5 py-1.5">
+                  <UserAvatar src={m.avatarUrl} name={m.fullName} size="sm" />
+                  <span className="text-[12px] text-slate-200">{na(m.fullName)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Conversation transcript */}
+        <div className="rounded-xl border border-white/[0.08] bg-card p-5">
+          <div className="mb-4 flex items-center gap-2">
+            <MessageCircle size={15} className="text-[#3b82f6]" />
+            <h2 className="text-sm font-semibold text-white">Conversation</h2>
+            {content && (
+              <span className="rounded-full bg-white/[0.06] px-2 py-0.5 text-[11px] font-semibold text-caption">
+                {content.messages.length}
+              </span>
+            )}
+          </div>
+
+          {contentLoading ? (
+            <div className="space-y-3">
+              {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-12 rounded-lg" />)}
+            </div>
+          ) : !content || content.messages.length === 0 ? (
+            <p className="py-10 text-center text-sm text-caption">No messages in this conversation.</p>
+          ) : (
+            <div className="space-y-3">
+              {content.messages.map((m, i) => <MessageBubble key={i} message={m} />)}
+            </div>
+          )}
+        </div>
       </main>
 
       <AlertDialog open={!!pendingAction} onOpenChange={(open) => { if (!open) setPendingAction(null); }}>
@@ -174,6 +223,30 @@ export default function ConversationReportDetailPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+    </div>
+  );
+}
+
+function MessageBubble({ message }: { message: ConversationMessage }) {
+  const when = message.timestamp ? new Date(message.timestamp) : null;
+  const time = when && !Number.isNaN(when.getTime())
+    ? when.toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })
+    : "";
+
+  return (
+    <div className="flex gap-3">
+      <UserAvatar src={message.sender.avatarUrl} name={message.sender.fullName} size="sm" />
+      <div className="min-w-0 flex-1">
+        <div className="flex items-baseline gap-2">
+          <span className="text-[12px] font-semibold text-white">{na(message.sender.fullName)}</span>
+          {time && <span className="text-[10px] text-caption">{time}</span>}
+        </div>
+        <div className="mt-1 w-fit max-w-full rounded-lg rounded-tl-sm border border-white/[0.06] bg-white/[0.03] px-3 py-2">
+          <p className="whitespace-pre-wrap break-words text-[13px] text-slate-200">
+            {message.text || <span className="italic text-caption">No text</span>}
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

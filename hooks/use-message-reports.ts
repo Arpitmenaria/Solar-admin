@@ -7,6 +7,7 @@ export const conversationReportKeys = {
   all: ["conversation-reports"] as const,
   list: (filters: Partial<ConversationReportFilters>) => ["conversation-reports", "list", filters] as const,
   detail: (id: string) => ["conversation-reports", "detail", id] as const,
+  content: (id: string) => ["conversation-reports", "content", id] as const,
 };
 
 export function useConversationReports(filters: Partial<ConversationReportFilters> = {}) {
@@ -21,6 +22,16 @@ export function useConversationReportDetail(conversationId: string) {
   return useQuery({
     queryKey: conversationReportKeys.detail(conversationId),
     queryFn: () => messageReportsService.getConversationReports(conversationId),
+    enabled: !!conversationId,
+    staleTime: 30_000,
+  });
+}
+
+/** Members + full message transcript for the moderation view. */
+export function useConversationContent(conversationId: string) {
+  return useQuery({
+    queryKey: conversationReportKeys.content(conversationId),
+    queryFn: () => messageReportsService.getConversationContent(conversationId),
     enabled: !!conversationId,
     staleTime: 30_000,
   });

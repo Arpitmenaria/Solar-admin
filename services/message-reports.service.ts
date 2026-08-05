@@ -1,6 +1,7 @@
 import type {
   ChatType, ConversationMessageReport, ConversationReportDetail, ConversationReporter,
   ConversationReportStatus, ConversationReportSummary, MessageReportPerson, PaginatedConversationReports,
+  ConversationTranscript, ConversationMessage,
 } from "@/types";
 import { apiClient } from "@/services/api/client";
 
@@ -48,6 +49,22 @@ interface ApiConversationReportDetail {
   conversation?: { id?: string; type?: string; name?: string; memberCount?: number } | null;
   reports?: ApiConversationReportItem[];
   total?: number;
+}
+
+interface ApiConversationMessage {
+  sender?: ApiPerson | null;
+  text?: string;
+  timestamp?: string;
+}
+
+interface ApiReportDetails {
+  success: boolean;
+  conversation?: {
+    type?: string;
+    name?: string;
+    members?: ApiPerson[];
+    messages?: ApiConversationMessage[];
+  } | null;
 }
 
 function mapPerson(p: ApiPerson | null | undefined): MessageReportPerson {
@@ -137,6 +154,24 @@ export const messageReportsService = {
         reportedAt: r.reportedAt ?? "",
         status: mapStatus(r.status),
         reporter: mapPerson(r.reportedBy),
+      })),
+    };
+  },
+
+  /**
+   * Full context for the moderation view: every member and the complete
+   * message history, sorted chronologically. Separate from getConversationReports
+   * so the reports list (one row per reporter) stays intact.
+   */
+  async getConversationContent(conversationId: string): Promise<ConversationTranscript> {
+    const res = await apiClient.get<ApiReportDetails>(`${BASE}/${conversationId}/report-details`);
+    const conv = res.conversation;
+    return {
+      members: (conv?.members ?? []).map(mapPerson),
+      messages: (conv?.messages ?? []).map((m): ConversationMessage => ({
+        sender: mapPerson(m.sender),
+        text: m.text ?? "",
+        timestamp: m.timestamp ?? "",
       })),
     };
   },

@@ -423,6 +423,19 @@ export interface ConversationReportDetail {
   reports: ConversationMessageReport[];
 }
 
+/** A single message in the conversation transcript. */
+export interface ConversationMessage {
+  sender: MessageReportPerson;
+  text: string;
+  timestamp: string;
+}
+
+/** Members + full message history — the context an admin reviews before acting. */
+export interface ConversationTranscript {
+  members: MessageReportPerson[];
+  messages: ConversationMessage[];
+}
+
 export type PlanTier = "free" | "gold" | "platinum";
 export type PlanBillingType = "weekly" | "monthly" | "quarterly" | "yearly";
 
