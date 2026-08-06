@@ -101,13 +101,14 @@ export const commentReportsService = {
     };
   },
 
-  /** Hides the comment from the public feed (not deleted) and resolves its reports. */
-  async hideComment(commentId: string): Promise<void> {
-    await apiClient.patch(`${BASE}/${commentId}/hide`, {});
+  /** Hides the comment from the public feed (not deleted), resolves its
+   *  reports, and notifies the author. Requires a reason for the audit log. */
+  async hideComment(commentId: string, reason: string, notes = ""): Promise<void> {
+    await apiClient.patch(`${BASE}/${commentId}/hide`, { reason, notes });
   },
 
   /** Takes no action on the comment, resolves its pending reports. */
-  async dismissReports(commentId: string): Promise<void> {
-    await apiClient.patch(`${BASE}/${commentId}/dismiss`, {});
+  async dismissReports(commentId: string, reason: string, notes = ""): Promise<void> {
+    await apiClient.patch(`${BASE}/${commentId}/dismiss`, { reason, notes });
   },
 };

@@ -105,14 +105,19 @@ export const postReportsService = {
     };
   },
 
-  /** Hides the post from the public feed (not deleted) and resolves its reports. */
-  async hidePost(postId: string): Promise<void> {
-    await apiClient.patch(`${BASE}/${postId}/hide`, {});
+  /**
+   * Removes the post from the public feed and resolves its reports.
+   * NOTE: hits the existing PATCH /hide. The client spec describes
+   * DELETE /:postId ("post_deleted") — confirm with backend which is live;
+   * swapping to `apiClient.delete` here is the only change needed.
+   */
+  async hidePost(postId: string, reason: string, notes = ""): Promise<void> {
+    await apiClient.patch(`${BASE}/${postId}/hide`, { reason, notes });
   },
 
   /** Takes no action on the post, resolves its pending reports. */
-  async dismissReports(postId: string): Promise<void> {
-    await apiClient.patch(`${BASE}/${postId}/dismiss`, {});
+  async dismissReports(postId: string, reason: string, notes = ""): Promise<void> {
+    await apiClient.patch(`${BASE}/${postId}/dismiss`, { reason, notes });
   },
 
   /** Distinct authors who have at least one reported post — for the filter. */

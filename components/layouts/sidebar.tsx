@@ -16,6 +16,7 @@ import {
   TbCalendarEvent,
   TbSchool,
   TbBell,
+  TbHistory,
 } from "react-icons/tb";
 
 import { FaRegStar } from "react-icons/fa";
@@ -32,7 +33,8 @@ type IconKey =
   | "Events"
   | "Education"
   | "Plans"
-  | "Notifications";
+  | "Notifications"
+  | "Audit";
 
 interface NavChild {
   label: string;
@@ -97,6 +99,7 @@ const NAV_ITEMS: NavEntry[] = [
       { label: "Library", href: "/dashboard/education/library" },
     ],
   },
+  { type: "link", label: "Audit Log", href: "/dashboard/audit-logs", icon: "Audit" },
   { type: "link", label: "Plans & Subscriptions", href: "/dashboard/plans", icon: "Plans" },
   { type: "link", label: "Notification Settings", href: "/dashboard/notifications", icon: "Notifications" },
 ];
@@ -109,6 +112,7 @@ const ICON_MAP: Record<IconKey, ElementType> = {
   Education: TbSchool,
   Plans: TbCreditCard,
   Notifications: TbBell,
+  Audit: TbHistory,
 };
 
 const isPathActive = (href: string, pathname: string) =>

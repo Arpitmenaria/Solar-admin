@@ -176,13 +176,14 @@ export const messageReportsService = {
     };
   },
 
-  /** Hard-deletes the conversation and all its messages. */
-  async deleteConversation(conversationId: string): Promise<void> {
-    await apiClient.delete(`${BASE}/${conversationId}`);
+  /** Hard-deletes the conversation and all its messages, and notifies the
+   *  creator. Requires a reason for the audit log. */
+  async deleteConversation(conversationId: string, reason: string, notes = ""): Promise<void> {
+    await apiClient.delete(`${BASE}/${conversationId}`, { reason, notes });
   },
 
   /** Keeps the conversation, resolves all its pending reports. */
-  async dismissReports(conversationId: string): Promise<void> {
-    await apiClient.patch(`${BASE}/${conversationId}/reports/dismiss`, {});
+  async dismissReports(conversationId: string, reason: string, notes = ""): Promise<void> {
+    await apiClient.patch(`${BASE}/${conversationId}/reports/dismiss`, { reason, notes });
   },
 };

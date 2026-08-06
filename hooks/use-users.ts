@@ -71,8 +71,13 @@ export function useUserStats() {
 export function useToggleSuspend() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => usersService.toggleSuspend(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: userKeys.all }),
+    mutationFn: ({ id, reason, notes }: { id: string; reason: string; notes: string }) =>
+      usersService.toggleSuspend(id, reason, notes),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: userKeys.all });
+      // The user's audit trail changed too.
+      qc.invalidateQueries({ queryKey: ["audit-logs"] });
+    },
   });
 }
 

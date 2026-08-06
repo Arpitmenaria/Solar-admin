@@ -16,11 +16,18 @@ export function useCommentReports(filters: Partial<CommentReportFilters> = {}) {
   });
 }
 
+interface CommentActionArgs {
+  commentId: string;
+  reason: string;
+  notes: string;
+}
+
 /** Both actions resolve the comment's reports, so both invalidate the same list. */
 export function useHideComment() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (commentId: string) => commentReportsService.hideComment(commentId),
+    mutationFn: ({ commentId, reason, notes }: CommentActionArgs) =>
+      commentReportsService.hideComment(commentId, reason, notes),
     onSuccess: () => qc.invalidateQueries({ queryKey: commentReportKeys.all }),
   });
 }
@@ -28,7 +35,8 @@ export function useHideComment() {
 export function useDismissCommentReports() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (commentId: string) => commentReportsService.dismissReports(commentId),
+    mutationFn: ({ commentId, reason, notes }: CommentActionArgs) =>
+      commentReportsService.dismissReports(commentId, reason, notes),
     onSuccess: () => qc.invalidateQueries({ queryKey: commentReportKeys.all }),
   });
 }

@@ -15,10 +15,7 @@ import { StatCard } from "@/components/shared/stat-card";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { StatCardSkeleton, TableRowSkeleton } from "@/components/shared/loading-skeleton";
 import { PaginationButton } from "@/components/shared/pagination-button";
-import {
-  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
-} from "@/components/ui/alert-dialog";
+import { ActionReasonDialog } from "@/components/shared/action-reason-dialog";
 import { useConversationReports, useDeleteConversation, useDismissConversationReports } from "@/hooks/use-message-reports";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { formatNumberFull, formatDate, na, cn } from "@/lib/utils";
@@ -247,19 +244,19 @@ export default function ReportedMessagesPage() {
     router.push(`/dashboard/reported-messages/${conversationId}`);
   };
 
-  const confirmAction = () => {
+  const confirmAction = ({ reason, notes }: { reason: string; notes: string }) => {
     if (!pendingAction) return;
     const { kind, conversation } = pendingAction;
     const name = na(conversation.chat.name);
 
     if (kind === "delete") {
-      deleteConversation.mutate(conversation.conversationId, {
-        onSuccess: () => toast.success(`Conversation "${name}" deleted and its reports resolved.`),
+      deleteConversation.mutate({ conversationId: conversation.conversationId, reason, notes }, {
+        onSuccess: () => toast.success(`Conversation "${name}" deleted and the creator notified.`),
         onError: () => toast.error("Couldn't delete this conversation. Please try again."),
       });
     } else {
-      dismissReports.mutate(conversation.conversationId, {
-        onSuccess: () => toast.success(`Reports on "${name}" dismissed.`),
+      dismissReports.mutate({ conversationId: conversation.conversationId, reason, notes }, {
+        onSuccess: () => toast.success(`Reports on "${name}" dismissed and logged.`),
         onError: () => toast.error("Couldn't dismiss these reports. Please try again."),
       });
     }
@@ -444,29 +441,18 @@ export default function ReportedMessagesPage() {
         </div>
       </main>
 
-      <AlertDialog open={!!pendingAction} onOpenChange={(open) => { if (!open) setPendingAction(null); }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {pendingAction?.kind === "delete" ? "Delete this conversation?" : "Dismiss these reports?"}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {pendingAction && (pendingAction.kind === "delete"
-                ? `This permanently deletes "${na(pendingAction.conversation.chat.name)}" and all its messages, and resolves all ${pendingAction.conversation.reportCount} report(s) against it. Members will be notified.`
-                : `This keeps the conversation and marks all ${pendingAction.conversation.reportCount} report(s) as resolved.`)}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              variant={pendingAction?.kind === "delete" ? "destructive" : "default"}
-              onClick={confirmAction}
-            >
-              {pendingAction?.kind === "delete" ? "Delete Conversation" : "Dismiss Reports"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ActionReasonDialog
+        open={!!pendingAction}
+        title={pendingAction?.kind === "delete" ? "Delete this conversation?" : "Dismiss these reports?"}
+        description={pendingAction && (pendingAction.kind === "delete"
+          ? `Permanently deletes "${na(pendingAction.conversation.chat.name)}" and all its messages, resolves all ${pendingAction.conversation.reportCount} report(s), and notifies the creator.`
+          : `Keeps the conversation and resolves all ${pendingAction.conversation.reportCount} report(s). The action is logged.`)}
+        confirmLabel={pendingAction?.kind === "delete" ? "Delete Conversation" : "Dismiss Reports"}
+        variant={pendingAction?.kind === "delete" ? "destructive" : "default"}
+        pending={busy}
+        onConfirm={confirmAction}
+        onClose={() => setPendingAction(null)}
+      />
     </div>
   );
 }

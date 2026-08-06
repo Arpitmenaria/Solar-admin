@@ -14,10 +14,7 @@ import { StatCard } from "@/components/shared/stat-card";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { StatCardSkeleton, TableRowSkeleton } from "@/components/shared/loading-skeleton";
 import { PaginationButton } from "@/components/shared/pagination-button";
-import {
-  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
-} from "@/components/ui/alert-dialog";
+import { ActionReasonDialog } from "@/components/shared/action-reason-dialog";
 import { useCommentReports, useHideComment, useDismissCommentReports } from "@/hooks/use-comment-reports";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { formatNumberFull, formatDate, na, cn } from "@/lib/utils";
@@ -326,20 +323,20 @@ export default function ReportedCommentsPage() {
   const totalPages = data?.totalPages ?? 1;
   const busy = hideComment.isPending || dismissReports.isPending;
 
-  const confirmAction = () => {
+  const confirmAction = ({ reason, notes }: { reason: string; notes: string }) => {
     if (!pendingAction) return;
     const { kind, report } = pendingAction;
     const author = na(report.comment.author.fullName);
 
     if (kind === "hide") {
-      hideComment.mutate(report.commentId, {
-        onSuccess: () => toast.success(`Comment by "${author}" hidden from the feed and its reports resolved.`),
+      hideComment.mutate({ commentId: report.commentId, reason, notes }, {
+        onSuccess: () => toast.success(`Comment by "${author}" hidden and the author was notified.`),
         onError: () => toast.error("Couldn't hide this comment. Please try again."),
       });
     } else {
-      dismissReports.mutate(report.commentId, {
-        onSuccess: () => toast.success(`No action taken on "${author}"'s comment; reports resolved.`),
-        onError: () => toast.error("Couldn't resolve these reports. Please try again."),
+      dismissReports.mutate({ commentId: report.commentId, reason, notes }, {
+        onSuccess: () => toast.success(`Reports on "${author}"'s comment dismissed and logged.`),
+        onError: () => toast.error("Couldn't dismiss these reports. Please try again."),
       });
     }
     setPendingAction(null);
@@ -562,29 +559,18 @@ export default function ReportedCommentsPage() {
 
       <CommentPreview report={preview} onClose={() => setPreview(null)} />
 
-      <AlertDialog open={!!pendingAction} onOpenChange={(open) => { if (!open) setPendingAction(null); }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {pendingAction?.kind === "hide" ? "Hide this comment from the feed?" : "Take no action on these reports?"}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {pendingAction && (pendingAction.kind === "hide"
-                ? `This hides the comment by "${na(pendingAction.report.comment.author.fullName)}" from the public feed (it is not deleted) and resolves all ${pendingAction.report.reportCount} report(s) against it.`
-                : `This keeps the comment visible and marks all ${pendingAction.report.reportCount} pending report(s) as resolved, with no action taken on the comment.`)}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              variant={pendingAction?.kind === "hide" ? "destructive" : "default"}
-              onClick={confirmAction}
-            >
-              {pendingAction?.kind === "hide" ? "Hide Comment" : "No Action"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ActionReasonDialog
+        open={!!pendingAction}
+        title={pendingAction?.kind === "hide" ? "Hide this comment?" : "Dismiss these reports?"}
+        description={pendingAction && (pendingAction.kind === "hide"
+          ? `Hides the comment by "${na(pendingAction.report.comment.author.fullName)}" from the feed, resolves all ${pendingAction.report.reportCount} report(s), and notifies the author.`
+          : `Keeps the comment and resolves all ${pendingAction.report.reportCount} pending report(s). The action is logged.`)}
+        confirmLabel={pendingAction?.kind === "hide" ? "Hide Comment" : "Dismiss Reports"}
+        variant={pendingAction?.kind === "hide" ? "destructive" : "default"}
+        pending={busy}
+        onConfirm={confirmAction}
+        onClose={() => setPendingAction(null)}
+      />
     </div>
   );
 }

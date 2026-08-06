@@ -8,10 +8,7 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { StatCardSkeleton, TableRowSkeleton } from "@/components/shared/loading-skeleton";
 import { PaginationButton } from "@/components/shared/pagination-button";
-import {
-  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
-} from "@/components/ui/alert-dialog";
+import { ActionReasonDialog } from "@/components/shared/action-reason-dialog";
 import { useUsers, useUserStats, useToggleSuspend } from "@/hooks/use-users";
 import { USER_FILTER_TABS } from "@/constants/users";
 import { formatNumberFull, formatDate, na, cn } from "@/lib/utils";
@@ -135,15 +132,15 @@ export default function UsersPage() {
 
   const totalPages = users?.totalPages ?? 1;
 
-  const confirmSuspend = () => {
+  const confirmSuspend = ({ reason, notes }: { reason: string; notes: string }) => {
     if (!pendingSuspend) return;
     const { id, displayName, isSuspended } = pendingSuspend;
-    toggleSuspend.mutate(id, {
+    toggleSuspend.mutate({ id, reason, notes }, {
       // Report the state the server landed on, not the one we predicted.
       onSuccess: (nowSuspended) =>
         toast.success(
           nowSuspended
-            ? `"${displayName}" has been suspended.`
+            ? `"${displayName}" suspended and notified by email.`
             : `"${displayName}" has been reactivated.`
         ),
       onError: () =>
@@ -354,29 +351,18 @@ export default function UsersPage() {
         </div>
       </main>
 
-      <AlertDialog open={!!pendingSuspend} onOpenChange={(open) => { if (!open) setPendingSuspend(null); }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {pendingSuspend?.isSuspended ? "Reactivate this account?" : "Suspend this account?"}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {pendingSuspend && (pendingSuspend.isSuspended
-                ? `This restores "${pendingSuspend.displayName}"'s access to the platform.`
-                : `This blocks "${pendingSuspend.displayName}" from the platform and signs them out of any active session. You can reactivate the account later.`)}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              variant={pendingSuspend?.isSuspended ? "default" : "destructive"}
-              onClick={confirmSuspend}
-            >
-              {pendingSuspend?.isSuspended ? "Reactivate Account" : "Make Account Suspend"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ActionReasonDialog
+        open={!!pendingSuspend}
+        title={pendingSuspend?.isSuspended ? "Reactivate this account?" : "Suspend this account?"}
+        description={pendingSuspend && (pendingSuspend.isSuspended
+          ? `Restores "${pendingSuspend.displayName}"'s access to the platform.`
+          : `Blocks "${pendingSuspend.displayName}" from the platform, signs them out, and notifies them by email.`)}
+        confirmLabel={pendingSuspend?.isSuspended ? "Reactivate Account" : "Suspend Account"}
+        variant={pendingSuspend?.isSuspended ? "default" : "destructive"}
+        pending={toggleSuspend.isPending}
+        onConfirm={confirmSuspend}
+        onClose={() => setPendingSuspend(null)}
+      />
     </div>
   );
 }

@@ -216,10 +216,10 @@ export const usersService = {
    * value rather than assuming the opposite of what they had — two admins
    * acting at once would otherwise get a toast that contradicts reality.
    */
-  async toggleSuspend(id: string): Promise<boolean> {
+  async toggleSuspend(id: string, reason: string, notes = ""): Promise<boolean> {
     const res = await apiClient.patch<{ success: boolean; message: string; isSuspended: boolean }>(
       `/api/admin/users/${id}/suspend`,
-      {}
+      { reason, notes }
     );
     return res.isSuspended;
   },

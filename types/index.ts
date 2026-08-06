@@ -407,6 +407,53 @@ export interface PaginatedConversationReports {
   stats: ConversationReportStats;
 }
 
+/* ── Admin audit log ─────────────────────────── */
+
+/** Known action slugs. Kept as a plain string so the backend can add more
+ *  without breaking the type; labels live in AUDIT_ACTION_LABELS. */
+export type AuditAction = string;
+
+/** One row in the admin action audit trail. */
+export interface AuditLog {
+  id: string;
+  adminId: string;
+  adminName: string;
+  adminEmail: string;
+  action: AuditAction;
+  targetType: string;
+  targetId: string;
+  targetAuthorId: string;
+  targetAuthorName: string;
+  reason: string;
+  notes: string;
+  statusBefore: string;
+  statusAfter: string;
+  userNotified: boolean;
+  notificationSent: boolean;
+  emailSent: boolean;
+  createdAt: string;
+}
+
+/** A report that triggered an audited action. */
+export interface AuditLogReportRef {
+  id: string;
+  reason: string;
+  reporterName: string;
+}
+
+/** Full audit entry — adds IP and the triggering reports. */
+export interface AuditLogDetail extends AuditLog {
+  ipAddress: string;
+  relatedReports: AuditLogReportRef[];
+}
+
+export interface PaginatedAuditLogs {
+  data: AuditLog[];
+  total: number;
+  page: number;
+  totalPages: number;
+}
+
 /** One filed report within a conversation's report detail view. */
 export interface ConversationMessageReport {
   reportId: string;

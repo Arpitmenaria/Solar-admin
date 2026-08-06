@@ -9,10 +9,7 @@ import { Users, MessageCircle, ShieldCheck, Trash2 } from "lucide-react";
 import { BackButton } from "@/components/shared/back-button";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Skeleton } from "@/components/shared/loading-skeleton";
-import {
-  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
-} from "@/components/ui/alert-dialog";
+import { ActionReasonDialog } from "@/components/shared/action-reason-dialog";
 import {
   useConversationReportDetail, useConversationContent,
   useDeleteConversation, useDismissConversationReports,
@@ -34,21 +31,21 @@ export default function ConversationReportDetailPage() {
   const busy = deleteConversation.isPending || dismissReports.isPending;
   const pendingCount = data?.reports.filter((r) => r.status === "PENDING").length ?? 0;
 
-  const confirmAction = () => {
+  const confirmAction = ({ reason, notes }: { reason: string; notes: string }) => {
     if (!pendingAction || !data) return;
     const name = na(data.chat.name);
 
     if (pendingAction === "delete") {
-      deleteConversation.mutate(data.conversationId, {
+      deleteConversation.mutate({ conversationId: data.conversationId, reason, notes }, {
         onSuccess: () => {
-          toast.success(`Conversation "${name}" deleted and its reports resolved.`);
+          toast.success(`Conversation "${name}" deleted and the creator notified.`);
           router.push("/dashboard/reported-messages");
         },
         onError: () => toast.error("Couldn't delete this conversation. Please try again."),
       });
     } else {
-      dismissReports.mutate(data.conversationId, {
-        onSuccess: () => toast.success(`Reports on "${name}" dismissed.`),
+      dismissReports.mutate({ conversationId: data.conversationId, reason, notes }, {
+        onSuccess: () => toast.success(`Reports on "${name}" dismissed and logged.`),
         onError: () => toast.error("Couldn't dismiss these reports. Please try again."),
       });
     }
@@ -200,29 +197,18 @@ export default function ConversationReportDetailPage() {
         </div>
       </main>
 
-      <AlertDialog open={!!pendingAction} onOpenChange={(open) => { if (!open) setPendingAction(null); }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {pendingAction === "delete" ? "Delete this conversation?" : "Dismiss these reports?"}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {pendingAction === "delete"
-                ? `This permanently deletes "${na(data.chat.name)}" and all its messages, and resolves all ${data.reports.length} report(s) against it. Members will be notified.`
-                : `This keeps the conversation and marks all ${pendingCount} pending report(s) as resolved.`}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              variant={pendingAction === "delete" ? "destructive" : "default"}
-              onClick={confirmAction}
-            >
-              {pendingAction === "delete" ? "Delete Conversation" : "Dismiss Reports"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ActionReasonDialog
+        open={!!pendingAction}
+        title={pendingAction === "delete" ? "Delete this conversation?" : "Dismiss these reports?"}
+        description={pendingAction === "delete"
+          ? `Permanently deletes "${na(data.chat.name)}" and all its messages, resolves all ${data.reports.length} report(s), and notifies the creator.`
+          : `Keeps the conversation and resolves all ${pendingCount} pending report(s). The action is logged.`}
+        confirmLabel={pendingAction === "delete" ? "Delete Conversation" : "Dismiss Reports"}
+        variant={pendingAction === "delete" ? "destructive" : "default"}
+        pending={busy}
+        onConfirm={confirmAction}
+        onClose={() => setPendingAction(null)}
+      />
     </div>
   );
 }

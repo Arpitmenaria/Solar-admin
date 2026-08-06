@@ -16,10 +16,7 @@ import { UserAvatar } from "@/components/shared/user-avatar";
 import { StatCardSkeleton, TableRowSkeleton } from "@/components/shared/loading-skeleton";
 import { PaginationButton } from "@/components/shared/pagination-button";
 import { CustomSelect } from "@/components/shared/custom-select";
-import {
-  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
-} from "@/components/ui/alert-dialog";
+import { ActionReasonDialog } from "@/components/shared/action-reason-dialog";
 import { usePostReports, usePostReportAuthors, useHidePost, useDismissPostReports } from "@/hooks/use-post-reports";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { formatNumberFull, formatDate, na, cn } from "@/lib/utils";
@@ -395,20 +392,20 @@ function PostReportsPageContent() {
     .filter((r) => reporterFilter === "ALL" || r.reporters.some((rep) => rep.id === reporterFilter));
   const busy = hidePost.isPending || dismissReports.isPending;
 
-  const confirmAction = () => {
+  const confirmAction = ({ reason, notes }: { reason: string; notes: string }) => {
     if (!pendingAction) return;
     const { kind, report } = pendingAction;
     const author = na(report.post.author.fullName);
 
     if (kind === "hide") {
-      hidePost.mutate(report.postId, {
-        onSuccess: () => toast.success(`Post by "${author}" hidden from the feed and its reports resolved.`),
-        onError: () => toast.error("Couldn't hide this post. Please try again."),
+      hidePost.mutate({ postId: report.postId, reason, notes }, {
+        onSuccess: () => toast.success(`Post by "${author}" removed and the user was notified.`),
+        onError: () => toast.error("Couldn't remove this post. Please try again."),
       });
     } else {
-      dismissReports.mutate(report.postId, {
-        onSuccess: () => toast.success(`No action taken on "${author}"'s post; reports resolved.`),
-        onError: () => toast.error("Couldn't resolve these reports. Please try again."),
+      dismissReports.mutate({ postId: report.postId, reason, notes }, {
+        onSuccess: () => toast.success(`Reports on "${author}"'s post dismissed and logged.`),
+        onError: () => toast.error("Couldn't dismiss these reports. Please try again."),
       });
     }
     setPendingAction(null);
@@ -657,29 +654,18 @@ function PostReportsPageContent() {
 
       <PostPreview report={preview} onClose={() => setPreview(null)} />
 
-      <AlertDialog open={!!pendingAction} onOpenChange={(open) => { if (!open) setPendingAction(null); }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {pendingAction?.kind === "hide" ? "Hide this post from the feed?" : "Take no action on these reports?"}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {pendingAction && (pendingAction.kind === "hide"
-                ? `This hides the post by "${na(pendingAction.report.post.author.fullName)}" from the public feed (it is not deleted) and resolves all ${pendingAction.report.reportCount} report(s) against it.`
-                : `This keeps the post visible and marks all ${pendingAction.report.reportCount} pending report(s) as resolved, with no action taken on the post.`)}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              variant={pendingAction?.kind === "hide" ? "destructive" : "default"}
-              onClick={confirmAction}
-            >
-              {pendingAction?.kind === "hide" ? "Hide Post" : "No Action"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ActionReasonDialog
+        open={!!pendingAction}
+        title={pendingAction?.kind === "hide" ? "Remove this post?" : "Dismiss these reports?"}
+        description={pendingAction && (pendingAction.kind === "hide"
+          ? `Removes the post by "${na(pendingAction.report.post.author.fullName)}" from the feed, resolves all ${pendingAction.report.reportCount} report(s), and notifies the user.`
+          : `Keeps the post and resolves all ${pendingAction.report.reportCount} pending report(s). The action is logged.`)}
+        confirmLabel={pendingAction?.kind === "hide" ? "Remove Post" : "Dismiss Reports"}
+        variant={pendingAction?.kind === "hide" ? "destructive" : "default"}
+        pending={busy}
+        onConfirm={confirmAction}
+        onClose={() => setPendingAction(null)}
+      />
     </div>
   );
 }

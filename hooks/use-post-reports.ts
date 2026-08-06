@@ -26,11 +26,17 @@ export function usePostReportAuthors() {
   });
 }
 
+interface ActionArgs {
+  postId: string;
+  reason: string;
+  notes: string;
+}
+
 /** Both actions resolve the post's reports, so both invalidate the same list. */
 export function useHidePost() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (postId: string) => postReportsService.hidePost(postId),
+    mutationFn: ({ postId, reason, notes }: ActionArgs) => postReportsService.hidePost(postId, reason, notes),
     onSuccess: () => qc.invalidateQueries({ queryKey: postReportKeys.all }),
   });
 }
@@ -38,7 +44,7 @@ export function useHidePost() {
 export function useDismissPostReports() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (postId: string) => postReportsService.dismissReports(postId),
+    mutationFn: ({ postId, reason, notes }: ActionArgs) => postReportsService.dismissReports(postId, reason, notes),
     onSuccess: () => qc.invalidateQueries({ queryKey: postReportKeys.all }),
   });
 }

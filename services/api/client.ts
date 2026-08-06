@@ -48,5 +48,8 @@ export const apiClient = {
   post:   <T>(path: string, body: unknown, h?: Record<string, string>) => request<T>(path, { method: "POST", body, headers: h }),
   put:    <T>(path: string, body: unknown, h?: Record<string, string>) => request<T>(path, { method: "PUT", body, headers: h }),
   patch:  <T>(path: string, body: unknown, h?: Record<string, string>) => request<T>(path, { method: "PATCH", body, headers: h }),
-  delete: <T>(path: string, h?: Record<string, string>) => request<T>(path, { method: "DELETE", headers: h }),
+  // DELETE may carry a body (e.g. an audit reason). Both args are optional so
+  // existing `delete(path)` calls keep working.
+  delete: <T>(path: string, body?: unknown, h?: Record<string, string>) =>
+    request<T>(path, { method: "DELETE", body, headers: h }),
 };

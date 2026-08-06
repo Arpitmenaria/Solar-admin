@@ -9,11 +9,10 @@ import { Users, CreditCard, Calendar, ArrowUpRight, Ban, RotateCcw } from "lucid
 import { BackButton } from "@/components/shared/back-button";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { StatusBadge } from "@/components/shared/status-badge";
-import {
-  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
-} from "@/components/ui/alert-dialog";
+import { ActionReasonDialog } from "@/components/shared/action-reason-dialog";
 import { useUser, useToggleSuspend } from "@/hooks/use-users";
+import { useUserAuditLogs } from "@/hooks/use-audit-logs";
+import { auditActionLabel } from "@/services/audit-logs.service";
 import { RelationsModal } from "@/components/users/relations-modal";
 import { ReportedByModal } from "@/components/users/reported-by-modal";
 import { formatNumberFull, formatDate, na, cn } from "@/lib/utils";
@@ -40,16 +39,17 @@ export default function UserDetailPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [relationKind, setRelationKind] = useState<RelationKind | null>(null);
   const [reportedByOpen, setReportedByOpen] = useState(false);
+  const { data: auditData } = useUserAuditLogs(id, 1, 10, !!id);
 
   const suspended = !!user?.isSuspended;
 
-  const confirmToggle = () => {
+  const confirmToggle = ({ reason, notes }: { reason: string; notes: string }) => {
     if (!user) return;
     const name = na(user.displayName);
-    toggleSuspend.mutate(user.id, {
+    toggleSuspend.mutate({ id: user.id, reason, notes }, {
       onSuccess: (nowSuspended) =>
         toast.success(
-          nowSuspended ? `"${name}" has been suspended.` : `"${name}" has been reactivated.`
+          nowSuspended ? `"${name}" suspended and notified by email.` : `"${name}" has been reactivated.`
         ),
       onError: () =>
         toast.error(
@@ -260,6 +260,35 @@ export default function UserDetailPage() {
                 )}
               </div>
             </motion.div>
+
+            {/* Admin actions taken on this user (audit trail). */}
+            {auditData && auditData.data.length > 0 && (
+              <motion.div variants={fadeUp} className="rounded-xl border border-white/[0.08] bg-[#0d1321] p-5">
+                <div className="mb-4 flex items-center justify-between">
+                  <h4 className="text-sm font-semibold text-white">Admin Actions on This User</h4>
+                  <Link
+                    href={`/dashboard/audit-logs?targetId=${user.id}`}
+                    className="text-[11px] font-semibold text-[#99CBFF] transition-colors hover:text-white"
+                  >
+                    See all →
+                  </Link>
+                </div>
+                <div className="space-y-3">
+                  {auditData.data.map((log) => (
+                    <div key={log.id} className="border-l-2 border-white/[0.08] pl-3">
+                      <div className="flex flex-wrap items-center gap-x-2 text-[12px]">
+                        <span className="font-semibold text-white">{auditActionLabel(log.action)}</span>
+                        <span className="text-caption">·</span>
+                        <span className="text-slate-300">{na(log.adminName)}</span>
+                        <span className="text-caption">·</span>
+                        <span className="text-caption">{formatDate(log.createdAt)}</span>
+                      </div>
+                      {log.reason && <p className="mt-0.5 text-[11px] text-caption">Reason: {log.reason}</p>}
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
           </div>
         </motion.div>
       </main>
@@ -278,29 +307,18 @@ export default function UserDetailPage() {
         onClose={() => setReportedByOpen(false)}
       />
 
-      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {suspended ? "Reactivate this account?" : "Suspend this account?"}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {suspended
-                ? `This restores "${na(user.displayName)}"'s access to the platform.`
-                : `This blocks "${na(user.displayName)}" from the platform and signs them out of any active session. You can reactivate the account later.`}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              variant={suspended ? "default" : "destructive"}
-              onClick={confirmToggle}
-            >
-              {suspended ? "Reactivate Account" : "Suspend Account"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ActionReasonDialog
+        open={confirmOpen}
+        title={suspended ? "Reactivate this account?" : "Suspend this account?"}
+        description={suspended
+          ? `Restores "${na(user.displayName)}"'s access to the platform.`
+          : `Blocks "${na(user.displayName)}" from the platform, signs them out, and notifies them by email.`}
+        confirmLabel={suspended ? "Reactivate Account" : "Suspend Account"}
+        variant={suspended ? "default" : "destructive"}
+        pending={toggleSuspend.isPending}
+        onConfirm={confirmToggle}
+        onClose={() => setConfirmOpen(false)}
+      />
 
       {/* Status bar */}
       {/* <footer className="flex items-center justify-between border-t border-white/[0.06] px-6 py-2.5 text-[10px] text-[#3a4a6a]">

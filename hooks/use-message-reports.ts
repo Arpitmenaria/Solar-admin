@@ -37,11 +37,18 @@ export function useConversationContent(conversationId: string) {
   });
 }
 
+interface ConversationActionArgs {
+  conversationId: string;
+  reason: string;
+  notes: string;
+}
+
 /** Both actions resolve the conversation's reports, so both invalidate the same list. */
 export function useDeleteConversation() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (conversationId: string) => messageReportsService.deleteConversation(conversationId),
+    mutationFn: ({ conversationId, reason, notes }: ConversationActionArgs) =>
+      messageReportsService.deleteConversation(conversationId, reason, notes),
     onSuccess: () => qc.invalidateQueries({ queryKey: conversationReportKeys.all }),
   });
 }
@@ -49,7 +56,8 @@ export function useDeleteConversation() {
 export function useDismissConversationReports() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (conversationId: string) => messageReportsService.dismissReports(conversationId),
+    mutationFn: ({ conversationId, reason, notes }: ConversationActionArgs) =>
+      messageReportsService.dismissReports(conversationId, reason, notes),
     onSuccess: () => qc.invalidateQueries({ queryKey: conversationReportKeys.all }),
   });
 }
