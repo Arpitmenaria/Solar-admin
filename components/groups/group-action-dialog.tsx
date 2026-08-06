@@ -1,11 +1,8 @@
 "use client";
 
 import { toast } from "sonner";
-import {
-  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
-} from "@/components/ui/alert-dialog";
-import { useDeleteGroup, useUpdateGroup } from "@/hooks/use-groups";
+import { ActionReasonDialog } from "@/components/shared/action-reason-dialog";
+import { useSuspendGroup, useUnsuspendGroup, useDeleteGroup } from "@/hooks/use-groups";
 
 export type GroupAction = "SUSPEND" | "UNSUSPEND" | "DELETE";
 
@@ -15,7 +12,13 @@ export interface PendingGroupAction {
   groupName: string;
 }
 
-const COPY: Record<GroupAction, { title: string; description: (name: string) => string; confirmLabel: string; variant: "default" | "destructive"; toastMessage: (name: string) => string }> = {
+const COPY: Record<GroupAction, {
+  title: string;
+  description: (name: string) => string;
+  confirmLabel: string;
+  variant: "default" | "destructive";
+  toastMessage: (name: string) => string;
+}> = {
   SUSPEND: {
     title: "Suspend this group?",
     description: (name) => `Members will lose access to "${name}" until it's unsuspended.`,
@@ -42,52 +45,43 @@ const COPY: Record<GroupAction, { title: string; description: (name: string) => 
 interface GroupActionDialogProps {
   pending: PendingGroupAction | null;
   onClose: () => void;
-  /** Called after a successful mutation — use to navigate away from a detail screen, for example. */
+  /** Called after a successful mutation — e.g. to navigate away from a detail screen. */
   onSuccess?: (action: GroupAction) => void;
 }
 
 export function GroupActionDialog({ pending, onClose, onSuccess }: GroupActionDialogProps) {
-  const updateGroup = useUpdateGroup(pending?.groupId ?? "");
+  const suspendGroup = useSuspendGroup();
+  const unsuspendGroup = useUnsuspendGroup();
   const deleteGroup = useDeleteGroup();
   const copy = pending ? COPY[pending.action] : null;
 
-  const handleConfirm = () => {
+  const busy = suspendGroup.isPending || unsuspendGroup.isPending || deleteGroup.isPending;
+
+  const handleConfirm = ({ reason, notes }: { reason: string; notes: string }) => {
     if (!pending || !copy) return;
     const { action, groupId, groupName } = pending;
+    const mutation = action === "DELETE" ? deleteGroup : action === "SUSPEND" ? suspendGroup : unsuspendGroup;
 
-    if (action === "DELETE") {
-      deleteGroup.mutate(groupId, {
+    mutation.mutate(
+      { id: groupId, reason, notes },
+      {
         onSuccess: () => { toast.success(copy.toastMessage(groupName)); onSuccess?.(action); },
         onError: () => toast.error("Something went wrong. Please try again."),
-      });
-    } else {
-      updateGroup.mutate(
-        { status: action === "SUSPEND" ? "SUSPENDED" : "ACTIVE" },
-        {
-          onSuccess: () => { toast.success(copy.toastMessage(groupName)); onSuccess?.(action); },
-          onError: () => toast.error("Something went wrong. Please try again."),
-        }
-      );
-    }
+      },
+    );
     onClose();
   };
 
   return (
-    <AlertDialog open={!!pending} onOpenChange={(open) => { if (!open) onClose(); }}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>{copy?.title}</AlertDialogTitle>
-          <AlertDialogDescription>
-            {pending && copy ? copy.description(pending.groupName) : ""}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction variant={copy?.variant ?? "default"} onClick={handleConfirm}>
-            {copy?.confirmLabel}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <ActionReasonDialog
+      open={!!pending}
+      title={copy?.title ?? ""}
+      description={pending && copy ? copy.description(pending.groupName) : ""}
+      confirmLabel={copy?.confirmLabel ?? "Confirm"}
+      variant={copy?.variant ?? "default"}
+      pending={busy}
+      onConfirm={handleConfirm}
+      onClose={onClose}
+    />
   );
 }

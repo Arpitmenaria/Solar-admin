@@ -10,6 +10,7 @@ import { Search, ShieldCheck } from "lucide-react";
 import { BackButton } from "@/components/shared/back-button";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Skeleton } from "@/components/shared/loading-skeleton";
+import { ExpandableText } from "@/components/shared/expandable-text";
 import { useGroup, useGroupMembers } from "@/hooks/use-groups";
 import { formatDate, formatNumberFull, cn } from "@/lib/utils";
 import { STATUS_STYLES } from "@/components/groups/group-meta";
@@ -167,9 +168,17 @@ export default function GroupDetailPage() {
               <ShieldCheck size={16} className="text-blue-400" />
               <h2 className="text-sm font-semibold text-white">About this Group</h2>
             </div>
-            <p className="text-sm leading-relaxed text-slate-300">
-              {group.description ?? "No description has been provided for this group yet."}
-            </p>
+            {group.description ? (
+              <ExpandableText
+                text={group.description}
+                lines={3}
+                className="text-sm leading-relaxed text-slate-300"
+              />
+            ) : (
+              <p className="text-sm leading-relaxed text-slate-300">
+                No description has been provided for this group yet.
+              </p>
+            )}
           </motion.div>
         )}
 

@@ -40,6 +40,20 @@ export function formatDate(dateStr: string | null | undefined): string {
   });
 }
 
+/** Date + time, e.g. "08/06/2026, 4:09 PM". Falls back to NA. */
+export function formatDateTime(dateStr: string | null | undefined): string {
+  if (!dateStr) return NA;
+  const date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) return NA;
+  return date.toLocaleString("en-US", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
 export function getInitials(name: string): string {
   const words = name.replace(/^@/, "").trim().split(" ").filter(Boolean);
   if (words.length === 1) return words[0].slice(0, 2).toUpperCase();

@@ -21,6 +21,8 @@ export interface Group {
   status: GroupStatus;
   iconColor: string;
   createdAt: string;
+  /** Present only for groups from the deleted-groups endpoint. */
+  deletedAt?: string;
   description?: string;
   avatarUrl?: string;
   coverUrl?: string;

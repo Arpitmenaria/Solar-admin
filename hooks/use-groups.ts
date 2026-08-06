@@ -1,27 +1,18 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { groupsService, type CreateGroupInput, type UpdateGroupInput } from "@/services/groups.service";
+import { groupsService, type CreateGroupInput, type UpdateGroupInput, type GroupFilters } from "@/services/groups.service";
 
 export const groupKeys = {
   all: ["groups"] as const,
-  list: () => ["groups", "list"] as const,
-  stats: () => ["groups", "stats"] as const,
+  list: (filters: Partial<GroupFilters>) => ["groups", "list", filters] as const,
   detail: (id: string) => ["groups", "detail", id] as const,
 };
 
-export function useGroups() {
+export function useGroups(filters: Partial<GroupFilters> = {}) {
   return useQuery({
-    queryKey: groupKeys.list(),
-    queryFn: groupsService.getGroups,
-    staleTime: 30_000,
-  });
-}
-
-export function useGroupStats() {
-  return useQuery({
-    queryKey: groupKeys.stats(),
-    queryFn: groupsService.getGroupStats,
+    queryKey: groupKeys.list(filters),
+    queryFn: () => groupsService.getGroups(filters),
     staleTime: 30_000,
   });
 }
@@ -44,15 +35,6 @@ export function useGroupMembers(id: string) {
   });
 }
 
-export function useGroupPosts(id: string) {
-  return useQuery({
-    queryKey: [...groupKeys.detail(id), "posts"],
-    queryFn: () => groupsService.getGroupPosts(id),
-    enabled: !!id,
-    staleTime: 30_000,
-  });
-}
-
 export function useCreateGroup() {
   const qc = useQueryClient();
   return useMutation({
@@ -69,10 +51,32 @@ export function useUpdateGroup(id: string) {
   });
 }
 
-export function useDeleteGroup() {
+interface GroupActionArgs {
+  id: string;
+  reason: string;
+  notes: string;
+}
+
+/** Audited actions invalidate both the group list and the audit log. */
+function useGroupAction(fn: (a: GroupActionArgs) => Promise<void>) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => groupsService.deleteGroup(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: groupKeys.all }),
+    mutationFn: fn,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: groupKeys.all });
+      qc.invalidateQueries({ queryKey: ["audit-logs"] });
+    },
   });
+}
+
+export function useSuspendGroup() {
+  return useGroupAction(({ id, reason, notes }) => groupsService.suspendGroup(id, reason, notes));
+}
+
+export function useUnsuspendGroup() {
+  return useGroupAction(({ id, reason, notes }) => groupsService.unsuspendGroup(id, reason, notes));
+}
+
+export function useDeleteGroup() {
+  return useGroupAction(({ id, reason, notes }) => groupsService.deleteGroup(id, reason, notes));
 }
