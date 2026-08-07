@@ -4,14 +4,14 @@ import { useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { TbPencil, TbBan, TbCircleCheck, TbTrash, TbMapPin } from "react-icons/tb";
+import { TbPencil, TbCircleCheck, TbTrash, TbMapPin } from "react-icons/tb";
 import { Search, CalendarDays } from "lucide-react";
 
 import { BackButton } from "@/components/shared/back-button";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Skeleton } from "@/components/shared/loading-skeleton";
 import { useEvent, useEventAttendees } from "@/hooks/use-events";
-import { formatDate, formatNumberFull, cn } from "@/lib/utils";
+import { formatDate, formatNumberFull, getInitials, cn } from "@/lib/utils";
 import { STATUS_STYLES } from "@/components/events/event-meta";
 import { EventActionDialog, type PendingEventAction } from "@/components/events/event-action-dialog";
 import type { EventAttendee } from "@/constants/mock-data";
@@ -19,6 +19,7 @@ import type { EventAttendee } from "@/constants/mock-data";
 const fadeUp = { hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } };
 
 const RSVP_BADGE: Record<EventAttendee["status"], string> = {
+  Host: "border-amber-500/30 text-amber-300 bg-amber-500/10",
   Going: "border-blue-500/30 text-blue-300 bg-blue-500/10",
   "Checked In": "border-emerald-500/30 text-emerald-300 bg-emerald-500/10",
   Interested: "border-white/[0.12] text-slate-300 bg-white/[0.03]",
@@ -30,6 +31,14 @@ const TABS = [
 ] as const;
 
 type TabValue = (typeof TABS)[number]["value"];
+
+/** Falls back to `fallback` on a missing src or a failed load (broken/unreachable URL). Remounts (and re-tries) whenever `src` changes. */
+function ImgWithFallback({ src, className, fallback }: { src?: string; className: string; fallback: React.ReactNode }) {
+  const [failed, setFailed] = useState(false);
+  if (!src || failed) return <>{fallback}</>;
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={src} alt="" className={className} onError={() => setFailed(true)} />;
+}
 
 export default function EventDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -75,14 +84,30 @@ export default function EventDetailPage() {
 
         {/* Cover image + overlapping avatar */}
         <motion.div variants={fadeUp} initial="hidden" animate="show" className="relative">
-          <div className="relative h-32 overflow-hidden rounded-xl border border-white/[0.08] sm:h-40">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={event.coverUrl} alt="" className="h-full w-full object-cover" />
+          <div className="relative h-32 overflow-hidden rounded-xl border border-white/[0.08] bg-[#0d1321] sm:h-40">
+            <ImgWithFallback
+              key={event.id}
+              src={event.coverUrl}
+              className="h-full w-full object-cover"
+              fallback={
+                <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#141d33] to-[#0a0f1a]">
+                  <CalendarDays size={28} className="text-white/[0.12]" />
+                </div>
+              }
+            />
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
           </div>
           <div className="absolute -bottom-8 left-6 h-20 w-20 shrink-0 overflow-hidden rounded-2xl border-4 border-[#080c16] sm:h-24 sm:w-24">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={event.avatarUrl} alt="" className="h-full w-full object-cover" />
+            <ImgWithFallback
+              key={event.id}
+              src={event.avatarUrl}
+              className="h-full w-full object-cover"
+              fallback={
+                <div className="flex h-full w-full items-center justify-center bg-[#1a2744] text-lg font-bold text-blue-400">
+                  {getInitials(event.name)}
+                </div>
+              }
+            />
           </div>
         </motion.div>
 
@@ -104,7 +129,7 @@ export default function EventDetailPage() {
             <p className="mt-1 flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
               {formatNumberFull(event.attendees)} attending
               <span className="flex items-center gap-1"><TbMapPin size={13} /> {event.location}</span>
-              <span className="flex items-center gap-1"><CalendarDays size={13} /> {event.eventDate}</span>
+              <span className="flex items-center gap-1"><CalendarDays size={13} /> {formatDate(event.eventDate)}</span>
             </p>
           </div>
 
@@ -116,19 +141,12 @@ export default function EventDetailPage() {
               <TbPencil size={14} /> Edit Event
             </Link>
 
-            {event.status === "CANCELLED" ? (
+            {event.status === "CANCELLED" && (
               <button
                 onClick={() => setPendingAction({ action: "REINSTATE", eventId: event.id, eventName: event.name })}
                 className="flex items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-2 text-[12px] font-medium text-emerald-400 transition-colors hover:bg-emerald-500/20"
               >
                 <TbCircleCheck size={14} /> Reinstate
-              </button>
-            ) : (
-              <button
-                onClick={() => setPendingAction({ action: "CANCEL", eventId: event.id, eventName: event.name })}
-                className="flex items-center gap-1.5 rounded-lg border border-orange-500/30 bg-orange-500/10 px-3.5 py-2 text-[12px] font-medium text-orange-400 transition-colors hover:bg-orange-500/20"
-              >
-                <TbBan size={14} /> Cancel
               </button>
             )}
 

@@ -40,7 +40,7 @@ export function ReportDetail({
   }
 
   const st = STATUS_STYLES[report.status];
-  const actions = availableActions(report.status);
+  const actions = availableActions(report.status, kind);
 
   return (
     <div className="flex flex-1 flex-col">
@@ -131,7 +131,7 @@ export function ReportDetail({
                         key={action}
                         variant={copy.tone === "destructive" ? "destructive" : "default"}
                         className={copy.tone === "positive" ? "bg-emerald-600 text-white hover:bg-emerald-700" : undefined}
-                        onClick={() => setPendingAction({ action, reportId: report.id, targetName: report.target.name })}
+                        onClick={() => setPendingAction({ action, reportId: report.id, targetId: report.target.id, targetName: report.target.name })}
                       >
                         <Icon size={14} />
                         {copy.label}

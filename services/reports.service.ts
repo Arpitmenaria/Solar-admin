@@ -1,13 +1,8 @@
 import type { Report, ReportStats, ReportStatus, ReportCategory } from "@/types";
-import {
-  MOCK_EVENT_REPORTS,
-  MOCK_EVENT_REPORT_STATS,
-} from "@/constants/mock-data";
 import { apiClient } from "@/services/api/client";
 
-const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
 const GROUP_REPORTS_BASE = "/api/admin/groups/reports";
+const EVENT_REPORTS_BASE = "/api/admin/events/reports";
 
 const REPORT_STATUSES: ReportStatus[] = ["PENDING", "RESOLVED", "DISMISSED"];
 const REPORT_CATEGORIES: ReportCategory[] = [
@@ -66,13 +61,6 @@ function mapReport(r: ApiReport): Report {
 
 const EMPTY_REPORT_STATS: ReportStats = { total: 0, pending: 0, resolved: 0, dismissed: 0 };
 
-function updateStatus(reports: Report[], id: string, status: ReportStatus): Report {
-  const report = reports.find((r) => r.id === id);
-  if (!report) throw new Error("Report not found");
-  report.status = status;
-  return { ...report };
-}
-
 export const reportsService = {
   async getGroupReports(): Promise<Report[]> {
     const res = await apiClient.get<ApiReportList>(`${GROUP_REPORTS_BASE}?page=1&limit=200`);
@@ -97,20 +85,23 @@ export const reportsService = {
   },
 
   async getEventReports(): Promise<Report[]> {
-    await delay(250);
-    return MOCK_EVENT_REPORTS.map((r) => ({ ...r }));
+    const res = await apiClient.get<ApiReportList>(`${EVENT_REPORTS_BASE}?page=1&limit=200`);
+    return (res.reports ?? []).map(mapReport);
   },
   async getEventReportStats(): Promise<ReportStats> {
-    await delay(150);
-    return MOCK_EVENT_REPORT_STATS;
+    const res = await apiClient.get<ApiReportList>(`${EVENT_REPORTS_BASE}?page=1&limit=1`);
+    return res.stats ?? EMPTY_REPORT_STATS;
   },
   async getEventReportById(id: string): Promise<Report | null> {
-    await delay(200);
-    const report = MOCK_EVENT_REPORTS.find((r) => r.id === id);
-    return report ? { ...report } : null;
+    const res = await apiClient.get<{ success: boolean; report: ApiReport | null }>(`${EVENT_REPORTS_BASE}/${id}`);
+    return res.report ? mapReport(res.report) : null;
   },
-  async updateEventReportStatus(id: string, status: ReportStatus): Promise<Report> {
-    await delay(400);
-    return updateStatus(MOCK_EVENT_REPORTS, id, status);
+  /** The event-reports API only supports dismissing — "resolved" happens implicitly when the event is deleted. */
+  async updateEventReportStatus(id: string, status: ReportStatus): Promise<Report | null> {
+    const res = await apiClient.patch<{ success: boolean; report?: ApiReport }>(
+      `${EVENT_REPORTS_BASE}/${id}`,
+      { status: status.toLowerCase() },
+    );
+    return res.report ? mapReport(res.report) : null;
   },
 };

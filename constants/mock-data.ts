@@ -93,24 +93,41 @@ export const MOCK_GROUP_STATS = {
   newlyCreated24h:    76,
 };
 
-export type EventStatus   = "UPCOMING" | "ONGOING" | "COMPLETED" | "CANCELLED";
-export type EventCategory = "Music" | "Tech" | "Business" | "Art" | "Workshop" | "Social";
+export type EventStatus = "UPCOMING" | "ONGOING" | "COMPLETED" | "CANCELLED";
+
+export interface EventVenue {
+  name?: string;
+  street?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  pinCode?: string;
+}
 
 export interface EventItem {
   id: string;
   name: string;
-  category: EventCategory;
+  /** Free-form — the live category taxonomy comes from GET /api/admin/events/categories. */
+  category: string;
   location: string;
   host: { name: string; avatarUrl?: string; initials: string };
   attendees: number;
   capacity: number;
   status: EventStatus;
-  iconColor: string;
+  iconColor?: string;
   eventDate: string;
   createdAt: string;
   description?: string;
   avatarUrl?: string;
   coverUrl?: string;
+  /** Detail-only fields — present when fetched via getEventById, absent in list rows. */
+  about?: string;
+  tagline?: string;
+  eventType?: "online" | "offline";
+  pricingType?: "free" | "paid";
+  startTime?: string;
+  endTime?: string;
+  venue?: EventVenue;
 }
 
 export const MOCK_EVENTS: EventItem[] = [
@@ -124,32 +141,13 @@ export const MOCK_EVENTS: EventItem[] = [
   { id: "e8", name: "Community Karaoke Night",         category: "Social",   location: "Seattle, WA",     host: { name: "Amara Okonkwo", initials: "AO", avatarUrl: "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=60&h=60&fit=crop" }, attendees: 210,  capacity:  250, status: "COMPLETED", iconColor: "#0e7490", eventDate: "07/19/2026", createdAt: "03/01/2026", description: "A monthly community favorite — casual karaoke, snacks, and good company.", avatarUrl: dummyAvatar("e8"), coverUrl: dummyCover("e8") },
 ];
 
-export const MOCK_EVENT_STATS = {
-  totalEvents:  1482,
-  upcoming:      612,
-  ongoing:        48,
-  completed:     742,
-  cancelled:      80,
-};
-
 export interface EventAttendee {
   id: string;
   name: string;
   avatarUrl?: string;
-  status: "Going" | "Interested" | "Checked In";
+  status: "Host" | "Going" | "Interested" | "Checked In";
   rsvpAt: string;
 }
-
-export const MOCK_EVENT_ATTENDEES: EventAttendee[] = [
-  { id: "ea1", name: "Elena Voss",     avatarUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=60&h=60&fit=crop", status: "Going",       rsvpAt: "07/11/2026" },
-  { id: "ea2", name: "Ryan Nakamura",  avatarUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=60&h=60&fit=crop", status: "Checked In",  rsvpAt: "08/22/2026" },
-  { id: "ea3", name: "Priya Sharma",   avatarUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=60&h=60&fit=crop",    status: "Going",       rsvpAt: "09/03/2026" },
-  { id: "ea4", name: "Chen Wei",                                                                                                      status: "Interested",  rsvpAt: "10/15/2026" },
-  { id: "ea5", name: "Sofia Reyes",    avatarUrl: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=60&h=60&fit=crop",  status: "Going",       rsvpAt: "11/28/2026" },
-  { id: "ea6", name: "Jake Torres",                                                                                                    status: "Checked In",  rsvpAt: "01/09/2026" },
-  { id: "ea7", name: "Amara Okonkwo",  avatarUrl: "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=60&h=60&fit=crop",  status: "Interested",  rsvpAt: "02/17/2026" },
-  { id: "ea8", name: "Soren Kierk",    avatarUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=60&h=60&fit=crop",  status: "Going",       rsvpAt: "03/30/2026" },
-];
 
 export const MOCK_GROUP_REPORTS: Report[] = [
   { id: "gr1", target: { id: "g7", name: "Esports_Arena_Pro", meta: "28,400 members" }, reportedBy: { username: "@johndoe_92" }, category: "Hate Speech", description: "Multiple members posting targeted slurs in the general channel during tournament chat.", status: "PENDING", reportedAt: "2026-06-29" },
@@ -169,20 +167,4 @@ export const MOCK_GROUP_REPORT_STATS: ReportStats = {
   dismissed: 24,
 };
 
-export const MOCK_EVENT_REPORTS: Report[] = [
-  { id: "er1", target: { id: "e1", name: "Crypto Founders Meetup", meta: "Sat, Aug 16 · 7:00 PM" }, reportedBy: { username: "@anonymous_star" }, category: "Scam / Fraud", description: "Organizer is collecting an upfront 'registration fee' that isn't disclosed in the event policy.", status: "PENDING", reportedAt: "2026-06-29" },
-  { id: "er2", target: { id: "e2", name: "Late Night Gaming Tournament", meta: "Fri, Jul 04 · 9:00 PM" }, reportedBy: { username: "@sarah_dev" }, category: "Inappropriate Content", description: "Event banner image contains graphic content flagged by multiple attendees.", status: "PENDING", reportedAt: "2026-06-28" },
-  { id: "er3", target: { id: "e3", name: "Design Systems Workshop", meta: "Wed, Jul 09 · 2:00 PM" }, reportedBy: { username: "@kb_enterprise" }, category: "Spam", description: "Event listing duplicated 6 times by the same host to game search rankings.", status: "PENDING", reportedAt: "2026-06-26" },
-  { id: "er4", target: { id: "e4", name: "Underground Trading Signals", meta: "Sun, Jul 13 · 6:00 PM" }, reportedBy: { username: "@elena_r" }, category: "Fake or Misleading", description: "Event claims a celebrity guest speaker who has publicly denied involvement.", status: "RESOLVED", reportedAt: "2026-06-20" },
-  { id: "er5", target: { id: "e5", name: "Community Karaoke Night", meta: "Sat, Jul 19 · 8:00 PM" }, reportedBy: { username: "@marcus_v" }, category: "Harassment", description: "Comments section used to target and harass a specific attendee.", status: "DISMISSED", reportedAt: "2026-06-17" },
-  { id: "er6", target: { id: "e6", name: "Open Mic Comedy Hour", meta: "Thu, Jul 24 · 8:30 PM" }, reportedBy: { username: "@shadow_882" }, category: "Hate Speech", description: "Event description includes language targeting a protected group.", status: "PENDING", reportedAt: "2026-06-14" },
-  { id: "er7", target: { id: "e7", name: "Startup Pitch Night", meta: "Tue, Jul 29 · 6:30 PM" }, reportedBy: { username: "@sjm_82" }, category: "Other", description: "Listed venue does not exist at the stated address.", status: "RESOLVED", reportedAt: "2026-06-12" },
-];
-
-export const MOCK_EVENT_REPORT_STATS: ReportStats = {
-  total: 187,
-  pending: 96,
-  resolved: 74,
-  dismissed: 17,
-};
 

@@ -4,12 +4,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { CustomSelect } from "@/components/shared/custom-select";
-import type { EventCategory, EventItem, EventStatus } from "@/constants/mock-data";
-import { CATEGORY_OPTS, STATUS_OPTS } from "@/components/events/event-meta";
+import type { EventItem, EventStatus } from "@/constants/mock-data";
+import { STATUS_OPTS } from "@/components/events/event-meta";
+import { useEventCategories } from "@/hooks/use-events";
 
 export interface EventFormValues {
   name: string;
-  category: EventCategory;
+  category: string;
   location: string;
   eventDate: string;
   capacity: number;
@@ -29,8 +30,9 @@ interface EventFormProps {
 
 export function EventForm({ defaultValues, submitLabel, showStatus, isSubmitting, onSubmit }: EventFormProps) {
   const router = useRouter();
+  const { data: categories } = useEventCategories();
   const [name, setName] = useState(defaultValues?.name ?? "");
-  const [category, setCategory] = useState<EventCategory>(defaultValues?.category ?? "Music");
+  const [category, setCategory] = useState(defaultValues?.category ?? "");
   const [location, setLocation] = useState(defaultValues?.location ?? "");
   const [eventDate, setEventDate] = useState(defaultValues?.eventDate ?? "");
   const [capacity, setCapacity] = useState(defaultValues ? String(defaultValues.capacity) : "");
@@ -42,6 +44,7 @@ export function EventForm({ defaultValues, submitLabel, showStatus, isSubmitting
 
   const handleSubmit = () => {
     if (!name.trim()) { setError("Event name is required."); return; }
+    if (!category.trim()) { setError("Category is required."); return; }
     if (!location.trim()) { setError("Location is required."); return; }
     if (!eventDate.trim()) { setError("Event date is required."); return; }
     if (!hostName.trim()) { setError("Host name is required."); return; }
@@ -124,8 +127,8 @@ export function EventForm({ defaultValues, submitLabel, showStatus, isSubmitting
               <Field label="Category">
                 <CustomSelect
                   value={category}
-                  onChange={(v) => setCategory(v as EventCategory)}
-                  options={CATEGORY_OPTS.map((c) => ({ value: c, label: c }))}
+                  onChange={setCategory}
+                  options={(categories ?? []).map((c) => ({ value: c.name, label: c.name }))}
                 />
               </Field>
 

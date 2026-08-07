@@ -5,9 +5,11 @@ import {
   AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
   AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
 } from "@/components/ui/alert-dialog";
+import { ActionReasonDialog } from "@/components/shared/action-reason-dialog";
 import { useDeleteEvent, useUpdateEvent } from "@/hooks/use-events";
 
-export type EventAction = "CANCEL" | "REINSTATE" | "DELETE";
+/** Admins cannot cancel events (no product surface for it) — REINSTATE only ever applies to events a host already cancelled. */
+export type EventAction = "REINSTATE" | "DELETE";
 
 export interface PendingEventAction {
   action: EventAction;
@@ -16,13 +18,6 @@ export interface PendingEventAction {
 }
 
 const COPY: Record<EventAction, { title: string; description: (name: string) => string; confirmLabel: string; variant: "default" | "destructive"; toastMessage: (name: string) => string }> = {
-  CANCEL: {
-    title: "Cancel this event?",
-    description: (name) => `Attendees will be notified that "${name}" has been cancelled.`,
-    confirmLabel: "Cancel Event",
-    variant: "destructive",
-    toastMessage: (name) => `"${name}" event cancelled.`,
-  },
   REINSTATE: {
     title: "Reinstate this event?",
     description: (name) => `This restores "${name}" to upcoming and notifies attendees.`,
@@ -50,27 +45,48 @@ export function EventActionDialog({ pending, onClose, onSuccess }: EventActionDi
   const updateEvent = useUpdateEvent(pending?.eventId ?? "");
   const deleteEvent = useDeleteEvent();
   const copy = pending ? COPY[pending.action] : null;
+  const isDelete = pending?.action === "DELETE";
 
-  const handleConfirm = () => {
+  const handleDeleteConfirm = ({ reason, notes }: { reason: string; notes: string }) => {
     if (!pending || !copy) return;
-    const { action, eventId, eventName } = pending;
-
-    if (action === "DELETE") {
-      deleteEvent.mutate(eventId, {
-        onSuccess: () => { toast.success(copy.toastMessage(eventName)); onSuccess?.(action); },
+    const { eventId, eventName } = pending;
+    deleteEvent.mutate(
+      { id: eventId, reason, notes },
+      {
+        onSuccess: () => { toast.success(copy.toastMessage(eventName)); onSuccess?.("DELETE"); },
         onError: () => toast.error("Something went wrong. Please try again."),
-      });
-    } else {
-      updateEvent.mutate(
-        { status: action === "CANCEL" ? "CANCELLED" : "UPCOMING" },
-        {
-          onSuccess: () => { toast.success(copy.toastMessage(eventName)); onSuccess?.(action); },
-          onError: () => toast.error("Something went wrong. Please try again."),
-        }
-      );
-    }
+      }
+    );
     onClose();
   };
+
+  const handleStatusConfirm = () => {
+    if (!pending || !copy || pending.action === "DELETE") return;
+    const { action, eventName } = pending;
+    updateEvent.mutate(
+      { status: "UPCOMING" },
+      {
+        onSuccess: () => { toast.success(copy.toastMessage(eventName)); onSuccess?.(action); },
+        onError: () => toast.error("Something went wrong. Please try again."),
+      }
+    );
+    onClose();
+  };
+
+  if (isDelete) {
+    return (
+      <ActionReasonDialog
+        open={!!pending}
+        title={copy?.title ?? ""}
+        description={pending && copy ? copy.description(pending.eventName) : ""}
+        confirmLabel={copy?.confirmLabel ?? "Confirm"}
+        variant={copy?.variant ?? "default"}
+        pending={deleteEvent.isPending}
+        onConfirm={handleDeleteConfirm}
+        onClose={onClose}
+      />
+    );
+  }
 
   return (
     <AlertDialog open={!!pending} onOpenChange={(open) => { if (!open) onClose(); }}>
@@ -83,7 +99,7 @@ export function EventActionDialog({ pending, onClose, onSuccess }: EventActionDi
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction variant={copy?.variant ?? "default"} onClick={handleConfirm}>
+          <AlertDialogAction variant={copy?.variant ?? "default"} onClick={handleStatusConfirm}>
             {copy?.confirmLabel}
           </AlertDialogAction>
         </AlertDialogFooter>

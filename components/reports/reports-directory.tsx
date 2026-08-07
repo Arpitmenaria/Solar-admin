@@ -44,16 +44,16 @@ const PAGE_SIZE = 10;
 
 /* ── ActionMenu (portal, fixed) ─────────────── */
 function ActionMenu({
-  report, detailHref, onAction,
+  report, kind, detailHref, onAction,
 }: {
-  report: Report; detailHref: string; onAction: (action: ReportAction) => void;
+  report: Report; kind: ReportKind; detailHref: string; onAction: (action: ReportAction) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [pos, setPos]   = useState({ top: 0, right: 0 });
   const btnRef  = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const actions = availableActions(report.status);
+  const actions = availableActions(report.status, kind);
 
   const handleOpen = () => {
     if (btnRef.current) {
@@ -309,8 +309,9 @@ export function ReportsDirectory({
 
                       <ActionMenu
                         report={report}
+                        kind={kind}
                         detailHref={`${basePath}/${report.id}`}
-                        onAction={(action) => setPendingAction({ action, reportId: report.id, targetName: report.target.name })}
+                        onAction={(action) => setPendingAction({ action, reportId: report.id, targetId: report.target.id, targetName: report.target.name })}
                       />
                     </motion.div>
                   );

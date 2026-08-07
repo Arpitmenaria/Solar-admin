@@ -1,9 +1,11 @@
-import { CheckCircle2, Ban, type LucideIcon } from "lucide-react";
+import { CheckCircle2, Ban, Trash2, type LucideIcon } from "lucide-react";
 import type { ReportStatus } from "@/types";
+import type { ReportKind } from "@/hooks/use-reports";
 
-export type ReportAction = "RESOLVE" | "DISMISS";
+export type ReportAction = "RESOLVE" | "DISMISS" | "DELETE";
 
-export const ACTION_TO_STATUS: Record<ReportAction, ReportStatus> = {
+/** Only RESOLVE/DISMISS are status transitions — DELETE removes the underlying event instead. */
+export const ACTION_TO_STATUS: Record<"RESOLVE" | "DISMISS", ReportStatus> = {
   RESOLVE: "RESOLVED",
   DISMISS: "DISMISSED",
 };
@@ -34,12 +36,20 @@ export const ACTION_COPY: Record<ReportAction, ActionCopy> = {
     confirmDescription: (name) => `This dismisses the report against "${name}" with no action taken.`,
     toastMessage: (name) => `Report against "${name}" dismissed.`,
   },
+  DELETE: {
+    label: "Delete Event",
+    icon: Trash2,
+    tone: "destructive",
+    confirmTitle: "Delete this event?",
+    confirmDescription: (name) => `This permanently removes "${name}" and cannot be undone.`,
+    toastMessage: (name) => `"${name}" event deleted.`,
+  },
 };
 
-/** Which actions remain valid given the report's current status. */
-export function availableActions(status: ReportStatus): ReportAction[] {
+/** Which actions remain valid given the report's current status and kind. */
+export function availableActions(status: ReportStatus, kind: ReportKind): ReportAction[] {
   if (status !== "PENDING") return [];
-  return ["RESOLVE", "DISMISS"];
+  return kind === "event" ? ["DELETE", "DISMISS"] : ["RESOLVE", "DISMISS"];
 }
 
 export const STATUS_STYLES: Record<ReportStatus, { dot: string; text: string; label: string }> = {

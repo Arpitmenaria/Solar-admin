@@ -1,28 +1,28 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { eventsService, type CreateEventInput, type UpdateEventInput } from "@/services/events.service";
+import { eventsService, type CreateEventInput, type UpdateEventInput, type EventFilters } from "@/services/events.service";
 
 export const eventKeys = {
   all: ["events"] as const,
-  list: () => ["events", "list"] as const,
-  stats: () => ["events", "stats"] as const,
+  list: (filters: Partial<EventFilters>) => ["events", "list", filters] as const,
   detail: (id: string) => ["events", "detail", id] as const,
+  categories: () => ["events", "categories"] as const,
 };
 
-export function useEvents() {
+export function useEvents(filters: Partial<EventFilters> = {}) {
   return useQuery({
-    queryKey: eventKeys.list(),
-    queryFn: eventsService.getEvents,
+    queryKey: eventKeys.list(filters),
+    queryFn: () => eventsService.getEvents(filters),
     staleTime: 30_000,
   });
 }
 
-export function useEventStats() {
+export function useEventCategories() {
   return useQuery({
-    queryKey: eventKeys.stats(),
-    queryFn: eventsService.getEventStats,
-    staleTime: 30_000,
+    queryKey: eventKeys.categories(),
+    queryFn: eventsService.getEventCategories,
+    staleTime: 5 * 60_000,
   });
 }
 
@@ -60,10 +60,24 @@ export function useUpdateEvent(id: string) {
   });
 }
 
-export function useDeleteEvent() {
+interface EventActionArgs {
+  id: string;
+  reason: string;
+  notes: string;
+}
+
+/** Audited actions invalidate both the event list and the audit log. */
+function useEventAction(fn: (a: EventActionArgs) => Promise<void>) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => eventsService.deleteEvent(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: eventKeys.all }),
+    mutationFn: fn,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: eventKeys.all });
+      qc.invalidateQueries({ queryKey: ["audit-logs"] });
+    },
   });
+}
+
+export function useDeleteEvent() {
+  return useEventAction(({ id, reason, notes }) => eventsService.deleteEvent(id, reason, notes));
 }
