@@ -2,7 +2,7 @@ import { dummyAvatar, dummyCover } from "@/constants/mock-data";
 import { getInitials } from "@/lib/utils";
 
 /* ══════════════════════════════════════════════════════════════
-   Courses
+   Courses 
    ══════════════════════════════════════════════════════════════ */
 
 export type CourseStatus = "DRAFT" | "PUBLISHED" | "ARCHIVED";
