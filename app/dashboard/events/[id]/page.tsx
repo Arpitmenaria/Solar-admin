@@ -3,8 +3,7 @@
 import { useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import Link from "next/link";
-import { TbPencil, TbCircleCheck, TbTrash, TbMapPin } from "react-icons/tb";
+import { TbCircleCheck, TbMapPin } from "react-icons/tb";
 import { Search, CalendarDays } from "lucide-react";
 
 import { BackButton } from "@/components/shared/back-button";
@@ -133,30 +132,16 @@ export default function EventDetailPage() {
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-2.5">
-            <Link
-              href={`/dashboard/events/${event.id}/edit`}
-              className="flex items-center gap-1.5 rounded-lg border border-white/[0.10] bg-white/[0.03] px-3.5 py-2 text-[12px] font-medium text-slate-300 transition-colors hover:bg-white/[0.06] hover:text-white"
-            >
-              <TbPencil size={14} /> Edit Event
-            </Link>
-
-            {event.status === "CANCELLED" && (
+          {event.status === "CANCELLED" && (
+            <div className="flex flex-wrap gap-2.5">
               <button
                 onClick={() => setPendingAction({ action: "REINSTATE", eventId: event.id, eventName: event.name })}
                 className="flex items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-2 text-[12px] font-medium text-emerald-400 transition-colors hover:bg-emerald-500/20"
               >
                 <TbCircleCheck size={14} /> Reinstate
               </button>
-            )}
-
-            <button
-              onClick={() => setPendingAction({ action: "DELETE", eventId: event.id, eventName: event.name })}
-              className="flex items-center gap-1.5 rounded-lg border border-red-500/30 bg-red-500/10 px-3.5 py-2 text-[12px] font-medium text-red-400 transition-colors hover:bg-red-500/20"
-            >
-              <TbTrash size={14} /> Delete Event
-            </button>
-          </div>
+            </div>
+          )}
         </motion.div>
 
         {/* Tabs */}
@@ -231,7 +216,6 @@ export default function EventDetailPage() {
                     <UserAvatar name={attendee.name} src={attendee.avatarUrl} size="sm" />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-white">{attendee.name}</p>
-                      <p className="text-[11px] text-caption">RSVP&apos;d {formatDate(attendee.rsvpAt)}</p>
                     </div>
                     <span className={cn("inline-flex w-fit items-center rounded border px-2 py-0.5 text-[10px] font-semibold tracking-wide", RSVP_BADGE[attendee.status])}>
                       {attendee.status}
