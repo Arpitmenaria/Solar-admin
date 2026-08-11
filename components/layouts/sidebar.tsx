@@ -17,6 +17,7 @@ import {
   TbSchool,
   TbBell,
   TbHistory,
+  TbWorldWww,
 } from "react-icons/tb";
 
 import { FaRegStar } from "react-icons/fa";
@@ -32,6 +33,7 @@ type IconKey =
   | "Groups"
   | "Events"
   | "Education"
+  | "MiniSites"
   | "Plans"
   | "Notifications"
   | "Audit";
@@ -99,6 +101,15 @@ const NAV_ITEMS: NavEntry[] = [
       { label: "Library", href: "/dashboard/education/library" },
     ],
   },
+  {
+    type: "group",
+    label: "Mini Sites",
+    icon: "MiniSites",
+    children: [
+      { label: "Sites", href: "/dashboard/mini-sites/sites" },
+      { label: "Site Reports", href: "/dashboard/mini-sites/reports" },
+    ],
+  },
   { type: "link", label: "Audit Log", href: "/dashboard/audit-logs", icon: "Audit" },
   { type: "link", label: "Plans & Subscriptions", href: "/dashboard/plans", icon: "Plans" },
   { type: "link", label: "Notification Settings", href: "/dashboard/notifications", icon: "Notifications" },
@@ -110,6 +121,7 @@ const ICON_MAP: Record<IconKey, ElementType> = {
   Groups: TbUsersGroup,
   Events: TbCalendarEvent,
   Education: TbSchool,
+  MiniSites: TbWorldWww,
   Plans: TbCreditCard,
   Notifications: TbBell,
   Audit: TbHistory,
