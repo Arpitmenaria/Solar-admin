@@ -5,14 +5,13 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  TbPlus, TbSearch, TbRefresh,
+  TbSearch, TbRefresh,
   TbChevronsLeft, TbChevronsRight, TbChevronLeft, TbChevronRight,
-  TbSchool, TbDotsVertical, TbEye, TbPencil, TbTrash, TbCloudUpload, TbArchive,
+  TbSchool, TbDotsVertical, TbEye, TbTrash,
 } from "react-icons/tb";
 import { CustomSelect } from "@/components/shared/custom-select";
 import { cn } from "@/lib/utils";
 import type { Course, CourseCategory, CourseDifficulty, CourseStatus } from "@/constants/education-mock-data";
-import { MOCK_COURSE_ENROLLMENTS } from "@/constants/education-mock-data";
 import { useCourses, useCourseStats } from "@/hooks/use-courses";
 import { CATEGORY_ICON, CAT_BADGE, DIFFICULTY_BADGE, STATUS_STYLES, CATEGORY_OPTS, DIFFICULTY_OPTS } from "@/components/education/course-meta";
 import { CourseActionDialog, type PendingCourseAction } from "@/components/education/course-action-dialog";
@@ -22,11 +21,7 @@ const STATUS_TABS: { label: string; id: "ALL" | CourseStatus }[] = [
   { label: "Published", id: "PUBLISHED" },
 ];
 
-function enrolledCount(courseId: string): number {
-  return MOCK_COURSE_ENROLLMENTS.filter((e) => e.courseId === courseId).length;
-}
-
-function ActionMenu({ course, onAction }: { course: Course; onAction: (action: "PUBLISH" | "ARCHIVE" | "DELETE") => void }) {
+function ActionMenu({ course, onAction }: { course: Course; onAction: (action: "DELETE") => void }) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState({ top: 0, right: 0 });
   const btnRef = useRef<HTMLButtonElement>(null);
@@ -84,29 +79,6 @@ function ActionMenu({ course, onAction }: { course: Course; onAction: (action: "
               >
                 <TbEye size={14} /> View Details
               </Link>
-              <Link
-                href={`/dashboard/education/courses/${course.id}/edit`}
-                onClick={() => setOpen(false)}
-                className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-[12px] font-medium text-white transition-colors hover:bg-[rgba(255,255,255,0.07)]"
-              >
-                <TbPencil size={14} /> Edit Course
-              </Link>
-              {course.status !== "PUBLISHED" && (
-                <button
-                  onClick={() => { setOpen(false); onAction("PUBLISH"); }}
-                  className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-[12px] font-medium text-emerald-400 transition-colors hover:bg-[rgba(16,185,129,0.12)]"
-                >
-                  <TbCloudUpload size={14} /> Publish
-                </button>
-              )}
-              {course.status !== "ARCHIVED" && (
-                <button
-                  onClick={() => { setOpen(false); onAction("ARCHIVE"); }}
-                  className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-[12px] font-medium text-orange-400 transition-colors hover:bg-[rgba(249,115,22,0.12)]"
-                >
-                  <TbArchive size={14} /> Archive
-                </button>
-              )}
               <button
                 onClick={() => { setOpen(false); onAction("DELETE"); }}
                 className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-[12px] font-medium text-red-400 transition-colors hover:bg-[rgba(239,68,68,0.12)]"
@@ -216,14 +188,6 @@ export default function CoursesPage() {
                 <button onClick={resetFilters} className="flex items-center gap-1 text-[11px] font-medium text-[#99CBFF] transition-colors hover:text-white">
                   <TbRefresh size={12} /> Reset
                 </button>
-                <div className="ml-auto flex items-center gap-2 shrink-0">
-                  <Link
-                    href="/dashboard/education/courses/create"
-                    className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3.5 py-1.5 text-[11px] font-semibold text-white transition-colors hover:bg-blue-700"
-                  >
-                    <TbPlus size={12} /> Create Course
-                  </Link>
-                </div>
               </motion.div>
             </div>
 
@@ -278,7 +242,7 @@ export default function CoursesPage() {
                       {course.isFree ? <span className="text-emerald-400">Free</span> : course.price}
                     </span>
 
-                    <span className="text-center text-[13px] font-medium text-slate-200">{enrolledCount(course.id)}</span>
+                    <span className="text-center text-[13px] font-medium text-slate-200">{course.enrolledCount}</span>
 
                     <div className="flex items-center gap-1.5">
                       <span className={`h-1.5 w-1.5 rounded-full ${st.dot}`} />

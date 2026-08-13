@@ -1,8 +1,7 @@
 import { dummyAvatar, dummyCover } from "@/constants/mock-data";
-import { getInitials } from "@/lib/utils";
 
 /* ══════════════════════════════════════════════════════════════
-   Courses 
+   Courses
    ══════════════════════════════════════════════════════════════ */
 
 export type CourseStatus = "DRAFT" | "PUBLISHED" | "ARCHIVED";
@@ -45,179 +44,8 @@ export interface Course {
   description?: string;
   createdAt: string;
   modules: CourseModule[];
+  enrolledCount: number;
 }
-
-function mod(id: string, title: string, order: number, chapters: CourseChapter[]): CourseModule {
-  return { id, title, order, chapters };
-}
-function ch(id: string, title: string, order: number, videoUrl?: string, notes?: string): CourseChapter {
-  return { id, title, order, videoUrl, notes };
-}
-
-export const MOCK_COURSES: Course[] = [
-  {
-    id: "c1",
-    title: "Advanced UI Design Systems",
-    category: "Design",
-    difficulty: "Advanced",
-    instructor: { name: "Alex Rivera", initials: getInitials("Alex Rivera"), avatarUrl: dummyAvatar("instr-alex") },
-    duration: "12h 30m",
-    isFree: false,
-    price: "$89.99",
-    status: "PUBLISHED",
-    coverUrl: dummyCover("c1"),
-    description:
-      "A deep dive into building resilient, scalable design systems — typography, component architecture, and the tooling that keeps them from drifting.",
-    createdAt: "02/14/2026",
-    modules: [
-      mod("m1", "Module 1: Design Systems Foundations", 1, [
-        ch("ch1", "Typography Systems", 1, "https://www.w3schools.com/html/mov_bbb.mp4", "Type scales, hierarchy, and weight pairings."),
-        ch("ch2", "Component Architecture", 2, "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/360/Big_Buck_Bunny_360_10s_1MB.mp4", "Atomic design tokens through organisms."),
-      ]),
-    ],
-  },
-  {
-    id: "c2",
-    title: "Full-Stack Web Architecture",
-    category: "Development",
-    difficulty: "Intermediate",
-    instructor: { name: "Sarah Linden", initials: getInitials("Sarah Linden"), avatarUrl: dummyAvatar("instr-sarah") },
-    duration: "24h 45m",
-    isFree: false,
-    price: "$129.00",
-    status: "PUBLISHED",
-    coverUrl: dummyCover("c2"),
-    description: "Modern full-stack patterns from API design to deployment.",
-    createdAt: "01/22/2026",
-    modules: [
-      mod("m1", "Module 1: Getting Started", 1, [
-        ch("ch1", "Course Introduction", 1, "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"),
-        ch("ch2", "Core Concepts", 2, "https://www.w3schools.com/html/movie.mp4"),
-      ]),
-    ],
-  },
-  {
-    id: "c3",
-    title: "Data Science for Business",
-    category: "Technology",
-    difficulty: "Beginner",
-    instructor: { name: "Marcus Kane", initials: getInitials("Marcus Kane"), avatarUrl: dummyAvatar("instr-marcus") },
-    duration: "8h 15m",
-    isFree: true,
-    status: "PUBLISHED",
-    coverUrl: dummyCover("c3"),
-    description: "Analytics fundamentals for non-technical decision makers.",
-    createdAt: "03/02/2026",
-    modules: [
-      mod("m1", "Module 1: Getting Started", 1, [
-        ch("ch1", "Course Introduction", 1, "https://test-videos.co.uk/vids/sintel/mp4/h264/360/Sintel_360_10s_1MB.mp4"),
-      ]),
-    ],
-  },
-  {
-    id: "c4",
-    title: "Modern Branding Strategies",
-    category: "Marketing",
-    difficulty: "Intermediate",
-    instructor: { name: "Elena Wong", initials: getInitials("Elena Wong"), avatarUrl: dummyAvatar("instr-elena") },
-    duration: "15h 20m",
-    isFree: false,
-    price: "$59.99",
-    status: "DRAFT",
-    coverUrl: dummyCover("c4"),
-    description: "Building brand systems for digital-first products.",
-    createdAt: "04/10/2026",
-    modules: [
-      mod("m1", "Module 1: Getting Started", 1, [
-        ch("ch1", "Course Introduction", 1, "https://test-videos.co.uk/vids/jellyfish/mp4/h264/360/Jellyfish_360_10s_1MB.mp4"),
-      ]),
-    ],
-  },
-  {
-    id: "c5",
-    title: "Financial Modeling for Business Leaders",
-    category: "Finance",
-    difficulty: "Beginner",
-    instructor: { name: "Marcus Thorne", initials: getInitials("Marcus Thorne"), avatarUrl: dummyAvatar("instr-thorne") },
-    duration: "6h 45m",
-    isFree: true,
-    status: "PUBLISHED",
-    coverUrl: dummyCover("c5"),
-    description: "Core spreadsheet modeling skills for leaders who aren't finance specialists.",
-    createdAt: "05/18/2026",
-    modules: [
-      mod("m1", "Module 1: Getting Started", 1, [
-        ch("ch1", "Course Introduction", 1, "https://samplelib.com/preview/mp4/sample-5s.mp4"),
-      ]),
-    ],
-  },
-  {
-    id: "c6",
-    title: "Leadership & Team Management",
-    category: "Soft Skills",
-    difficulty: "Intermediate",
-    instructor: { name: "Dr. Sarah Jenkins", initials: getInitials("Dr. Sarah Jenkins"), avatarUrl: dummyAvatar("instr-jenkins") },
-    duration: "9h 20m",
-    isFree: false,
-    price: "$79.00",
-    status: "ARCHIVED",
-    coverUrl: dummyCover("c6"),
-    description: "Practical management techniques for first-time tech leads.",
-    createdAt: "12/05/2025",
-    modules: [
-      mod("m1", "Module 1: Getting Started", 1, [
-        ch("ch1", "Course Introduction", 1, "https://www.w3schools.com/html/mov_bbb.mp4"),
-      ]),
-    ],
-  },
-  {
-    id: "c7",
-    title: "React Performance Patterns",
-    category: "Development",
-    difficulty: "Advanced",
-    instructor: { name: "Leo Zhang", initials: getInitials("Leo Zhang"), avatarUrl: dummyAvatar("instr-leo") },
-    duration: "11h 15m",
-    isFree: false,
-    price: "$94.99",
-    status: "PUBLISHED",
-    coverUrl: dummyCover("c7"),
-    description: "Profiling, memoization, and rendering-cost patterns for large React apps.",
-    createdAt: "02/28/2026",
-    modules: [
-      mod("m1", "Module 1: Profiling & Rendering", 1, [
-        ch("ch1", "React DevTools", 1, "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/360/Big_Buck_Bunny_360_10s_1MB.mp4", "Reading the flamegraph."),
-      ]),
-    ],
-  },
-  {
-    id: "c8",
-    title: "Product Management Fundamentals",
-    category: "Business",
-    difficulty: "Intermediate",
-    instructor: { name: "Sophia Bloom", initials: getInitials("Sophia Bloom"), avatarUrl: dummyAvatar("instr-sophia") },
-    duration: "8h 40m",
-    isFree: true,
-    status: "PUBLISHED",
-    coverUrl: dummyCover("c8"),
-    description: "Stakeholder mapping, research ethics, and roadmap fundamentals.",
-    createdAt: "03/15/2026",
-    modules: [
-      mod("m1", "Module 1: Research & Stakeholders", 1, [
-        ch("ch1", "Stakeholder Mapping", 1, "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"),
-        ch("ch2", "User Research Ethics", 2, "https://www.w3schools.com/html/movie.mp4"),
-      ]),
-    ],
-  },
-];
-
-export const MOCK_COURSE_STATS = {
-  totalCourses: MOCK_COURSES.length,
-  published: MOCK_COURSES.filter((c) => c.status === "PUBLISHED").length,
-  draft: MOCK_COURSES.filter((c) => c.status === "DRAFT").length,
-  archived: MOCK_COURSES.filter((c) => c.status === "ARCHIVED").length,
-  freeCourses: MOCK_COURSES.filter((c) => c.isFree).length,
-  paidCourses: MOCK_COURSES.filter((c) => !c.isFree).length,
-};
 
 export interface CourseEnrollment {
   id: string;
@@ -228,19 +56,6 @@ export interface CourseEnrollment {
   enrolledAt: string;
   lastActiveAt: string;
 }
-
-export const MOCK_COURSE_ENROLLMENTS: CourseEnrollment[] = [
-  { id: "ce1", courseId: "c1", studentName: "Priya Nair", studentAvatarUrl: dummyAvatar("stu-priya"), progressPct: 100, enrolledAt: "03/01/2026", lastActiveAt: "06/20/2026" },
-  { id: "ce2", courseId: "c1", studentName: "Rohan Mehta", studentAvatarUrl: dummyAvatar("stu-rohan"), progressPct: 40, enrolledAt: "04/12/2026", lastActiveAt: "06/25/2026" },
-  { id: "ce3", courseId: "c1", studentName: "Sneha Kapoor", studentAvatarUrl: dummyAvatar("stu-sneha"), progressPct: 15, enrolledAt: "06/01/2026", lastActiveAt: "06/28/2026" },
-  { id: "ce4", courseId: "c2", studentName: "Mark Kovich", studentAvatarUrl: dummyAvatar("stu-mark"), progressPct: 65, enrolledAt: "02/10/2026", lastActiveAt: "06/22/2026" },
-  { id: "ce5", courseId: "c2", studentName: "Robert Fisher", studentAvatarUrl: dummyAvatar("stu-robert"), progressPct: 30, enrolledAt: "05/05/2026", lastActiveAt: "06/18/2026" },
-  { id: "ce6", courseId: "c3", studentName: "Sarah Jenkins", studentAvatarUrl: dummyAvatar("stu-sarahj"), progressPct: 100, enrolledAt: "03/20/2026", lastActiveAt: "06/15/2026" },
-  { id: "ce7", courseId: "c5", studentName: "Elena Lu", studentAvatarUrl: dummyAvatar("stu-elena"), progressPct: 50, enrolledAt: "05/28/2026", lastActiveAt: "06/27/2026" },
-  { id: "ce8", courseId: "c7", studentName: "Chen Wei", studentAvatarUrl: dummyAvatar("stu-chen"), progressPct: 80, enrolledAt: "04/02/2026", lastActiveAt: "06/26/2026" },
-  { id: "ce9", courseId: "c8", studentName: "Amara Okonkwo", studentAvatarUrl: dummyAvatar("stu-amara"), progressPct: 20, enrolledAt: "06/10/2026", lastActiveAt: "06/29/2026" },
-  { id: "ce10", courseId: "c8", studentName: "Jake Torres", studentAvatarUrl: dummyAvatar("stu-jake"), progressPct: 90, enrolledAt: "03/25/2026", lastActiveAt: "06/24/2026" },
-];
 
 /* ══════════════════════════════════════════════════════════════
    Library / Resources
