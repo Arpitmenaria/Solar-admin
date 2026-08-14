@@ -62,14 +62,6 @@ interface ApiChapter {
   order?: number;
 }
 
-interface ApiModule {
-  id?: string;
-  _id?: string;
-  title?: string;
-  order?: number;
-  chapters?: ApiChapter[];
-}
-
 interface ApiEnrollment {
   id?: string;
   _id?: string;
@@ -82,6 +74,25 @@ interface ApiEnrollment {
   progressPct?: number;
   enrolledAt?: string;
   lastActiveAt?: string;
+}
+
+interface ApiEnrollmentUser {
+  id?: string;
+  name?: string;
+  avatar?: string | null;
+}
+
+interface ApiEnrollmentRecord {
+  id?: string;
+  user?: ApiEnrollmentUser;
+  progressPct?: number;
+  enrolledAt?: string;
+  lastActiveAt?: string | null;
+}
+
+interface ApiEnrollmentsResponse {
+  success: boolean;
+  enrollments: ApiEnrollmentRecord[];
 }
 
 interface ApiCourse {
@@ -100,7 +111,7 @@ interface ApiCourse {
   students?: number | ApiEnrollment[];
   totalEnrollments?: number;
   duration?: number;
-  modules?: ApiModule[];
+  chapters?: ApiChapter[];
   createdAt?: string;
   updatedAt?: string;
 }
@@ -119,18 +130,19 @@ interface ApiCourseDetail {
 function mapCourse(c: ApiCourse): Course {
   const instructorName = c.instructor?.name ?? "Unknown";
   const isFree = (c.pricingType ?? "").toLowerCase() === "free" || !c.price;
-  const modules: CourseModule[] = (c.modules ?? []).map((m, mi) => ({
-    id: m.id ?? m._id ?? `m${mi}`,
-    title: m.title ?? `Module ${mi + 1}`,
-    order: m.order ?? mi + 1,
-    chapters: (m.chapters ?? []).map((ch, ci) => ({
-      id: ch.id ?? ch._id ?? `ch${ci}`,
-      title: ch.title ?? `Chapter ${ci + 1}`,
-      videoUrl: ch.videoUrl,
-      notes: ch.notes,
-      order: ch.order ?? ci + 1,
-    })),
+  // The real content model has no "modules" concept — chapters come back as
+  // a flat list. Wrapped in a single synthetic module so the UI (which
+  // groups chapters by module) doesn't need to change.
+  const chapters = (c.chapters ?? []).map((ch, ci) => ({
+    id: ch.id ?? ch._id ?? `ch${ci}`,
+    title: ch.title ?? `Chapter ${ci + 1}`,
+    videoUrl: ch.videoUrl,
+    notes: ch.notes,
+    order: ch.order ?? ci + 1,
   }));
+  const modules: CourseModule[] = chapters.length
+    ? [{ id: "content", title: "Course Content", order: 1, chapters }]
+    : [];
   const enrolledCount = Array.isArray(c.students) ? c.students.length : c.students ?? c.totalEnrollments ?? 0;
 
   return {
@@ -244,24 +256,21 @@ export const coursesService = {
 
   /** Derived from the course detail's `students` array — no separate enrollments endpoint is confirmed. */
   async getCourseEnrollments(id: string): Promise<CourseEnrollment[]> {
-    let students: ApiCourse["students"];
     try {
-      const res = await apiClient.get<ApiCourseDetail>(`${BASE}/${id}`);
-      students = res.course?.students;
+      const res = await apiClient.get<ApiEnrollmentsResponse>(`${BASE}/${id}/enrollments`);
+      return (res.enrollments ?? []).map((e, i) => ({
+        id: e.id ?? `enr-${i}`,
+        courseId: id,
+        studentName: e.user?.name ?? "Unknown",
+        studentAvatarUrl: e.user?.avatar ?? undefined,
+        progressPct: e.progressPct ?? 0,
+        enrolledAt: e.enrolledAt ?? "",
+        lastActiveAt: e.lastActiveAt ?? "",
+      }));
     } catch (err) {
       if ((err as ApiError)?.status === 404) return [];
       throw err;
     }
-    if (!Array.isArray(students)) return [];
-    return students.map((s, i) => ({
-      id: s.id ?? s._id ?? s.userId ?? `enr-${i}`,
-      courseId: id,
-      studentName: s.name ?? s.studentName ?? "Unknown",
-      studentAvatarUrl: s.avatar ?? s.avatarUrl,
-      progressPct: s.progress ?? s.progressPct ?? 0,
-      enrolledAt: s.enrolledAt ?? "",
-      lastActiveAt: s.lastActiveAt ?? "",
-    }));
   },
 
   async createCourse(input: CreateCourseInput): Promise<Course> {

@@ -3,6 +3,7 @@ import { apiClient } from "@/services/api/client";
 
 const GROUP_REPORTS_BASE = "/api/admin/groups/reports";
 const EVENT_REPORTS_BASE = "/api/admin/events/reports";
+const COURSE_REPORTS_BASE = "/api/admin/courses/reports";
 
 const REPORT_STATUSES: ReportStatus[] = ["PENDING", "RESOLVED", "DISMISSED"];
 const REPORT_CATEGORIES: ReportCategory[] = [
@@ -100,6 +101,26 @@ export const reportsService = {
   async updateEventReportStatus(id: string, status: ReportStatus): Promise<Report | null> {
     const res = await apiClient.patch<{ success: boolean; report?: ApiReport }>(
       `${EVENT_REPORTS_BASE}/${id}`,
+      { status: status.toLowerCase() },
+    );
+    return res.report ? mapReport(res.report) : null;
+  },
+
+  async getCourseReports(): Promise<Report[]> {
+    const res = await apiClient.get<ApiReportList>(`${COURSE_REPORTS_BASE}?page=1&limit=200`);
+    return (res.reports ?? []).map(mapReport);
+  },
+  async getCourseReportStats(): Promise<ReportStats> {
+    const res = await apiClient.get<ApiReportList>(`${COURSE_REPORTS_BASE}?page=1&limit=1`);
+    return res.stats ?? EMPTY_REPORT_STATS;
+  },
+  async getCourseReportById(id: string): Promise<Report | null> {
+    const res = await apiClient.get<{ success: boolean; report: ApiReport | null }>(`${COURSE_REPORTS_BASE}/${id}`);
+    return res.report ? mapReport(res.report) : null;
+  },
+  async updateCourseReportStatus(id: string, status: ReportStatus): Promise<Report | null> {
+    const res = await apiClient.patch<{ success: boolean; report?: ApiReport }>(
+      `${COURSE_REPORTS_BASE}/${id}`,
       { status: status.toLowerCase() },
     );
     return res.report ? mapReport(res.report) : null;
