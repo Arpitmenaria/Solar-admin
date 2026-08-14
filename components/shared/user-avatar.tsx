@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { getInitials } from "@/lib/utils";
 
@@ -18,12 +21,20 @@ const SIZE_MAP = {
 
 export function UserAvatar({ src, name, size = "md", className, online }: UserAvatarProps) {
   const initials = getInitials(name);
+  // A 404/expired/broken image URL is still truthy — falling straight
+  // through to <img> left a broken-icon (or nothing, on a dark background)
+  // instead of the initials placeholder this component already has.
+  // Tracking *which* src failed (rather than a plain boolean) means a new
+  // src prop is trusted again automatically, with no reset effect needed.
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  const showImage = !!src && src !== failedSrc;
+
   return (
     <div className={cn("relative shrink-0", className)}>
       <div className={cn("rounded-full overflow-hidden", SIZE_MAP[size])}>
-        {src ? (
+        {showImage ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={src} alt={name} className="h-full w-full object-cover" />
+          <img src={src} alt={name} className="h-full w-full object-cover" onError={() => setFailedSrc(src ?? null)} />
         ) : (
           <div className={cn("flex h-full w-full items-center justify-center bg-[#1a2a4a] font-semibold text-[#3b82f6]", SIZE_MAP[size])}>
             {initials}

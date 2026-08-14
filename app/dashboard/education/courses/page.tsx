@@ -10,6 +10,8 @@ import {
   TbSchool, TbDotsVertical, TbEye, TbTrash,
 } from "react-icons/tb";
 import { CustomSelect } from "@/components/shared/custom-select";
+import { UserAvatar } from "@/components/shared/user-avatar";
+import { TableRowSkeleton } from "@/components/shared/loading-skeleton";
 import { cn } from "@/lib/utils";
 import type { Course, CourseCategory, CourseDifficulty, CourseStatus } from "@/constants/education-mock-data";
 import { useCourses, useCourseStats } from "@/hooks/use-courses";
@@ -95,7 +97,7 @@ function ActionMenu({ course, onAction }: { course: Course; onAction: (action: "
 }
 
 export default function CoursesPage() {
-  const { data: courses = [] } = useCourses();
+  const { data: courses = [], isLoading } = useCourses();
   const { data: stats } = useCourseStats();
   const [activeTab, setActiveTab] = useState<"ALL" | CourseStatus>("ALL");
   const [search, setSearch] = useState("");
@@ -203,7 +205,9 @@ export default function CoursesPage() {
                 ))}
               </div>
 
-              {filtered.map((course, i) => {
+              {isLoading ? (
+                <div className="px-6">{Array.from({ length: 6 }).map((_, i) => <TableRowSkeleton key={i} />)}</div>
+              ) : filtered.map((course, i) => {
                 const CatIcon = CATEGORY_ICON[course.category];
                 const st = STATUS_STYLES[course.status];
                 return (
@@ -227,14 +231,7 @@ export default function CoursesPage() {
                     </span>
 
                     <div className="flex min-w-0 items-center gap-2">
-                      {course.instructor.avatarUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={course.instructor.avatarUrl} alt={course.instructor.name} className="h-7 w-7 shrink-0 rounded-full object-cover" />
-                      ) : (
-                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#1a2744] text-[10px] font-bold text-blue-400">
-                          {course.instructor.initials}
-                        </div>
-                      )}
+                      <UserAvatar src={course.instructor.avatarUrl} name={course.instructor.name} size="sm" />
                       <span className="truncate text-[12px] text-slate-200">{course.instructor.name}</span>
                     </div>
 
@@ -254,7 +251,7 @@ export default function CoursesPage() {
                 );
               })}
 
-              {filtered.length === 0 && (
+              {!isLoading && filtered.length === 0 && (
                 <div className="py-12 text-center text-sm text-caption">No courses match the current filters.</div>
               )}
 

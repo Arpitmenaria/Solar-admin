@@ -3,6 +3,7 @@
 import { TableRowSkeleton } from "@/components/shared/loading-skeleton";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { useCourseEnrollments } from "@/hooks/use-courses";
+import { formatDate, formatDateTime } from "@/lib/utils";
 
 export function EnrollmentList({ courseId }: { courseId: string }) {
   const { data: enrollments, isLoading } = useCourseEnrollments(courseId);
@@ -27,7 +28,7 @@ export function EnrollmentList({ courseId }: { courseId: string }) {
           <div className="min-w-0 flex-1">
             <p className="truncate text-[13px] font-medium text-white">{e.studentName}</p>
             <p className="text-[11.5px] text-slate-500">
-              Enrolled {e.enrolledAt} · Last active {e.lastActiveAt}
+              Enrolled {formatDate(e.enrolledAt)} · Last active {formatDateTime(e.lastActiveAt)}
             </p>
           </div>
           <div className="flex w-40 shrink-0 items-center gap-2.5">

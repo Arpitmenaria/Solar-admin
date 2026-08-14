@@ -3,8 +3,7 @@
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import Link from "next/link";
-import { TbPencil, TbCloudUpload, TbArchive, TbTrash, TbVideo } from "react-icons/tb";
+import { TbCloudUpload, TbTrash, TbVideo } from "react-icons/tb";
 import { BookOpen } from "lucide-react";
 
 import { BackButton } from "@/components/shared/back-button";
@@ -96,27 +95,12 @@ export default function CourseDetailPage() {
           </div>
 
           <div className="flex flex-wrap gap-2.5">
-            <Link
-              href={`/dashboard/education/courses/${course.id}/edit`}
-              className="flex items-center gap-1.5 rounded-lg border border-white/[0.10] bg-white/[0.03] px-3.5 py-2 text-[12px] font-medium text-slate-300 transition-colors hover:bg-white/[0.06] hover:text-white"
-            >
-              <TbPencil size={14} /> Edit Course
-            </Link>
-
             {course.status !== "PUBLISHED" && (
               <button
                 onClick={() => setPendingAction({ action: "PUBLISH", courseId: course.id, courseName: course.title })}
                 className="flex items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-2 text-[12px] font-medium text-emerald-400 transition-colors hover:bg-emerald-500/20"
               >
                 <TbCloudUpload size={14} /> Publish
-              </button>
-            )}
-            {course.status !== "ARCHIVED" && (
-              <button
-                onClick={() => setPendingAction({ action: "ARCHIVE", courseId: course.id, courseName: course.title })}
-                className="flex items-center gap-1.5 rounded-lg border border-orange-500/30 bg-orange-500/10 px-3.5 py-2 text-[12px] font-medium text-orange-400 transition-colors hover:bg-orange-500/20"
-              >
-                <TbArchive size={14} /> Archive
               </button>
             )}
 

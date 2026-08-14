@@ -157,7 +157,7 @@ export function ReportsDirectory({
     setStatusTab("ALL"); setCategory("ALL"); setSearch(""); setDate(""); setPage(1);
   };
 
-  const columnHeaderLabel = kind === "group" ? "GROUP NAME" : "EVENT NAME";
+  const columnHeaderLabel = kind === "group" ? "GROUP NAME" : kind === "event" ? "EVENT NAME" : "COURSE NAME";
 
   const filtered = (reports ?? []).filter((r) => {
     if (statusTab !== "ALL" && r.status !== statusTab) return false;

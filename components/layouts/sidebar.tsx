@@ -98,6 +98,7 @@ const NAV_ITEMS: NavEntry[] = [
     icon: "Education",
     children: [
       { label: "Courses", href: "/dashboard/education/courses" },
+      { label: "Reported Courses", href: "/dashboard/course-reports" },
       { label: "Library", href: "/dashboard/education/library" },
     ],
   },
