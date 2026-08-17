@@ -86,7 +86,7 @@ export default function UserDetailPage() {
           animate="show"
         >
           {/* Profile card */}
-          <motion.div variants={fadeUp} className="rounded-xl border border-white/[0.08] bg-[#0d1321] p-6 flex flex-col gap-5">
+          <motion.div variants={fadeUp} className="rounded-xl border border-white/[0.08] bg-[#0d1321] p-4 md:p-6 flex flex-col gap-5">
             {/* Profile fields are read-only — suspension is the only action
                 admins can take on a user from here. */}
             <div className="flex flex-col items-center gap-3">
@@ -398,13 +398,13 @@ function MiniStat({ label, value, href, onClick }: {
 
 function UserDetailSkeleton() {
   return (
-    <div className="flex-1 p-6 space-y-5">
+    <div className="flex-1 p-4 md:p-6 space-y-5">
       <Skeleton className="h-8 w-48" />
       <Skeleton className="h-4 w-64" />
-      <div className="grid grid-cols-[340px_1fr] gap-5">
+      <div className="grid grid-cols-1 xl:grid-cols-[340px_1fr] gap-5">
         <Skeleton className="h-80 rounded-xl" />
         <div className="space-y-4">
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)}
           </div>
         </div>

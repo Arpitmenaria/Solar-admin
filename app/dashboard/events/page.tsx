@@ -284,9 +284,10 @@ export default function EventsPage() {
                 transition={{ delay: 0.12, duration: 0.22 }}
                 className="overflow-hidden rounded-xl border border-white/[0.08] bg-card"
               >
+                <div className="overflow-x-auto">
 
                 {/* Table header */}
-                <div className="grid grid-cols-[2.5fr_120px_140px_160px_110px_120px_120px_60px] gap-4 border-b border-white/[0.07] bg-white/[0.025] px-6 py-4">
+                <div className="grid grid-cols-[2.5fr_120px_140px_160px_110px_120px_120px_60px] gap-4 border-b border-white/[0.07] bg-white/[0.025] px-6 py-4 min-w-[1220px]">
                   {[
                     { label: "EVENT NAME",   cls: ""            },
                     { label: "CATEGORY",     cls: ""            },
@@ -315,7 +316,7 @@ export default function EventsPage() {
                     <motion.div key={event.id}
                       initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                       transition={{ delay: i * 0.04 }}
-                      className="grid grid-cols-[2.5fr_120px_140px_160px_110px_120px_120px_60px] items-center gap-4 border-b border-white/[0.04] px-6 py-4 transition-colors hover:bg-white/[0.02]"
+                      className="grid grid-cols-[2.5fr_120px_140px_160px_110px_120px_120px_60px] items-center gap-4 border-b border-white/[0.04] px-6 py-4 transition-colors hover:bg-white/[0.02] min-w-[1220px]"
                     >
                       <div className="flex min-w-0 items-center gap-3">
                         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
@@ -369,15 +370,16 @@ export default function EventsPage() {
                 {!isLoading && events.length === 0 && (
                   <div className="py-12 text-center text-sm text-caption">No events match the current filters.</div>
                 )}
+                </div>
 
                 {/* Pagination — driven by the API's total/totalPages */}
-                <div className="flex items-center justify-between border-t border-white/[0.04] px-6 py-4">
+                <div className="flex flex-col gap-3 border-t border-white/[0.04] px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
                   <p className="text-[11px] text-caption">
                     {total > 0
                       ? `Showing ${formatNumberFull((page - 1) * PAGE_SIZE + 1)}–${formatNumberFull(Math.min(page * PAGE_SIZE, total))} of ${formatNumberFull(total)} entries`
                       : "No entries"}
                   </p>
-                  <div className="flex items-center gap-0.5">
+                  <div className="flex flex-wrap items-center gap-0.5">
                     <button onClick={() => setPage(1)} disabled={page === 1} aria-label="First page"
                       className="flex h-7 w-7 items-center justify-center rounded text-caption transition-colors hover:bg-white/[0.06] hover:text-slate-300 disabled:cursor-not-allowed disabled:opacity-40">
                       <TbChevronsLeft size={13} />

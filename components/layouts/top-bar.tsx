@@ -116,7 +116,7 @@ function NotificationPortal({
           exit={{ opacity: 0, y: -6, scale: 0.97 }}
           transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
           style={{ position: "fixed", top: pos.top, right: pos.right, zIndex: 9999, width: 340 }}
-          className="overflow-hidden rounded-xl border border-white/[0.10] bg-[#0d1321] shadow-2xl shadow-black/60"
+          className="max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-white/[0.10] bg-[#0d1321] shadow-2xl shadow-black/60"
         >
           {/* Header */}
           <div className="flex items-center justify-between border-b border-white/[0.07] px-4 py-3">

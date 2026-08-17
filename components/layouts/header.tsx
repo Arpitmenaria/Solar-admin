@@ -29,7 +29,7 @@ export function Header({ title, breadcrumbs, actions }: HeaderProps) {
           <span className="text-sm font-semibold text-white shrink-0">{title}</span>
         )}
         {hasCrumbs && (
-          <nav className="flex items-center gap-1.5">
+          <nav className="flex items-center gap-1.5 overflow-x-auto whitespace-nowrap">
             {breadcrumbs.map((crumb, i) => (
               <span key={i} className="flex items-center gap-1.5">
                 {i > 0 && <ChevronRight size={13} className="text-[#3a4a6a]" />}

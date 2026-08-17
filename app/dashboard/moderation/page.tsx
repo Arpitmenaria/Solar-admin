@@ -22,7 +22,7 @@ export default function ModerationPage() {
         breadcrumbs={[{ label: "Content Moderation" }]}
        
       />
-      <main className="flex-1 p-6 space-y-5">
+      <main className="flex-1 p-4 md:p-6 space-y-5">
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
           <h1 className="text-2xl font-bold text-white">Content Moderation</h1>
           <p className="text-sm text-muted-foreground mt-1">Review and action pending violations.</p>

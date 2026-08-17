@@ -67,7 +67,7 @@ export function ReportDetail({
             variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}
             className="flex flex-col gap-5"
           >
-            <div className="rounded-xl border border-white/[0.08] bg-[#0d1321] p-6">
+            <div className="rounded-xl border border-white/[0.08] bg-[#0d1321] p-4 md:p-6">
               <p className="text-label mb-3">{targetLabel.toUpperCase()} NAME</p>
               <div className="flex items-center gap-3">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-white/[0.07] bg-white/[0.05]">
@@ -80,7 +80,7 @@ export function ReportDetail({
               </div>
             </div>
 
-            <div className="rounded-xl border border-white/[0.08] bg-[#0d1321] p-6">
+            <div className="rounded-xl border border-white/[0.08] bg-[#0d1321] p-4 md:p-6">
               <p className="text-label mb-3">REPORTED BY</p>
               <div className="flex items-center gap-3">
                 <UserAvatar name={report.reportedBy.username} src={report.reportedBy.avatarUrl} size="md" />
@@ -94,7 +94,7 @@ export function ReportDetail({
             variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}
             className="flex flex-col gap-5"
           >
-            <div className="rounded-xl border border-white/[0.08] bg-[#0d1321] p-6">
+            <div className="rounded-xl border border-white/[0.08] bg-[#0d1321] p-4 md:p-6">
               <div className="mb-1 flex items-center gap-2">
                 <MessageSquareWarning size={16} className="text-orange-400" />
                 <h2 className="text-sm font-semibold text-white">Report Details</h2>
@@ -117,7 +117,7 @@ export function ReportDetail({
               </div>
             </div>
 
-            <div className="rounded-xl border border-white/[0.08] bg-[#0d1321] p-6">
+            <div className="rounded-xl border border-white/[0.08] bg-[#0d1321] p-4 md:p-6">
               <h2 className="mb-4 text-sm font-semibold text-white">Take Action</h2>
               {actions.length === 0 ? (
                 <p className="text-sm text-muted-foreground">This report has already been actioned — no further steps available.</p>

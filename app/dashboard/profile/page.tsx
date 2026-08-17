@@ -38,7 +38,7 @@ export default function ProfilePage() {
   );
 
   return (
-    <div className="min-h-screen bg-[#0B1120] p-6 text-white">
+    <div className="min-h-screen bg-[#0B1120] p-4 md:p-6 text-white">
       {/* Header */}
       <div className="rounded-2xl border border-white/10 bg-[#121B2E] p-6">
         <div className="flex flex-col gap-6 md:flex-row md:items-center">
@@ -70,7 +70,7 @@ export default function ProfilePage() {
             </p>
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
             <button className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold">
               Edit Profile
             </button>

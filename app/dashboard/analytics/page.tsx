@@ -12,7 +12,7 @@ export default function AnalyticsPage() {
         breadcrumbs={[{ label: "Analytics" }]}
        
       />
-      <main className="flex-1 flex items-center justify-center p-6">
+      <main className="flex-1 flex items-center justify-center p-4 md:p-6">
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
