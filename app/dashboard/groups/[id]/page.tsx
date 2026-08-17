@@ -163,7 +163,7 @@ export default function GroupDetailPage() {
         </motion.div>
 
         {tab === "about" && (
-          <motion.div variants={fadeUp} initial="hidden" animate="show" className="rounded-xl border border-white/[0.08] bg-[#0d1321] p-6">
+          <motion.div variants={fadeUp} initial="hidden" animate="show" className="rounded-xl border border-white/[0.08] bg-[#0d1321] p-4 md:p-6">
             <div className="mb-3 flex items-center gap-2">
               <ShieldCheck size={16} className="text-blue-400" />
               <h2 className="text-sm font-semibold text-white">About this Group</h2>

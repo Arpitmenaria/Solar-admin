@@ -60,7 +60,7 @@ export function TagManagerPanel() {
         ) : (
           <div className="flex flex-col divide-y divide-white/[0.06]">
             {tags.map((tag) => (
-              <div key={tag.label} className="flex items-center justify-between py-3">
+              <div key={tag.label} className="flex items-center justify-between gap-3 py-3">
                 {editing === tag.label ? (
                   <div className="flex flex-1 items-center gap-2">
                     <input
@@ -79,13 +79,13 @@ export function TagManagerPanel() {
                   </div>
                 ) : (
                   <>
-                    <div className="flex items-center gap-3">
-                      <span className="text-[13px] font-medium text-white">{tag.label}</span>
-                      <span className="rounded-full bg-white/[0.06] px-2 py-0.5 text-[10.5px] font-semibold text-slate-400">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <span className="truncate text-[13px] font-medium text-white">{tag.label}</span>
+                      <span className="shrink-0 rounded-full bg-white/[0.06] px-2 py-0.5 text-[10.5px] font-semibold text-slate-400">
                         {tag.count} {tag.count === 1 ? "resource" : "resources"}
                       </span>
                     </div>
-                    <div className="flex items-center gap-1">
+                    <div className="flex shrink-0 items-center gap-1">
                       <button type="button" onClick={() => startEdit(tag.label)} className="rounded p-1.5 text-slate-400 hover:bg-white/[0.06] hover:text-slate-200">
                         <Pencil size={14} />
                       </button>

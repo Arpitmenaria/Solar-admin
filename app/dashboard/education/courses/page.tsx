@@ -197,7 +197,8 @@ export default function CoursesPage() {
               initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12, duration: 0.22 }}
               className="overflow-hidden rounded-xl border border-white/[0.08] bg-card"
             >
-              <div className="grid grid-cols-[2.2fr_120px_110px_150px_100px_100px_120px_60px] gap-4 border-b border-white/[0.07] bg-white/[0.025] px-6 py-4">
+              <div className="overflow-x-auto">
+              <div className="grid grid-cols-[2.2fr_120px_110px_150px_100px_100px_120px_60px] gap-4 border-b border-white/[0.07] bg-white/[0.025] px-6 py-4 min-w-[1120px]">
                 {["COURSE", "CATEGORY", "DIFFICULTY", "INSTRUCTOR", "PRICE", "ENROLLED", "STATUS", "ACTIONS"].map((label) => (
                   <span key={label} className={`text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400 ${label === "ENROLLED" || label === "ACTIONS" ? "text-center" : ""}`}>
                     {label}
@@ -206,14 +207,14 @@ export default function CoursesPage() {
               </div>
 
               {isLoading ? (
-                <div className="px-6">{Array.from({ length: 6 }).map((_, i) => <TableRowSkeleton key={i} />)}</div>
+                <div className="px-6 min-w-[1120px]">{Array.from({ length: 6 }).map((_, i) => <TableRowSkeleton key={i} />)}</div>
               ) : filtered.map((course, i) => {
                 const CatIcon = CATEGORY_ICON[course.category];
                 const st = STATUS_STYLES[course.status];
                 return (
                   <motion.div key={course.id}
                     initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.04 }}
-                    className="grid grid-cols-[2.2fr_120px_110px_150px_100px_100px_120px_60px] items-center gap-4 border-b border-white/[0.04] px-6 py-4 transition-colors hover:bg-white/[0.02]"
+                    className="grid grid-cols-[2.2fr_120px_110px_150px_100px_100px_120px_60px] items-center gap-4 border-b border-white/[0.04] px-6 py-4 transition-colors hover:bg-white/[0.02] min-w-[1120px]"
                   >
                     <div className="flex min-w-0 items-center gap-3">
                       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/[0.07] bg-white/[0.04]">
@@ -254,6 +255,7 @@ export default function CoursesPage() {
               {!isLoading && filtered.length === 0 && (
                 <div className="py-12 text-center text-sm text-caption">No courses match the current filters.</div>
               )}
+              </div>
 
               <div className="flex items-center justify-between border-t border-white/[0.04] px-6 py-4">
                 <p className="text-[11px] text-caption">Showing {filtered.length} of {courses.length} courses</p>

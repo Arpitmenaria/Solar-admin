@@ -6,9 +6,9 @@ function Skeleton({ className }: { className?: string }) {
 
 export function StatCardSkeleton({ className }: { className?: string }) {
   return (
-    <div className={cn("rounded-xl border border-white/[0.08] bg-[#0d1321] p-5 space-y-3", className)}>
+    <div className={cn("rounded-xl border border-white/[0.08] bg-[#0d1321] p-4 sm:p-5 space-y-3", className)}>
       <Skeleton className="h-3 w-24" />
-      <Skeleton className="h-8 w-32" />
+      <Skeleton className="h-6 w-20 sm:h-8 sm:w-32" />
     </div>
   );
 }

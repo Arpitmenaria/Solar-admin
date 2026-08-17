@@ -18,7 +18,7 @@ interface PlanTabsProps {
 export function PlanTabs({ value, onChange }: PlanTabsProps) {
   return (
     <div className="relative border-b border-white/[0.08]">
-      <div className="flex gap-8">
+      <div className="flex flex-nowrap gap-6 overflow-x-auto pt-5 sm:gap-8">
         {TABS.map((tab) => {
           const isActive = value === tab.value;
           return (
@@ -26,7 +26,7 @@ export function PlanTabs({ value, onChange }: PlanTabsProps) {
               key={tab.value}
               onClick={() => onChange(tab.value)}
               className={cn(
-                "relative flex items-center gap-2 pb-3 text-xs font-semibold uppercase tracking-wider transition-colors",
+                "relative flex shrink-0 items-center gap-2 pb-3 text-xs font-semibold uppercase tracking-wider transition-colors",
                 isActive ? "text-blue-400" : "text-caption hover:text-white"
               )}
             >

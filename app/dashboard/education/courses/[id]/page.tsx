@@ -135,7 +135,7 @@ export default function CourseDetailPage() {
         </motion.div>
 
         {tab === "about" && (
-          <motion.div variants={fadeUp} initial="hidden" animate="show" className="rounded-xl border border-white/[0.08] bg-[#0d1321] p-6">
+          <motion.div variants={fadeUp} initial="hidden" animate="show" className="rounded-xl border border-white/[0.08] bg-[#0d1321] p-4 md:p-6">
             <div className="mb-3 flex items-center gap-2">
               <BookOpen size={16} className="text-blue-400" />
               <h2 className="text-sm font-semibold text-white">About this Course</h2>
@@ -147,7 +147,7 @@ export default function CourseDetailPage() {
         )}
 
         {tab === "modules" && (
-          <motion.div variants={fadeUp} initial="hidden" animate="show" className="rounded-xl border border-white/[0.08] bg-[#0d1321] p-6">
+          <motion.div variants={fadeUp} initial="hidden" animate="show" className="rounded-xl border border-white/[0.08] bg-[#0d1321] p-4 md:p-6">
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <TbVideo size={16} className="text-blue-400" />
@@ -182,7 +182,7 @@ export default function CourseDetailPage() {
         )}
 
         {tab === "enrollments" && (
-          <motion.div variants={fadeUp} initial="hidden" animate="show" className="rounded-xl border border-white/[0.08] bg-[#0d1321] p-6">
+          <motion.div variants={fadeUp} initial="hidden" animate="show" className="rounded-xl border border-white/[0.08] bg-[#0d1321] p-4 md:p-6">
             <EnrollmentList courseId={course.id} />
           </motion.div>
         )}

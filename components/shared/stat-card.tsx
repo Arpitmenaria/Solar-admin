@@ -15,7 +15,7 @@ interface StatCardProps {
 export function StatCard({ label, value, icon: Icon, badge, badgeClassName, dot, sub, className }: StatCardProps) {
   return (
     <div className={cn(
-      "group relative flex flex-col overflow-hidden rounded-xl border border-white/[0.07] bg-card p-5",
+      "group relative flex flex-col overflow-hidden rounded-xl border border-white/[0.07] bg-card p-4 sm:p-5",
       "transition-all duration-200 cursor-default",
       "hover:border-blue-500/40 hover:bg-blue-500/[0.04]",
       "hover:-translate-y-[2px] hover:shadow-xl hover:shadow-blue-500/10",
@@ -50,7 +50,7 @@ export function StatCard({ label, value, icon: Icon, badge, badgeClassName, dot,
       </p>
 
       {/* Row 3 — value */}
-      <p className="mt-1.5 text-[40px] font-bold leading-none tracking-tight text-white">
+      <p className="mt-1.5 text-[28px] sm:text-[40px] font-bold leading-none tracking-tight text-white">
         {value}
       </p>
 
