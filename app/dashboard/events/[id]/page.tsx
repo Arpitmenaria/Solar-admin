@@ -48,11 +48,12 @@ export default function EventDetailPage() {
   const [tab, setTab] = useState<TabValue>("about");
   const [attendeeSearch, setAttendeeSearch] = useState("");
 
+  const attendeeList = attendees?.data ?? [];
   const filteredAttendees = useMemo(() => {
     const q = attendeeSearch.trim().toLowerCase();
-    if (!q) return attendees ?? [];
-    return (attendees ?? []).filter((a) => a.name.toLowerCase().includes(q));
-  }, [attendees, attendeeSearch]);
+    if (!q) return attendeeList;
+    return attendeeList.filter((a) => a.name.toLowerCase().includes(q));
+  }, [attendeeList, attendeeSearch]);
 
   if (isLoading) {
     return (
@@ -179,7 +180,7 @@ export default function EventDetailPage() {
         )}
 
         {tab === "attendees" && (
-          <motion.div variants={fadeUp} initial="hidden" animate="show" className="rounded-xl border border-white/[0.08] bg-[#0d1321]">
+          <motion.div variants={fadeUp} initial="hidden" animate="show" className="rounded-xl border border-white/[0.08] bg-[#0d1321] overflow-hidden">
             <div className="flex items-center gap-3 border-b border-white/[0.06] p-4">
               <div className="relative w-full max-w-[280px]">
                 <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#3a4d6a]" />
@@ -197,33 +198,62 @@ export default function EventDetailPage() {
               </span>
             </div>
 
-            <div>
-              {attendeesLoading ? (
-                <div className="space-y-3 p-4">
-                  {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-12 rounded-lg" />)}
-                </div>
-              ) : filteredAttendees.length === 0 ? (
-                <div className="py-12 text-center text-sm text-caption">No attendees match your search.</div>
-              ) : (
-                filteredAttendees.map((attendee, i) => (
-                  <motion.div
-                    key={attendee.id}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: i * 0.03 }}
-                    className="flex items-center gap-3 border-b border-white/[0.04] px-4 py-3 last:border-b-0"
-                  >
-                    <UserAvatar name={attendee.name} src={attendee.avatarUrl} size="sm" />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-white">{attendee.name}</p>
-                    </div>
-                    <span className={cn("inline-flex w-fit items-center rounded border px-2 py-0.5 text-[10px] font-semibold tracking-wide", RSVP_BADGE[attendee.status])}>
-                      {attendee.status}
-                    </span>
-                  </motion.div>
-                ))
-              )}
-            </div>
+            {attendeesLoading ? (
+              <div className="space-y-3 p-4">
+                {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-12 rounded-lg" />)}
+              </div>
+            ) : filteredAttendees.length === 0 ? (
+              <div className="py-12 text-center text-sm text-caption">No attendees match your search.</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-white/[0.06]">
+                      <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Name</th>
+                      <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Age</th>
+                      <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Email</th>
+                      <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Ticket Type</th>
+                      <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Price</th>
+                      <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Qty</th>
+                      <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredAttendees.map((attendee, i) => (
+                      <motion.tr
+                        key={attendee.id}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: i * 0.03 }}
+                        className="border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors last:border-b-0"
+                      >
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <UserAvatar name={attendee.name} src={attendee.avatarUrl} size="sm" />
+                            <span className="text-white font-medium">{attendee.name}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-slate-300">{attendee.age ? `${attendee.age} yrs` : "—"}</td>
+                        <td className="px-4 py-3 text-slate-300 text-[11px] break-all">{attendee.email || "—"}</td>
+                        <td className="px-4 py-3 text-slate-300">{attendee.ticketType || "—"}</td>
+                        <td className="px-4 py-3 text-slate-300 font-medium">${attendee.ticketPrice?.toFixed(2) || "0.00"}</td>
+                        <td className="px-4 py-3 text-slate-300">{attendee.quantity || "—"}</td>
+                        <td className="px-4 py-3">
+                          <span className={cn(
+                            "inline-flex items-center rounded border px-2 py-0.5 text-[10px] font-semibold tracking-wide",
+                            attendee.paymentStatus === "paid" ? "border-emerald-500/30 text-emerald-300 bg-emerald-500/10" :
+                            attendee.paymentStatus === "pending" ? "border-yellow-500/30 text-yellow-300 bg-yellow-500/10" :
+                            "border-white/[0.12] text-slate-300 bg-white/[0.03]"
+                          )}>
+                            {attendee.paymentStatus ? attendee.paymentStatus.charAt(0).toUpperCase() + attendee.paymentStatus.slice(1) : "—"}
+                          </span>
+                        </td>
+                      </motion.tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </motion.div>
         )}
       </main>

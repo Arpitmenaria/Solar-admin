@@ -84,11 +84,50 @@ export interface EventCategoryOption {
 interface ApiAttendee {
   _id?: string;
   id?: string;
+  userId?: string;
   name?: string;
+  email?: string;
   avatar?: string;
   avatarUrl?: string;
   status?: string;
   rsvpAt?: string;
+  age?: number;
+  ticketType?: string;
+  ticketPrice?: number;
+  quantity?: number;
+  paymentStatus?: string;
+  amount?: number;
+  joinedAt?: string;
+}
+
+export interface AttendeeFilters {
+  page?: number;
+  limit?: number;
+  paymentStatus?: "paid" | "pending" | "free";
+}
+
+export interface PaginatedAttendees {
+  data: EventAttendee[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+interface ApiAttendeesResponse {
+  success: boolean;
+  data: ApiAttendee[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+  stats?: {
+    totalAttendees: number;
+    paidAttendees: number;
+    pendingAttendees: number;
+    totalRevenue: number;
+  };
 }
 
 function mapStatus(s?: string): EventStatus {
@@ -134,7 +173,15 @@ function mapAttendee(a: ApiAttendee): EventAttendee {
     name: a.name ?? "",
     avatarUrl: a.avatarUrl ?? a.avatar,
     status: status === "host" ? "Host" : status === "checked in" ? "Checked In" : status === "interested" ? "Interested" : "Going",
-    rsvpAt: a.rsvpAt ?? "",
+    rsvpAt: a.rsvpAt ?? a.joinedAt ?? "",
+    email: a.email,
+    age: a.age,
+    ticketType: a.ticketType,
+    ticketPrice: a.ticketPrice,
+    quantity: a.quantity,
+    paymentStatus: a.paymentStatus,
+    amount: a.amount,
+    joinedAt: a.joinedAt,
   };
 }
 
@@ -201,9 +248,19 @@ export const eventsService = {
     return res.event ? mapEvent(res.event) : null;
   },
 
-  async getEventAttendees(id: string): Promise<EventAttendee[]> {
-    const res = await apiClient.get<{ success: boolean; attendees: ApiAttendee[] }>(`${BASE}/${id}/attendees`);
-    return (res.attendees ?? []).map(mapAttendee);
+  async getEventAttendees(id: string, filters: Partial<AttendeeFilters> = {}): Promise<PaginatedAttendees> {
+    const page = filters.page ?? 1;
+    const limit = filters.limit ?? 50;
+    const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (filters.paymentStatus) params.set("paymentStatus", filters.paymentStatus);
+
+    const res = await apiClient.get<ApiAttendeesResponse>(`${BASE}/${id}/attendees?${params.toString()}`);
+    return {
+      data: (res.data ?? []).map(mapAttendee),
+      total: res.pagination?.total ?? 0,
+      page: res.pagination?.page ?? page,
+      limit: res.pagination?.limit ?? limit,
+    };
   },
 
   /** Audited action — requires a reason (min 5 chars) + optional notes. */

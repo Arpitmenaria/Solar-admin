@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { eventsService, type CreateEventInput, type UpdateEventInput, type EventFilters } from "@/services/events.service";
+import { eventsService, type CreateEventInput, type UpdateEventInput, type EventFilters, type AttendeeFilters } from "@/services/events.service";
 
 export const eventKeys = {
   all: ["events"] as const,
@@ -35,10 +35,10 @@ export function useEvent(id: string) {
   });
 }
 
-export function useEventAttendees(id: string) {
+export function useEventAttendees(id: string, filters: Partial<AttendeeFilters> = {}) {
   return useQuery({
-    queryKey: [...eventKeys.detail(id), "attendees"],
-    queryFn: () => eventsService.getEventAttendees(id),
+    queryKey: [...eventKeys.detail(id), "attendees", filters],
+    queryFn: () => eventsService.getEventAttendees(id, filters),
     enabled: !!id,
     staleTime: 30_000,
   });

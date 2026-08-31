@@ -147,6 +147,14 @@ export interface EventAttendee {
   avatarUrl?: string;
   status: "Host" | "Going" | "Interested" | "Checked In";
   rsvpAt: string;
+  email?: string;
+  age?: number;
+  ticketType?: string;
+  ticketPrice?: number;
+  quantity?: number;
+  paymentStatus?: string;
+  amount?: number;
+  joinedAt?: string;
 }
 
 export const MOCK_GROUP_REPORTS: Report[] = [
