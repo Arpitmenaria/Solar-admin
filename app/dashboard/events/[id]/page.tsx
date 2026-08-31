@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { TbCircleCheck, TbMapPin } from "react-icons/tb";
-import { Search, CalendarDays } from "lucide-react";
+import { Search, CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 
 import { BackButton } from "@/components/shared/back-button";
 import { UserAvatar } from "@/components/shared/user-avatar";
@@ -43,7 +43,8 @@ export default function EventDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { data: event, isLoading } = useEvent(id);
-  const { data: attendees, isLoading: attendeesLoading } = useEventAttendees(id);
+  const [attendeePage, setAttendeePage] = useState(1);
+  const { data: attendees, isLoading: attendeesLoading } = useEventAttendees(id, { page: attendeePage, limit: 50 });
   const [pendingAction, setPendingAction] = useState<PendingEventAction | null>(null);
   const [tab, setTab] = useState<TabValue>("about");
   const [attendeeSearch, setAttendeeSearch] = useState("");
@@ -252,6 +253,33 @@ export default function EventDetailPage() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            )}
+
+            {!attendeesLoading && filteredAttendees.length > 0 && (
+              <div className="flex items-center justify-between border-t border-white/[0.06] px-4 py-3">
+                <span className="text-[11px] text-slate-400">
+                  Showing {((attendeePage - 1) * 50) + 1} to {Math.min(attendeePage * 50, attendees?.total || 0)} of {attendees?.total || 0} attendees
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setAttendeePage((p) => Math.max(1, p - 1))}
+                    disabled={attendeePage === 1}
+                    className="flex items-center gap-1 rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-[11px] font-medium text-slate-300 transition-all hover:bg-white/[0.06] disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ChevronLeft size={14} /> Previous
+                  </button>
+                  <span className="text-[11px] text-slate-400 min-w-[60px] text-center">
+                    Page {attendeePage} of {attendees?.page ? Math.ceil((attendees?.total || 0) / 50) : 1}
+                  </span>
+                  <button
+                    onClick={() => setAttendeePage((p) => p + 1)}
+                    disabled={attendeePage >= Math.ceil((attendees?.total || 0) / 50)}
+                    className="flex items-center gap-1 rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-[11px] font-medium text-slate-300 transition-all hover:bg-white/[0.06] disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Next <ChevronRight size={14} />
+                  </button>
+                </div>
               </div>
             )}
           </motion.div>
