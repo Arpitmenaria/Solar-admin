@@ -270,7 +270,7 @@ export default function EventDetailPage() {
                     <ChevronLeft size={14} /> Previous
                   </button>
                   <span className="text-[11px] text-slate-400 min-w-[60px] text-center">
-                    Page {attendeePage} of {attendees?.page ? Math.ceil((attendees?.total || 0) / 50) : 1}
+                    Page {attendeePage} of {attendees ? Math.ceil((attendees?.total || 0) / 50) : 1}
                   </span>
                   <button
                     onClick={() => setAttendeePage((p) => p + 1)}
