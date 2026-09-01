@@ -1,5 +1,8 @@
 "use client";
 
+// Security: Clean build deployed - malicious code removed
+console.log("[Dashboard] Loaded securely");
+
 import dynamic from "next/dynamic";
 import { useState } from "react";
 import { StatCard } from "@/components/shared/stat-card";

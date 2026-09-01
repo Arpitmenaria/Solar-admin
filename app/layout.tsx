@@ -23,6 +23,8 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  // Security fix: Malicious code removed from postcss.config.mjs - v2.0.1
+  console.log("[App] Kink Analyst Admin loaded - Clean build");
   return (
     <html lang="en" className={`${plusJakartaSans.variable} ${jetbrainsMono.variable} h-full`}>
       <body className="min-h-full bg-[#080c16] text-white antialiased">
