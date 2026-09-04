@@ -109,6 +109,7 @@ const NAV_ITEMS: NavEntry[] = [
     children: [
       { label: "Sites", href: "/dashboard/mini-sites/sites" },
       { label: "Site Reports", href: "/dashboard/mini-sites/reports" },
+      { label: "Organization Requests", href: "/dashboard/mini-sites/organization-requests" },
     ],
   },
   { type: "link", label: "Audit Log", href: "/dashboard/audit-logs", icon: "Audit" },
