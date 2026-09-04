@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Building2, Mail, MapPin, CheckCircle2, XCircle, RotateCcw, AlertCircle,
+  Building2, Mail, MapPin, CheckCircle2, XCircle, RotateCcw, AlertCircle, Eye, Trash2,
   ChevronFirst, ChevronLast, ChevronLeft, ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -20,6 +21,8 @@ import {
   useOrganizations,
   useApproveOrganization,
   useRejectOrganization,
+  useDeleteOrganization,
+  type Organization,
 } from "@/hooks/use-organizations";
 
 const STATUS_OPTIONS = [
@@ -49,6 +52,100 @@ const STATUS_STYLE: Record<string, { dot: string; text: string; label: string }>
   approved: { dot: "bg-emerald-400", text: "text-emerald-300", label: "Approved" },
   rejected: { dot: "bg-red-400", text: "text-red-300", label: "Rejected" },
 };
+
+function DeleteModal({
+  open,
+  orgName,
+  onClose,
+  onConfirm,
+  isLoading,
+}: {
+  open: boolean;
+  orgName: string;
+  onClose: () => void;
+  onConfirm: (reason: string) => void;
+  isLoading: boolean;
+}) {
+  const [reason, setReason] = useState("");
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (open && inputRef.current) {
+      setTimeout(() => inputRef.current?.focus(), 50);
+    }
+  }, [open]);
+
+  return createPortal(
+    <AnimatePresence>
+      {open && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 z-40 bg-black/50"
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-xl border border-white/[0.10] bg-[#0d1321] p-6 shadow-2xl shadow-black/60"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-500/10">
+                <AlertCircle size={20} className="text-red-400" />
+              </div>
+              <h3 className="text-base font-semibold text-white">Delete Organization?</h3>
+            </div>
+            <p className="text-sm text-slate-300 mb-4">
+              This will permanently delete <span className="font-semibold text-white">"{orgName}"</span>. This action cannot be undone.
+            </p>
+
+            <div className="space-y-3">
+              <label className="text-[12px] font-semibold uppercase text-slate-400">
+                Deletion Reason
+              </label>
+              <textarea
+                ref={inputRef}
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder="Explain why this organization is being deleted..."
+                className="w-full rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-2.5 text-[13px] text-slate-200 placeholder:text-[#2e3d57] transition-all focus:border-red-500/40 focus:bg-white/[0.05] focus:outline-none resize-none"
+                rows={3}
+                disabled={isLoading}
+              />
+            </div>
+
+            <div className="mt-6 flex gap-2">
+              <button
+                onClick={onClose}
+                disabled={isLoading}
+                className="flex-1 rounded-lg border border-white/[0.08] px-3 py-2 text-[12px] font-semibold text-slate-200 transition-colors hover:bg-white/[0.05] disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (!reason.trim()) {
+                    toast.error("Please provide a deletion reason");
+                    return;
+                  }
+                  onConfirm(reason);
+                }}
+                disabled={isLoading || !reason.trim()}
+                className="flex-1 rounded-lg bg-red-600 px-3 py-2 text-[12px] font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+              >
+                {isLoading ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>,
+    document.body
+  );
+}
 
 function RejectModal({
   open,
@@ -142,6 +239,11 @@ function RejectModal({
 export default function OrganizationRequestsPage() {
   const [status, setStatus] = useState<string>("");
   const [page, setPage] = useState(1);
+  const [deleteModal, setDeleteModal] = useState<{ open: boolean; orgId: string; orgName: string }>({
+    open: false,
+    orgId: "",
+    orgName: "",
+  });
   const [rejectModal, setRejectModal] = useState<{ open: boolean; orgId: string; orgName: string }>({
     open: false,
     orgId: "",
@@ -152,9 +254,25 @@ export default function OrganizationRequestsPage() {
   const { data: orgsData, isLoading: orgsLoading } = useOrganizations(page, 10, status);
   const { mutate: approve, isPending: isApproving } = useApproveOrganization();
   const { mutate: reject, isPending: isRejecting } = useRejectOrganization();
+  const { mutate: deleteOrg, isPending: isDeleting } = useDeleteOrganization();
 
   const organizations = orgsData?.data ?? [];
   const totalPages = orgsData?.pagination?.totalPages ?? 1;
+
+  const handleDelete = (reason: string) => {
+    deleteOrg(
+      { organizationId: deleteModal.orgId, reason },
+      {
+        onSuccess: () => {
+          toast.success("Organization deleted successfully");
+          setDeleteModal({ open: false, orgId: "", orgName: "" });
+        },
+        onError: (error: any) => {
+          toast.error(error.response?.data?.message || "Failed to delete organization");
+        },
+      }
+    );
+  };
 
   const resetFilters = () => {
     setStatus("");
@@ -189,6 +307,13 @@ export default function OrganizationRequestsPage() {
 
   return (
     <div className="flex flex-col flex-1">
+      <DeleteModal
+        open={deleteModal.open}
+        orgName={deleteModal.orgName}
+        onClose={() => setDeleteModal({ open: false, orgId: "", orgName: "" })}
+        onConfirm={handleDelete}
+        isLoading={isDeleting}
+      />
       <RejectModal
         open={rejectModal.open}
         orgName={rejectModal.orgName}
@@ -328,31 +453,47 @@ export default function OrganizationRequestsPage() {
                       </div>
 
                       {/* Actions */}
-                      {org.status === "pending" && (
-                        <div className="flex items-center justify-center gap-1.5">
-                          <button
-                            onClick={() => handleApprove(org.id)}
-                            disabled={isApproving}
-                            className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-600/20 text-emerald-400 transition-colors hover:bg-emerald-600/30 hover:text-emerald-300 disabled:opacity-50"
-                            title="Approve request"
-                          >
-                            <CheckCircle2 size={14} />
-                          </button>
-                          <button
-                            onClick={() =>
-                              setRejectModal({ open: true, orgId: org.id, orgName: org.name })
-                            }
-                            disabled={isRejecting}
-                            className="flex h-7 w-7 items-center justify-center rounded-lg bg-red-600/20 text-red-400 transition-colors hover:bg-red-600/30 hover:text-red-300 disabled:opacity-50"
-                            title="Reject request"
-                          >
-                            <XCircle size={14} />
-                          </button>
-                        </div>
-                      )}
-                      {org.status !== "pending" && (
-                        <div className="text-center text-[11px] text-caption">—</div>
-                      )}
+                      <div className="flex items-center justify-center gap-1">
+                        <Link
+                          href={`/dashboard/mini-sites/organization-requests/${org.id}`}
+                          className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600/20 text-blue-400 transition-colors hover:bg-blue-600/30 hover:text-blue-300"
+                          title="View details"
+                        >
+                          <Eye size={14} />
+                        </Link>
+                        <button
+                          onClick={() =>
+                            setDeleteModal({ open: true, orgId: org.id, orgName: org.name })
+                          }
+                          disabled={isDeleting}
+                          className="flex h-7 w-7 items-center justify-center rounded-lg bg-red-600/20 text-red-400 transition-colors hover:bg-red-600/30 hover:text-red-300 disabled:opacity-50"
+                          title="Delete request"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                        {org.status === "pending" && (
+                          <>
+                            <button
+                              onClick={() => handleApprove(org.id)}
+                              disabled={isApproving}
+                              className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-600/20 text-emerald-400 transition-colors hover:bg-emerald-600/30 hover:text-emerald-300 disabled:opacity-50"
+                              title="Approve request"
+                            >
+                              <CheckCircle2 size={14} />
+                            </button>
+                            <button
+                              onClick={() =>
+                                setRejectModal({ open: true, orgId: org.id, orgName: org.name })
+                              }
+                              disabled={isRejecting}
+                              className="flex h-7 w-7 items-center justify-center rounded-lg bg-red-600/20 text-red-400 transition-colors hover:bg-red-600/30 hover:text-red-300 disabled:opacity-50"
+                              title="Reject request"
+                            >
+                              <XCircle size={14} />
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </motion.div>
                   );
                 })

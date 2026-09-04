@@ -42,6 +42,13 @@ export interface Pagination {
   totalPages: number;
 }
 
+export interface Member {
+  id: string;
+  name: string;
+  email: string;
+  avatar?: string;
+}
+
 export const organizationsKey = () => ["organizations"];
 export const organizationStatsKey = () => ["organizations", "stats"];
 
@@ -108,6 +115,20 @@ export function usePendingOrganizations(page: number = 1, limit: number = 10, se
   });
 }
 
+export function useOrganizationDetail(organizationId: string) {
+  return useQuery({
+    queryKey: [...organizationsKey(), organizationId],
+    queryFn: async () => {
+      const response = await apiClient.get<{
+        success: boolean;
+        data: Organization & { members: Member[] };
+      }>(`/api/admin/organizations/${organizationId}`);
+      return response.data;
+    },
+    enabled: !!organizationId,
+  });
+}
+
 export function useApproveOrganization() {
   const queryClient = useQueryClient();
 
@@ -132,6 +153,23 @@ export function useRejectOrganization() {
     mutationFn: async ({ organizationId, reason }: { organizationId: string; reason: string }) => {
       return apiClient.post<{ success: boolean; message: string; data: Organization }>(
         `/api/admin/organizations/${organizationId}/reject`,
+        { reason }
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: organizationsKey() });
+      queryClient.invalidateQueries({ queryKey: organizationStatsKey() });
+    },
+  });
+}
+
+export function useDeleteOrganization() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ organizationId, reason }: { organizationId: string; reason: string }) => {
+      return apiClient.delete<{ success: boolean; message: string }>(
+        `/api/admin/organizations/${organizationId}`,
         { reason }
       );
     },
