@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowLeft, Mail, Calendar, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Mail, Calendar, CheckCircle2, AlertCircle } from "lucide-react";
 import { useOrganizationDetail } from "@/hooks/use-organizations";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { cn, formatDate, formatNumberFull } from "@/lib/utils";
