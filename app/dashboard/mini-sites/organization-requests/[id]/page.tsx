@@ -562,9 +562,10 @@ export default function OrganizationDetailPage() {
             transition={{ delay: 0.2 }}
             className="lg:col-span-2 space-y-6"
           >
-            {/* Organization Admin Info */}
-            {admin ? (
-              <div className="rounded-xl border border-white/[0.08] bg-card p-6">
+            {/* Organization Admin & Author Info */}
+            <div className="rounded-xl border border-white/[0.08] bg-card p-6 space-y-6">
+              {/* Admin */}
+              {admin && (
                 <div className="flex items-center gap-4">
                   <UserAvatar
                     src={admin.avatar}
@@ -586,32 +587,34 @@ export default function OrganizationDetailPage() {
                     )}
                   </div>
                 </div>
-              </div>
-            ) : (
-              <div className="rounded-xl border border-white/[0.08] bg-card p-6">
-                <div className="flex items-center gap-4">
-                  <UserAvatar
-                    src={author.avatar}
-                    name={author.name}
-                    size="md"
-                  />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="text-[13px] font-semibold text-white">{author.name}</p>
-                      {author.role && (
-                        <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold bg-blue-500/20 text-blue-300 capitalize">
-                          🔵 {author.role}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-[12px] text-slate-400">{author.email}</p>
-                    {author.phone && (
-                      <p className="text-[12px] text-slate-400 mt-1">{author.phone}</p>
+              )}
+
+              {/* Divider */}
+              {admin && <div className="border-t border-white/[0.05]" />}
+
+              {/* Author */}
+              <div className="flex items-center gap-4">
+                <UserAvatar
+                  src={author.avatar}
+                  name={author.name}
+                  size="md"
+                />
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="text-[13px] font-semibold text-white">{author.name}</p>
+                    {author.role && (
+                      <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold bg-blue-500/20 text-blue-300 capitalize">
+                        🔵 {author.role}
+                      </span>
                     )}
                   </div>
+                  <p className="text-[12px] text-slate-400">{author.email}</p>
+                  {author.phone && (
+                    <p className="text-[12px] text-slate-400 mt-1">{author.phone}</p>
+                  )}
                 </div>
               </div>
-            )}
+            </div>
 
           </motion.div>
 
