@@ -167,7 +167,7 @@ export function useOrganizationMembers(organizationId: string, enabled: boolean 
         success: boolean;
         data: Member[];
       }>(`/api/admin/organizations/${organizationId}/members`);
-      return response.data;
+      return response.data.data;
     },
     enabled: !!organizationId && enabled,
   });
