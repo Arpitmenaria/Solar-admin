@@ -217,7 +217,7 @@ export default function OrganizationDetailPage() {
   const [rejectModal, setRejectModal] = useState(false);
   const [deleteModal, setDeleteModal] = useState(false);
 
-  const { data: org, isLoading } = useOrganizationDetail(orgId);
+  const { data: detailData, isLoading } = useOrganizationDetail(orgId);
   const { mutate: approve, isPending: isApproving } = useApproveOrganization();
   const { mutate: reject, isPending: isRejecting } = useRejectOrganization();
   const { mutate: deleteOrg, isPending: isDeleting } = useDeleteOrganization();
@@ -274,7 +274,7 @@ export default function OrganizationDetailPage() {
     );
   }
 
-  if (!org) {
+  if (!detailData) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center">
         <p className="text-slate-400 mb-4">Organization not found</p>
@@ -289,6 +289,13 @@ export default function OrganizationDetailPage() {
     );
   }
 
+  const org = detailData.organization;
+  const author = detailData.author;
+  const admin = detailData.admin;
+  const members = detailData.members;
+  const approvedBy = detailData.approvedBy;
+  const rejectionReason = detailData.rejectionReason;
+
   const typeStyle = TYPE_STYLE[org.type] || TYPE_STYLE.business;
   const statusStyle = STATUS_STYLE[org.status] || STATUS_STYLE.pending;
 
@@ -296,14 +303,14 @@ export default function OrganizationDetailPage() {
     <div className="flex flex-col flex-1">
       <RejectModal
         open={rejectModal}
-        orgName={org?.name || ""}
+        orgName={org.name || ""}
         onClose={() => setRejectModal(false)}
         onConfirm={handleReject}
         isLoading={isRejecting}
       />
       <DeleteModal
         open={deleteModal}
-        orgName={org?.name || ""}
+        orgName={org.name || ""}
         onClose={() => setDeleteModal(false)}
         onConfirm={handleDelete}
         isLoading={isDeleting}
@@ -467,22 +474,22 @@ export default function OrganizationDetailPage() {
               </h3>
               <div className="flex items-center gap-4">
                 <UserAvatar
-                  src={org.createdBy.avatar}
-                  name={org.createdBy.name}
+                  src={author.avatar}
+                  name={author.name}
                   size="md"
                 />
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
-                    <p className="text-[13px] font-semibold text-white">{org.createdBy.name}</p>
-                    {org.createdBy.role && (
+                    <p className="text-[13px] font-semibold text-white">{author.name}</p>
+                    {author.role && (
                       <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold bg-blue-500/20 text-blue-300 capitalize">
-                        🔵 {org.createdBy.role}
+                        🔵 {author.role}
                       </span>
                     )}
                   </div>
-                  <p className="text-[12px] text-slate-400">{org.createdBy.email}</p>
-                  {org.createdBy.phone && (
-                    <p className="text-[12px] text-slate-400 mt-1">{org.createdBy.phone}</p>
+                  <p className="text-[12px] text-slate-400">{author.email}</p>
+                  {author.phone && (
+                    <p className="text-[12px] text-slate-400 mt-1">{author.phone}</p>
                   )}
                 </div>
               </div>
@@ -565,9 +572,9 @@ export default function OrganizationDetailPage() {
                     <div>
                       <p className="text-[11px] text-emerald-300">Approved</p>
                       <p className="text-[12px] font-semibold text-white">{formatDate(org.approvedAt)}</p>
-                      {org.approvedBy && (
+                      {approvedBy && (
                         <p className="text-[11px] text-emerald-200 mt-1">
-                          by {org.approvedBy.name}
+                          by {approvedBy.name}
                         </p>
                       )}
                     </div>
@@ -575,13 +582,13 @@ export default function OrganizationDetailPage() {
                 </div>
               )}
 
-              {org.status === "rejected" && org.rejectionReason && (
+              {org.status === "rejected" && rejectionReason && (
                 <div className="pt-4 border-t border-white/[0.05]">
                   <div className="flex items-start gap-3">
                     <AlertCircle size={16} className="text-red-400 mt-0.5" />
                     <div>
                       <p className="text-[11px] text-red-300">Rejected</p>
-                      <p className="text-[12px] font-semibold text-white mt-1">{org.rejectionReason}</p>
+                      <p className="text-[12px] font-semibold text-white mt-1">{rejectionReason}</p>
                     </div>
                   </div>
                 </div>
@@ -601,26 +608,26 @@ export default function OrganizationDetailPage() {
             </div>
 
             {/* Rejection Reason */}
-            {org.status === "rejected" && org.rejectionReason && (
+            {org.status === "rejected" && rejectionReason && (
               <div className="p-4 rounded-lg bg-red-500/5 border border-red-500/20">
                 <h3 className="text-[12px] font-semibold text-red-300 mb-2">Rejection Reason</h3>
-                <p className="text-[12px] text-red-200">{org.rejectionReason}</p>
+                <p className="text-[12px] text-red-200">{rejectionReason}</p>
               </div>
             )}
 
             {/* Organization Admin */}
-            {org.organizationAdmin && (
+            {admin && (
               <div className="p-4 rounded-lg bg-red-500/5 border border-red-500/20">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-[12px] font-semibold text-red-300">Organization Admin</h3>
-                  {org.organizationAdmin.role && (
+                  {admin.role && (
                     <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-semibold bg-red-500/30 text-red-200 capitalize">
-                      🔴 {org.organizationAdmin.role}
+                      🔴 {admin.role}
                     </span>
                   )}
                 </div>
-                <p className="text-[12px] font-semibold text-red-100">{org.organizationAdmin.name}</p>
-                <p className="text-[11px] text-red-200">{org.organizationAdmin.email}</p>
+                <p className="text-[12px] font-semibold text-red-100">{admin.name}</p>
+                <p className="text-[11px] text-red-200">{admin.email}</p>
               </div>
             )}
 

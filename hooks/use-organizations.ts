@@ -17,6 +17,40 @@ export interface Creator {
   role?: "author" | "admin" | "member";
 }
 
+export interface Member {
+  id: string;
+  name: string;
+  email: string;
+  avatar?: string;
+  phone?: string;
+  role?: "author" | "admin" | "member";
+}
+
+export interface OrganizationData {
+  id: string;
+  name: string;
+  type: "business" | "non-profit" | "educational" | "community" | "club" | string;
+  shortDescription: string;
+  fullDescription: string;
+  logo: string;
+  coverImage: string;
+  slug: string;
+  status: "pending" | "approved" | "rejected";
+  memberCount: number;
+  miniSitesCount?: number;
+  createdAt: string;
+  approvedAt?: string | null;
+}
+
+export interface OrganizationDetail {
+  organization: OrganizationData;
+  author: Creator;
+  admin?: Member | null;
+  members: Member[];
+  approvedBy?: Creator | null;
+  rejectionReason?: string;
+}
+
 export interface Organization {
   id: string;
   name: string;
@@ -43,14 +77,6 @@ export interface Pagination {
   limit: number;
   total: number;
   totalPages: number;
-}
-
-export interface Member {
-  id: string;
-  name: string;
-  email: string;
-  avatar?: string;
-  role?: "author" | "admin" | "member";
 }
 
 export const organizationsKey = () => ["organizations"];
@@ -125,7 +151,7 @@ export function useOrganizationDetail(organizationId: string) {
     queryFn: async () => {
       const response = await apiClient.get<{
         success: boolean;
-        data: Organization & { members: Member[] };
+        data: OrganizationDetail;
       }>(`/api/admin/organizations/${organizationId}`);
       return response.data;
     },
