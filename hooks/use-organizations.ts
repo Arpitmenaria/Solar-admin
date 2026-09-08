@@ -159,6 +159,20 @@ export function useOrganizationDetail(organizationId: string) {
   });
 }
 
+export function useOrganizationMembers(organizationId: string, enabled: boolean = false) {
+  return useQuery({
+    queryKey: [...organizationsKey(), organizationId, "members"],
+    queryFn: async () => {
+      const response = await apiClient.get<{
+        success: boolean;
+        data: Member[];
+      }>(`/api/admin/organizations/${organizationId}/members`);
+      return response.data;
+    },
+    enabled: !!organizationId && enabled,
+  });
+}
+
 export function useApproveOrganization() {
   const queryClient = useQueryClient();
 

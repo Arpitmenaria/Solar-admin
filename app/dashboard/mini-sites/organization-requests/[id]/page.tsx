@@ -3,7 +3,7 @@
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { ArrowLeft, Mail, Calendar, CheckCircle2, AlertCircle, Link as LinkIcon, Copy, Trash2, XCircle, X } from "lucide-react";
-import { useOrganizationDetail, useApproveOrganization, useRejectOrganization, useDeleteOrganization } from "@/hooks/use-organizations";
+import { useOrganizationDetail, useApproveOrganization, useRejectOrganization, useDeleteOrganization, useOrganizationMembers } from "@/hooks/use-organizations";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { cn, formatDate, formatNumberFull } from "@/lib/utils";
 import { toast } from "sonner";
@@ -24,6 +24,97 @@ const STATUS_STYLE: Record<string, { dot: string; text: string; label: string; b
   approved: { dot: "bg-emerald-400", text: "text-emerald-300", label: "Approved", bg: "bg-emerald-500/5" },
   rejected: { dot: "bg-red-400", text: "text-red-300", label: "Rejected", bg: "bg-red-500/5" },
 };
+
+function MembersModal({
+  open,
+  members,
+  onClose,
+  isLoading,
+}: {
+  open: boolean;
+  members: any[];
+  onClose: () => void;
+  isLoading: boolean;
+}) {
+  const roleColors: Record<string, { bg: string; text: string; icon: string }> = {
+    author: { bg: "bg-blue-500/20", text: "text-blue-300", icon: "🔵" },
+    admin: { bg: "bg-red-500/20", text: "text-red-300", icon: "🔴" },
+    member: { bg: "bg-green-500/20", text: "text-green-300", icon: "🟢" },
+  };
+
+  return createPortal(
+    <AnimatePresence>
+      {open && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 z-40 bg-black/50"
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-xl border border-white/[0.10] bg-[#0d1321] p-6 shadow-2xl shadow-black/60 max-h-[80vh] overflow-y-auto"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-white">Members ({members.length})</h3>
+              <button
+                onClick={onClose}
+                className="p-1 hover:bg-white/[0.05] rounded transition-colors"
+              >
+                <X size={20} className="text-slate-400" />
+              </button>
+            </div>
+
+            {isLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border b-2 border-blue-500"></div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {members.map((member) => {
+                  const roleStyle = member.role ? roleColors[member.role] : null;
+                  return (
+                    <div
+                      key={member.id}
+                      className="flex items-center gap-3 p-3 rounded-lg bg-white/[0.02] border border-white/[0.05]"
+                    >
+                      <UserAvatar src={member.avatar} name={member.name} size="sm" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <p className="text-[12px] font-semibold text-white truncate">{member.name}</p>
+                          {member.role && roleStyle && (
+                            <span className={cn("inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] font-semibold capitalize whitespace-nowrap", roleStyle.bg, roleStyle.text)}>
+                              {roleStyle.icon} {member.role}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-slate-400 truncate">{member.email}</p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(member.id);
+                          toast.success("Member ID copied!");
+                        }}
+                        className="p-1 hover:bg-white/[0.05] rounded transition-colors"
+                      >
+                        <Copy size={12} className="text-slate-500" />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>,
+    document.body
+  );
+}
 
 function DescriptionModal({
   open,
@@ -263,8 +354,10 @@ export default function OrganizationDetailPage() {
   const [rejectModal, setRejectModal] = useState(false);
   const [deleteModal, setDeleteModal] = useState(false);
   const [descriptionModal, setDescriptionModal] = useState(false);
+  const [membersModal, setMembersModal] = useState(false);
 
   const { data: detailData, isLoading } = useOrganizationDetail(orgId);
+  const { data: membersData, isLoading: isMembersLoading } = useOrganizationMembers(orgId, membersModal);
   const { mutate: approve, isPending: isApproving } = useApproveOrganization();
   const { mutate: reject, isPending: isRejecting } = useRejectOrganization();
   const { mutate: deleteOrg, isPending: isDeleting } = useDeleteOrganization();
@@ -366,6 +459,12 @@ export default function OrganizationDetailPage() {
         open={descriptionModal}
         description={org.fullDescription || ""}
         onClose={() => setDescriptionModal(false)}
+      />
+      <MembersModal
+        open={membersModal}
+        members={membersData || []}
+        onClose={() => setMembersModal(false)}
+        isLoading={isMembersLoading}
       />
 
       <main className="flex-1 space-y-6 p-4 md:p-6">
@@ -537,12 +636,15 @@ export default function OrganizationDetailPage() {
                 </h3>
                 <p className="text-[13px] capitalize text-slate-200">{org.type}</p>
               </div>
-              <div className="p-4 rounded-lg bg-white/[0.03] border border-white/[0.05]">
+              <button
+                onClick={() => setMembersModal(true)}
+                className="p-4 rounded-lg bg-white/[0.03] border border-white/[0.05] hover:bg-white/[0.05] transition-colors text-left"
+              >
                 <h3 className="text-[12px] font-semibold uppercase text-slate-400 mb-2">
                   Members
                 </h3>
                 <p className="text-2xl font-bold text-white">{formatNumberFull(org.memberCount ?? 0)}</p>
-              </div>
+              </button>
               <div className="p-4 rounded-lg bg-white/[0.03] border border-white/[0.05]">
                 <h3 className="text-[12px] font-semibold uppercase text-slate-400 mb-2">
                   Mini Sites
