@@ -165,9 +165,14 @@ export function useOrganizationMembers(organizationId: string, enabled: boolean 
     queryFn: async () => {
       const response = await apiClient.get<{
         success: boolean;
-        data: Member[];
+        data: {
+          organizationId: string;
+          organizationName: string;
+          members: Member[];
+          pagination: Pagination;
+        };
       }>(`/api/admin/organizations/${organizationId}/members`);
-      return response.data.data;
+      return response.data.data.members;
     },
     enabled: !!organizationId && enabled,
   });
