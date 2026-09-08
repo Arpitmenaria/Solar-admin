@@ -172,7 +172,7 @@ export function useOrganizationMembers(organizationId: string, enabled: boolean 
           pagination: Pagination;
         };
       }>(`/api/admin/organizations/${organizationId}/members`);
-      return response.data.data.members;
+      return response.data.members;
     },
     enabled: !!organizationId && enabled,
   });
