@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowLeft, Mail, Calendar, CheckCircle2, AlertCircle, Link as LinkIcon, Copy, Trash2, XCircle } from "lucide-react";
+import { ArrowLeft, Mail, Calendar, CheckCircle2, AlertCircle, Link as LinkIcon, Copy, Trash2, XCircle, X } from "lucide-react";
 import { useOrganizationDetail, useApproveOrganization, useRejectOrganization, useDeleteOrganization } from "@/hooks/use-organizations";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { cn, formatDate, formatNumberFull } from "@/lib/utils";
@@ -24,6 +24,52 @@ const STATUS_STYLE: Record<string, { dot: string; text: string; label: string; b
   approved: { dot: "bg-emerald-400", text: "text-emerald-300", label: "Approved", bg: "bg-emerald-500/5" },
   rejected: { dot: "bg-red-400", text: "text-red-300", label: "Rejected", bg: "bg-red-500/5" },
 };
+
+function DescriptionModal({
+  open,
+  description,
+  onClose,
+}: {
+  open: boolean;
+  description: string;
+  onClose: () => void;
+}) {
+  return createPortal(
+    <AnimatePresence>
+      {open && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 z-40 bg-black/50"
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            className="fixed left-1/2 top-1/2 z-50 w-full max-w-2xl -translate-x-1/2 -translate-y-1/2 rounded-xl border border-white/[0.10] bg-[#0d1321] p-6 shadow-2xl shadow-black/60 max-h-[80vh] overflow-y-auto"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-white">Full Description</h3>
+              <button
+                onClick={onClose}
+                className="p-1 hover:bg-white/[0.05] rounded transition-colors"
+              >
+                <X size={20} className="text-slate-400" />
+              </button>
+            </div>
+            <p className="text-[14px] text-slate-200 leading-relaxed whitespace-pre-wrap">
+              {description}
+            </p>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>,
+    document.body
+  );
+}
 
 function RejectModal({
   open,
@@ -216,6 +262,7 @@ export default function OrganizationDetailPage() {
   const orgId = params.id as string;
   const [rejectModal, setRejectModal] = useState(false);
   const [deleteModal, setDeleteModal] = useState(false);
+  const [descriptionModal, setDescriptionModal] = useState(false);
 
   const { data: detailData, isLoading } = useOrganizationDetail(orgId);
   const { mutate: approve, isPending: isApproving } = useApproveOrganization();
@@ -315,6 +362,11 @@ export default function OrganizationDetailPage() {
         onConfirm={handleDelete}
         isLoading={isDeleting}
       />
+      <DescriptionModal
+        open={descriptionModal}
+        description={org.fullDescription || ""}
+        onClose={() => setDescriptionModal(false)}
+      />
 
       <main className="flex-1 space-y-6 p-4 md:p-6">
         {/* Header with Back Button */}
@@ -383,20 +435,44 @@ export default function OrganizationDetailPage() {
               </div>
             </div>
 
-            {/* Status Badge */}
-            <div
-              className={cn(
-                "flex flex-col items-center rounded-lg px-4 py-3 border",
-                statusStyle.bg,
-                "border-white/[0.08]"
-              )}
-            >
-              <div className="flex items-center gap-1.5 mb-2">
-                <span className={cn("h-2 w-2 rounded-full", statusStyle.dot)} />
-                <span className={cn("text-xs font-semibold capitalize", statusStyle.text)}>
-                  {statusStyle.label}
-                </span>
+            {/* Status Badge & Action Buttons */}
+            <div className="flex items-center gap-3">
+              <div
+                className={cn(
+                  "flex flex-col items-center rounded-lg px-4 py-3 border",
+                  statusStyle.bg,
+                  "border-white/[0.08]"
+                )}
+              >
+                <div className="flex items-center gap-1.5 mb-2">
+                  <span className={cn("h-2 w-2 rounded-full", statusStyle.dot)} />
+                  <span className={cn("text-xs font-semibold capitalize", statusStyle.text)}>
+                    {statusStyle.label}
+                  </span>
+                </div>
               </div>
+
+              {/* Action Buttons */}
+              {org.status === "pending" && (
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleApprove}
+                    disabled={isApproving}
+                    className="flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-[12px] font-semibold text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
+                  >
+                    <CheckCircle2 size={14} />
+                    Approve
+                  </button>
+                  <button
+                    onClick={() => setRejectModal(true)}
+                    disabled={isRejecting}
+                    className="flex items-center justify-center gap-2 rounded-lg bg-red-600 px-3 py-2 text-[12px] font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+                  >
+                    <XCircle size={14} />
+                    Reject
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
@@ -416,14 +492,22 @@ export default function OrganizationDetailPage() {
                 <h3 className="text-[12px] font-semibold uppercase text-slate-400 mb-2">
                   Full Description
                 </h3>
-                <p className="text-[13px] text-slate-200 leading-relaxed">
+                <p className="text-[13px] text-slate-200 leading-relaxed line-clamp-2">
                   {org.fullDescription || "—"}
                 </p>
+                {org.fullDescription && (
+                  <button
+                    onClick={() => setDescriptionModal(true)}
+                    className="mt-2 text-[12px] font-semibold text-blue-400 hover:text-blue-300 transition-colors"
+                  >
+                    see more
+                  </button>
+                )}
               </div>
             </div>
 
             {/* Organization Details */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
               <div className="p-4 rounded-lg bg-white/[0.03] border border-white/[0.05]">
                 <h3 className="text-[12px] font-semibold uppercase text-slate-400 mb-2">
                   Slug
@@ -453,6 +537,18 @@ export default function OrganizationDetailPage() {
                 </h3>
                 <p className="text-[13px] capitalize text-slate-200">{org.type}</p>
               </div>
+              <div className="p-4 rounded-lg bg-white/[0.03] border border-white/[0.05]">
+                <h3 className="text-[12px] font-semibold uppercase text-slate-400 mb-2">
+                  Members
+                </h3>
+                <p className="text-2xl font-bold text-white">{formatNumberFull(org.memberCount ?? 0)}</p>
+              </div>
+              <div className="p-4 rounded-lg bg-white/[0.03] border border-white/[0.05]">
+                <h3 className="text-[12px] font-semibold uppercase text-slate-400 mb-2">
+                  Mini Sites
+                </h3>
+                <p className="text-2xl font-bold text-white">{formatNumberFull(org.miniSitesCount ?? 0)}</p>
+              </div>
             </div>
           </div>
         </motion.div>
@@ -466,95 +562,66 @@ export default function OrganizationDetailPage() {
             transition={{ delay: 0.2 }}
             className="lg:col-span-2 space-y-6"
           >
-            {/* Creator Info */}
-            <div className="rounded-xl border border-white/[0.08] bg-card p-6">
-              <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
-                <Mail size={16} />
-                Created By
-              </h3>
-              <div className="flex items-center gap-4">
-                <UserAvatar
-                  src={author.avatar}
-                  name={author.name}
-                  size="md"
-                />
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <p className="text-[13px] font-semibold text-white">{author.name}</p>
-                    {author.role && (
-                      <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold bg-blue-500/20 text-blue-300 capitalize">
-                        🔵 {author.role}
-                      </span>
+            {/* Organization Admin Info */}
+            {admin ? (
+              <div className="rounded-xl border border-white/[0.08] bg-card p-6">
+                <div className="flex items-center gap-4">
+                  <UserAvatar
+                    src={admin.avatar}
+                    name={admin.name}
+                    size="md"
+                  />
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="text-[13px] font-semibold text-white">{admin.name}</p>
+                      {admin.role && (
+                        <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold bg-red-500/20 text-red-300 capitalize">
+                          🔴 {admin.role}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[12px] text-slate-400">{admin.email}</p>
+                    {admin.phone && (
+                      <p className="text-[12px] text-slate-400 mt-1">{admin.phone}</p>
                     )}
                   </div>
-                  <p className="text-[12px] text-slate-400">{author.email}</p>
-                  {author.phone && (
-                    <p className="text-[12px] text-slate-400 mt-1">{author.phone}</p>
-                  )}
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="rounded-xl border border-white/[0.08] bg-card p-6">
+                <div className="flex items-center gap-4">
+                  <UserAvatar
+                    src={author.avatar}
+                    name={author.name}
+                    size="md"
+                  />
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="text-[13px] font-semibold text-white">{author.name}</p>
+                      {author.role && (
+                        <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold bg-blue-500/20 text-blue-300 capitalize">
+                          🔵 {author.role}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[12px] text-slate-400">{author.email}</p>
+                    {author.phone && (
+                      <p className="text-[12px] text-slate-400 mt-1">{author.phone}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
 
           </motion.div>
 
-          {/* Right: Status & Actions */}
+          {/* Right: Timeline & Delete */}
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
             className="space-y-6"
           >
-            {/* Members List */}
-            {org.members && org.members.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="lg:col-span-2 rounded-xl border border-white/[0.08] bg-card p-6"
-              >
-                <h3 className="text-sm font-semibold text-white mb-4">Members ({org.members.length})</h3>
-                <div className="space-y-2">
-                  {org.members.map((member) => {
-                    const roleColors: Record<string, { bg: string; text: string; icon: string }> = {
-                      author: { bg: "bg-blue-500/20", text: "text-blue-300", icon: "🔵" },
-                      admin: { bg: "bg-red-500/20", text: "text-red-300", icon: "🔴" },
-                      member: { bg: "bg-green-500/20", text: "text-green-300", icon: "🟢" },
-                    };
-                    const roleStyle = member.role ? roleColors[member.role] : null;
-
-                    return (
-                      <div
-                        key={member.id}
-                        className="flex items-center gap-3 p-3 rounded-lg bg-white/[0.02] border border-white/[0.05] hover:bg-white/[0.03] transition-colors"
-                      >
-                        <UserAvatar src={member.avatar} name={member.name} size="sm" />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-0.5">
-                            <p className="text-[12px] font-semibold text-white truncate">{member.name}</p>
-                            {member.role && roleStyle && (
-                              <span className={cn("inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] font-semibold capitalize whitespace-nowrap", roleStyle.bg, roleStyle.text)}>
-                                {roleStyle.icon} {member.role}
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-[11px] text-slate-400 truncate">{member.email}</p>
-                        </div>
-                        <button
-                          onClick={() => {
-                            navigator.clipboard.writeText(member.id);
-                            toast.success("Member ID copied!");
-                          }}
-                          className="p-1 hover:bg-white/[0.05] rounded transition-colors"
-                        >
-                          <Copy size={12} className="text-slate-500" />
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              </motion.div>
-            )}
-
             {/* Timeline */}
             <div className="rounded-xl border border-white/[0.08] bg-card p-6 space-y-4">
               <div className="flex items-center gap-3">
@@ -595,73 +662,15 @@ export default function OrganizationDetailPage() {
               )}
             </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-lg border border-white/[0.08] bg-white/[0.02] p-4">
-                <p className="text-[11px] text-slate-400">Members</p>
-                <p className="text-2xl font-bold text-white mt-2">{formatNumberFull(org.memberCount ?? 0)}</p>
-              </div>
-              <div className="rounded-lg border border-white/[0.08] bg-white/[0.02] p-4">
-                <p className="text-[11px] text-slate-400">Mini Sites</p>
-                <p className="text-2xl font-bold text-white mt-2">{formatNumberFull(org.miniSitesCount ?? 0)}</p>
-              </div>
-            </div>
-
-            {/* Rejection Reason */}
-            {org.status === "rejected" && rejectionReason && (
-              <div className="p-4 rounded-lg bg-red-500/5 border border-red-500/20">
-                <h3 className="text-[12px] font-semibold text-red-300 mb-2">Rejection Reason</h3>
-                <p className="text-[12px] text-red-200">{rejectionReason}</p>
-              </div>
-            )}
-
-            {/* Organization Admin */}
-            {admin && (
-              <div className="p-4 rounded-lg bg-red-500/5 border border-red-500/20">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-[12px] font-semibold text-red-300">Organization Admin</h3>
-                  {admin.role && (
-                    <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-semibold bg-red-500/30 text-red-200 capitalize">
-                      🔴 {admin.role}
-                    </span>
-                  )}
-                </div>
-                <p className="text-[12px] font-semibold text-red-100">{admin.name}</p>
-                <p className="text-[11px] text-red-200">{admin.email}</p>
-              </div>
-            )}
-
-            {/* Action Buttons */}
-            <div className="space-y-2 pt-4 border-t border-white/[0.05]">
-              {org.status === "pending" && (
-                <>
-                  <button
-                    onClick={handleApprove}
-                    disabled={isApproving}
-                    className="w-full flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-3 text-[13px] font-semibold text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
-                  >
-                    <CheckCircle2 size={16} />
-                    Approve Organization
-                  </button>
-                  <button
-                    onClick={() => setRejectModal(true)}
-                    disabled={isRejecting}
-                    className="w-full flex items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-3 text-[13px] font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-50"
-                  >
-                    <XCircle size={16} />
-                    Reject Organization
-                  </button>
-                </>
-              )}
-              <button
-                onClick={() => setDeleteModal(true)}
-                disabled={isDeleting}
-                className="w-full flex items-center justify-center gap-2 rounded-lg bg-red-900 px-4 py-3 text-[13px] font-semibold text-red-100 transition-colors hover:bg-red-950 disabled:opacity-50"
-              >
-                <Trash2 size={16} />
-                Delete Organization
-              </button>
-            </div>
+            {/* Delete Button */}
+            <button
+              onClick={() => setDeleteModal(true)}
+              disabled={isDeleting}
+              className="w-full flex items-center justify-center gap-2 rounded-lg bg-red-900 px-4 py-3 text-[13px] font-semibold text-red-100 transition-colors hover:bg-red-950 disabled:opacity-50"
+            >
+              <Trash2 size={16} />
+              Delete Organization
+            </button>
 
           </motion.div>
         </div>
