@@ -2,10 +2,12 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowLeft, Mail, Calendar, CheckCircle2, AlertCircle } from "lucide-react";
+import { ArrowLeft, Mail, Calendar, CheckCircle2, AlertCircle, Link as LinkIcon, Copy } from "lucide-react";
 import { useOrganizationDetail } from "@/hooks/use-organizations";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { cn, formatDate, formatNumberFull } from "@/lib/utils";
+import { toast } from "sonner";
+import { useState } from "react";
 
 const TYPE_STYLE: Record<string, { bg: string; text: string }> = {
   business: { bg: "bg-blue-500/10", text: "text-blue-300" },
@@ -140,15 +142,61 @@ export default function OrganizationDetailPage() {
             </div>
           </div>
 
-          {/* Description */}
-          {org.fullDescription && (
-            <div className="mb-6 p-4 rounded-lg bg-white/[0.03] border border-white/[0.05]">
-              <h3 className="text-[12px] font-semibold uppercase text-slate-400 mb-2">
-                Full Description
-              </h3>
-              <p className="text-[13px] text-slate-200 leading-relaxed">{org.fullDescription}</p>
+          {/* Full Details Section */}
+          <div className="space-y-4">
+            {/* Short & Full Description */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="p-4 rounded-lg bg-white/[0.03] border border-white/[0.05]">
+                <h3 className="text-[12px] font-semibold uppercase text-slate-400 mb-2">
+                  Short Description
+                </h3>
+                <p className="text-[13px] text-slate-200 leading-relaxed">
+                  {org.shortDescription || "—"}
+                </p>
+              </div>
+              <div className="p-4 rounded-lg bg-white/[0.03] border border-white/[0.05]">
+                <h3 className="text-[12px] font-semibold uppercase text-slate-400 mb-2">
+                  Full Description
+                </h3>
+                <p className="text-[13px] text-slate-200 leading-relaxed">
+                  {org.fullDescription || "—"}
+                </p>
+              </div>
             </div>
-          )}
+
+            {/* Organization Details */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <div className="p-4 rounded-lg bg-white/[0.03] border border-white/[0.05]">
+                <h3 className="text-[12px] font-semibold uppercase text-slate-400 mb-2">
+                  Slug
+                </h3>
+                <p className="text-[13px] font-mono text-slate-200">{org.slug}</p>
+              </div>
+              <div className="p-4 rounded-lg bg-white/[0.03] border border-white/[0.05]">
+                <h3 className="text-[12px] font-semibold uppercase text-slate-400 mb-2">
+                  Organization ID
+                </h3>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[12px] font-mono text-slate-300 truncate">{org.id}</p>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(org.id);
+                      toast.success("ID copied!");
+                    }}
+                    className="flex-shrink-0 p-1 hover:bg-white/[0.05] rounded transition-colors"
+                  >
+                    <Copy size={14} className="text-slate-400" />
+                  </button>
+                </div>
+              </div>
+              <div className="p-4 rounded-lg bg-white/[0.03] border border-white/[0.05]">
+                <h3 className="text-[12px] font-semibold uppercase text-slate-400 mb-2">
+                  Organization Type
+                </h3>
+                <p className="text-[13px] capitalize text-slate-200">{org.type}</p>
+              </div>
+            </div>
+          </div>
         </motion.div>
 
         {/* Two Column Layout */}
@@ -191,6 +239,41 @@ export default function OrganizationDetailPage() {
             transition={{ delay: 0.3 }}
             className="space-y-6"
           >
+            {/* Members List */}
+            {org.members && org.members.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="lg:col-span-2 rounded-xl border border-white/[0.08] bg-card p-6"
+              >
+                <h3 className="text-sm font-semibold text-white mb-4">Members ({org.members.length})</h3>
+                <div className="space-y-2">
+                  {org.members.map((member) => (
+                    <div
+                      key={member.id}
+                      className="flex items-center gap-3 p-3 rounded-lg bg-white/[0.02] border border-white/[0.05] hover:bg-white/[0.03] transition-colors"
+                    >
+                      <UserAvatar src={member.avatar} name={member.name} size="sm" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[12px] font-semibold text-white truncate">{member.name}</p>
+                        <p className="text-[11px] text-slate-400 truncate">{member.email}</p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(member.id);
+                          toast.success("Member ID copied!");
+                        }}
+                        className="p-1 hover:bg-white/[0.05] rounded transition-colors"
+                      >
+                        <Copy size={12} className="text-slate-500" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
             {/* Timeline */}
             <div className="rounded-xl border border-white/[0.08] bg-card p-6 space-y-4">
               <div className="flex items-center gap-3">
@@ -242,6 +325,23 @@ export default function OrganizationDetailPage() {
                 <p className="text-2xl font-bold text-white mt-2">{formatNumberFull(org.miniSitesCount ?? 0)}</p>
               </div>
             </div>
+
+            {/* Rejection Reason */}
+            {org.status === "rejected" && org.rejectionReason && (
+              <div className="p-4 rounded-lg bg-red-500/5 border border-red-500/20">
+                <h3 className="text-[12px] font-semibold text-red-300 mb-2">Rejection Reason</h3>
+                <p className="text-[12px] text-red-200">{org.rejectionReason}</p>
+              </div>
+            )}
+
+            {/* Organization Admin */}
+            {org.organizationAdmin && (
+              <div className="p-4 rounded-lg bg-blue-500/5 border border-blue-500/20">
+                <h3 className="text-[12px] font-semibold text-blue-300 mb-2">Organization Admin</h3>
+                <p className="text-[12px] font-semibold text-blue-100">{org.organizationAdmin.name}</p>
+                <p className="text-[11px] text-blue-200">{org.organizationAdmin.email}</p>
+              </div>
+            )}
 
           </motion.div>
         </div>

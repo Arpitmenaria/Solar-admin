@@ -19,7 +19,7 @@ export interface Creator {
 export interface Organization {
   id: string;
   name: string;
-  type: "business" | "non-profit" | "educational" | "community";
+  type: "business" | "non-profit" | "educational" | "community" | "club" | string;
   shortDescription: string;
   fullDescription: string;
   logo: string;
@@ -29,10 +29,12 @@ export interface Organization {
   memberCount: number;
   miniSitesCount?: number;
   createdBy: Creator;
+  organizationAdmin?: Creator | null;
   approvedBy?: Creator;
   rejectionReason?: string;
   createdAt: string;
   approvedAt?: string;
+  members?: Member[];
 }
 
 export interface Pagination {
