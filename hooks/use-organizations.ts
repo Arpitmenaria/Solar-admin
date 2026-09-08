@@ -14,6 +14,7 @@ export interface Creator {
   email: string;
   avatar?: string;
   phone?: string;
+  role?: "author" | "admin" | "member";
 }
 
 export interface Organization {
@@ -49,6 +50,7 @@ export interface Member {
   name: string;
   email: string;
   avatar?: string;
+  role?: "author" | "admin" | "member";
 }
 
 export const organizationsKey = () => ["organizations"];

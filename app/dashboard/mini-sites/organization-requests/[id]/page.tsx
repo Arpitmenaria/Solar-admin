@@ -467,8 +467,15 @@ export default function OrganizationDetailPage() {
                   name={org.createdBy.name}
                   size="md"
                 />
-                <div>
-                  <p className="text-[13px] font-semibold text-white">{org.createdBy.name}</p>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="text-[13px] font-semibold text-white">{org.createdBy.name}</p>
+                    {org.createdBy.role && (
+                      <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold bg-blue-500/20 text-blue-300 capitalize">
+                        🔵 {org.createdBy.role}
+                      </span>
+                    )}
+                  </div>
                   <p className="text-[12px] text-slate-400">{org.createdBy.email}</p>
                   {org.createdBy.phone && (
                     <p className="text-[12px] text-slate-400 mt-1">{org.createdBy.phone}</p>
@@ -496,27 +503,43 @@ export default function OrganizationDetailPage() {
               >
                 <h3 className="text-sm font-semibold text-white mb-4">Members ({org.members.length})</h3>
                 <div className="space-y-2">
-                  {org.members.map((member) => (
-                    <div
-                      key={member.id}
-                      className="flex items-center gap-3 p-3 rounded-lg bg-white/[0.02] border border-white/[0.05] hover:bg-white/[0.03] transition-colors"
-                    >
-                      <UserAvatar src={member.avatar} name={member.name} size="sm" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[12px] font-semibold text-white truncate">{member.name}</p>
-                        <p className="text-[11px] text-slate-400 truncate">{member.email}</p>
-                      </div>
-                      <button
-                        onClick={() => {
-                          navigator.clipboard.writeText(member.id);
-                          toast.success("Member ID copied!");
-                        }}
-                        className="p-1 hover:bg-white/[0.05] rounded transition-colors"
+                  {org.members.map((member) => {
+                    const roleColors: Record<string, { bg: string; text: string; icon: string }> = {
+                      author: { bg: "bg-blue-500/20", text: "text-blue-300", icon: "🔵" },
+                      admin: { bg: "bg-red-500/20", text: "text-red-300", icon: "🔴" },
+                      member: { bg: "bg-green-500/20", text: "text-green-300", icon: "🟢" },
+                    };
+                    const roleStyle = member.role ? roleColors[member.role] : null;
+
+                    return (
+                      <div
+                        key={member.id}
+                        className="flex items-center gap-3 p-3 rounded-lg bg-white/[0.02] border border-white/[0.05] hover:bg-white/[0.03] transition-colors"
                       >
-                        <Copy size={12} className="text-slate-500" />
-                      </button>
-                    </div>
-                  ))}
+                        <UserAvatar src={member.avatar} name={member.name} size="sm" />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <p className="text-[12px] font-semibold text-white truncate">{member.name}</p>
+                            {member.role && roleStyle && (
+                              <span className={cn("inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] font-semibold capitalize whitespace-nowrap", roleStyle.bg, roleStyle.text)}>
+                                {roleStyle.icon} {member.role}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-slate-400 truncate">{member.email}</p>
+                        </div>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(member.id);
+                            toast.success("Member ID copied!");
+                          }}
+                          className="p-1 hover:bg-white/[0.05] rounded transition-colors"
+                        >
+                          <Copy size={12} className="text-slate-500" />
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               </motion.div>
             )}
@@ -583,10 +606,17 @@ export default function OrganizationDetailPage() {
 
             {/* Organization Admin */}
             {org.organizationAdmin && (
-              <div className="p-4 rounded-lg bg-blue-500/5 border border-blue-500/20">
-                <h3 className="text-[12px] font-semibold text-blue-300 mb-2">Organization Admin</h3>
-                <p className="text-[12px] font-semibold text-blue-100">{org.organizationAdmin.name}</p>
-                <p className="text-[11px] text-blue-200">{org.organizationAdmin.email}</p>
+              <div className="p-4 rounded-lg bg-red-500/5 border border-red-500/20">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-[12px] font-semibold text-red-300">Organization Admin</h3>
+                  {org.organizationAdmin.role && (
+                    <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-semibold bg-red-500/30 text-red-200 capitalize">
+                      🔴 {org.organizationAdmin.role}
+                    </span>
+                  )}
+                </div>
+                <p className="text-[12px] font-semibold text-red-100">{org.organizationAdmin.name}</p>
+                <p className="text-[11px] text-red-200">{org.organizationAdmin.email}</p>
               </div>
             )}
 
