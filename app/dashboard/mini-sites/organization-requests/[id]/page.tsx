@@ -609,9 +609,9 @@ export default function OrganizationDetailPage() {
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
               <div className="p-4 rounded-lg bg-white/[0.03] border border-white/[0.05]">
                 <h3 className="text-[12px] font-semibold uppercase text-slate-400 mb-2">
-                  Slug
+                  Organization Name
                 </h3>
-                <p className="text-[13px] font-mono text-slate-200">{org.slug}</p>
+                <p className="text-[13px] font-mono text-slate-200">{org.name}</p>
               </div>
               <div className="p-4 rounded-lg bg-white/[0.03] border border-white/[0.05]">
                 <h3 className="text-[12px] font-semibold uppercase text-slate-400 mb-2">
