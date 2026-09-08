@@ -44,6 +44,8 @@ function RejectModal({
   useEffect(() => {
     if (open && inputRef.current) {
       setTimeout(() => inputRef.current?.focus(), 50);
+    } else if (!open) {
+      setReason("");
     }
   }, [open]);
 
@@ -131,6 +133,8 @@ function DeleteModal({
   useEffect(() => {
     if (open && inputRef.current) {
       setTimeout(() => inputRef.current?.focus(), 50);
+    } else if (!open) {
+      setReason("");
     }
   }, [open]);
 
