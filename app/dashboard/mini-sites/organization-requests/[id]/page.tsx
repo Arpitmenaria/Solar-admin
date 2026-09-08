@@ -2,12 +2,14 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowLeft, Mail, Calendar, CheckCircle2, AlertCircle, Link as LinkIcon, Copy } from "lucide-react";
-import { useOrganizationDetail } from "@/hooks/use-organizations";
+import { ArrowLeft, Mail, Calendar, CheckCircle2, AlertCircle, Link as LinkIcon, Copy, Trash2, XCircle } from "lucide-react";
+import { useOrganizationDetail, useApproveOrganization, useRejectOrganization, useDeleteOrganization } from "@/hooks/use-organizations";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { cn, formatDate, formatNumberFull } from "@/lib/utils";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
+import { AnimatePresence } from "framer-motion";
 
 const TYPE_STYLE: Record<string, { bg: string; text: string }> = {
   business: { bg: "bg-blue-500/10", text: "text-blue-300" },
@@ -23,12 +25,242 @@ const STATUS_STYLE: Record<string, { dot: string; text: string; label: string; b
   rejected: { dot: "bg-red-400", text: "text-red-300", label: "Rejected", bg: "bg-red-500/5" },
 };
 
+function RejectModal({
+  open,
+  orgName,
+  onClose,
+  onConfirm,
+  isLoading,
+}: {
+  open: boolean;
+  orgName: string;
+  onClose: () => void;
+  onConfirm: (reason: string) => void;
+  isLoading: boolean;
+}) {
+  const [reason, setReason] = useState("");
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (open && inputRef.current) {
+      setTimeout(() => inputRef.current?.focus(), 50);
+    }
+  }, [open]);
+
+  return createPortal(
+    <AnimatePresence>
+      {open && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 z-40 bg-black/50"
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-xl border border-white/[0.10] bg-[#0d1321] p-6 shadow-2xl shadow-black/60"
+          >
+            <h3 className="text-base font-semibold text-white">Reject Organization?</h3>
+            <p className="mt-1 text-sm text-slate-300">{orgName}</p>
+
+            <div className="mt-4 space-y-3">
+              <label className="text-[12px] font-semibold uppercase text-slate-400">
+                Rejection Reason
+              </label>
+              <textarea
+                ref={inputRef}
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder="Explain why this organization is being rejected..."
+                className="w-full rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-2.5 text-[13px] text-slate-200 placeholder:text-[#2e3d57] transition-all focus:border-red-500/40 focus:bg-white/[0.05] focus:outline-none resize-none"
+                rows={4}
+                disabled={isLoading}
+              />
+            </div>
+
+            <div className="mt-6 flex gap-2">
+              <button
+                onClick={onClose}
+                disabled={isLoading}
+                className="flex-1 rounded-lg border border-white/[0.08] px-3 py-2 text-[12px] font-semibold text-slate-200 transition-colors hover:bg-white/[0.05] disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (!reason.trim()) {
+                    toast.error("Please provide a rejection reason");
+                    return;
+                  }
+                  onConfirm(reason);
+                }}
+                disabled={isLoading || !reason.trim()}
+                className="flex-1 rounded-lg bg-red-600 px-3 py-2 text-[12px] font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+              >
+                {isLoading ? "Rejecting..." : "Reject"}
+              </button>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>,
+    document.body
+  );
+}
+
+function DeleteModal({
+  open,
+  orgName,
+  onClose,
+  onConfirm,
+  isLoading,
+}: {
+  open: boolean;
+  orgName: string;
+  onClose: () => void;
+  onConfirm: (reason: string) => void;
+  isLoading: boolean;
+}) {
+  const [reason, setReason] = useState("");
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (open && inputRef.current) {
+      setTimeout(() => inputRef.current?.focus(), 50);
+    }
+  }, [open]);
+
+  return createPortal(
+    <AnimatePresence>
+      {open && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 z-40 bg-black/50"
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-xl border border-white/[0.10] bg-[#0d1321] p-6 shadow-2xl shadow-black/60"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-500/10">
+                <AlertCircle size={20} className="text-red-400" />
+              </div>
+              <h3 className="text-base font-semibold text-white">Delete Organization?</h3>
+            </div>
+            <p className="text-sm text-slate-300 mb-4">
+              This will permanently delete <span className="font-semibold text-white">"{orgName}"</span>. This action cannot be undone.
+            </p>
+
+            <div className="space-y-3">
+              <label className="text-[12px] font-semibold uppercase text-slate-400">
+                Deletion Reason
+              </label>
+              <textarea
+                ref={inputRef}
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder="Explain why this organization is being deleted..."
+                className="w-full rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-2.5 text-[13px] text-slate-200 placeholder:text-[#2e3d57] transition-all focus:border-red-500/40 focus:bg-white/[0.05] focus:outline-none resize-none"
+                rows={3}
+                disabled={isLoading}
+              />
+            </div>
+
+            <div className="mt-6 flex gap-2">
+              <button
+                onClick={onClose}
+                disabled={isLoading}
+                className="flex-1 rounded-lg border border-white/[0.08] px-3 py-2 text-[12px] font-semibold text-slate-200 transition-colors hover:bg-white/[0.05] disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (!reason.trim()) {
+                    toast.error("Please provide a deletion reason");
+                    return;
+                  }
+                  onConfirm(reason);
+                }}
+                disabled={isLoading || !reason.trim()}
+                className="flex-1 rounded-lg bg-red-600 px-3 py-2 text-[12px] font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+              >
+                {isLoading ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>,
+    document.body
+  );
+}
+
 export default function OrganizationDetailPage() {
   const params = useParams();
   const router = useRouter();
   const orgId = params.id as string;
+  const [rejectModal, setRejectModal] = useState(false);
+  const [deleteModal, setDeleteModal] = useState(false);
 
   const { data: org, isLoading } = useOrganizationDetail(orgId);
+  const { mutate: approve, isPending: isApproving } = useApproveOrganization();
+  const { mutate: reject, isPending: isRejecting } = useRejectOrganization();
+  const { mutate: deleteOrg, isPending: isDeleting } = useDeleteOrganization();
+
+  const handleApprove = () => {
+    approve(orgId, {
+      onSuccess: () => {
+        toast.success("Organization approved successfully");
+        router.push("/dashboard/mini-sites/organization-requests");
+      },
+      onError: (error: any) => {
+        toast.error(error.response?.data?.message || "Failed to approve organization");
+      },
+    });
+  };
+
+  const handleReject = (reason: string) => {
+    reject(
+      { organizationId: orgId, reason },
+      {
+        onSuccess: () => {
+          toast.success("Organization rejected successfully");
+          setRejectModal(false);
+          router.push("/dashboard/mini-sites/organization-requests");
+        },
+        onError: (error: any) => {
+          toast.error(error.response?.data?.message || "Failed to reject organization");
+        },
+      }
+    );
+  };
+
+  const handleDelete = (reason: string) => {
+    deleteOrg(
+      { organizationId: orgId, reason },
+      {
+        onSuccess: () => {
+          toast.success("Organization deleted successfully");
+          setDeleteModal(false);
+          router.push("/dashboard/mini-sites/organization-requests");
+        },
+        onError: (error: any) => {
+          toast.error(error.response?.data?.message || "Failed to delete organization");
+        },
+      }
+    );
+  };
 
   if (isLoading) {
     return (
@@ -58,6 +290,21 @@ export default function OrganizationDetailPage() {
 
   return (
     <div className="flex flex-col flex-1">
+      <RejectModal
+        open={rejectModal}
+        orgName={org?.name || ""}
+        onClose={() => setRejectModal(false)}
+        onConfirm={handleReject}
+        isLoading={isRejecting}
+      />
+      <DeleteModal
+        open={deleteModal}
+        orgName={org?.name || ""}
+        onClose={() => setDeleteModal(false)}
+        onConfirm={handleDelete}
+        isLoading={isDeleting}
+      />
+
       <main className="flex-1 space-y-6 p-4 md:p-6">
         {/* Header with Back Button */}
         <motion.div
@@ -342,6 +589,38 @@ export default function OrganizationDetailPage() {
                 <p className="text-[11px] text-blue-200">{org.organizationAdmin.email}</p>
               </div>
             )}
+
+            {/* Action Buttons */}
+            <div className="space-y-2 pt-4 border-t border-white/[0.05]">
+              {org.status === "pending" && (
+                <>
+                  <button
+                    onClick={handleApprove}
+                    disabled={isApproving}
+                    className="w-full flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-3 text-[13px] font-semibold text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
+                  >
+                    <CheckCircle2 size={16} />
+                    Approve Organization
+                  </button>
+                  <button
+                    onClick={() => setRejectModal(true)}
+                    disabled={isRejecting}
+                    className="w-full flex items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-3 text-[13px] font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+                  >
+                    <XCircle size={16} />
+                    Reject Organization
+                  </button>
+                </>
+              )}
+              <button
+                onClick={() => setDeleteModal(true)}
+                disabled={isDeleting}
+                className="w-full flex items-center justify-center gap-2 rounded-lg bg-red-900 px-4 py-3 text-[13px] font-semibold text-red-100 transition-colors hover:bg-red-950 disabled:opacity-50"
+              >
+                <Trash2 size={16} />
+                Delete Organization
+              </button>
+            </div>
 
           </motion.div>
         </div>
