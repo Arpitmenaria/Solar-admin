@@ -378,9 +378,12 @@ export default function OrganizationRequestsPage() {
           <div className="overflow-x-auto">
             <div className="min-w-[900px]">
               {/* Headers */}
-              <div className="grid gap-4 border-b border-white/[0.05] bg-white/[0.025] px-6 py-3 grid-cols-[minmax(200px,2fr)_1fr_minmax(180px,1.5fr)_minmax(140px,1.2fr)_120px]">
+              <div className="grid gap-4 border-b border-white/[0.05] bg-white/[0.025] px-6 py-3 grid-cols-[minmax(180px,1.8fr)_minmax(120px,1fr)_1fr_minmax(180px,1.5fr)_minmax(120px,1.2fr)_120px]">
                 <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400">
                   Organization
+                </span>
+                <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400">
+                  Date
                 </span>
                 <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400">
                   Type
@@ -414,18 +417,16 @@ export default function OrganizationRequestsPage() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: i * 0.05 }}
-                      className="grid gap-4 border-b border-white/[0.04] px-6 py-4 items-center transition-colors hover:bg-white/[0.02] grid-cols-[minmax(200px,2fr)_1fr_minmax(180px,1.5fr)_minmax(140px,1.2fr)_120px]"
+                      className="grid gap-4 border-b border-white/[0.04] px-6 py-4 items-center transition-colors hover:bg-white/[0.02] grid-cols-[minmax(180px,1.8fr)_minmax(120px,1fr)_1fr_minmax(180px,1.5fr)_minmax(120px,1.2fr)_120px]"
                     >
                       {/* Organization Name */}
                       <div className="flex min-w-0 items-center gap-3">
                         <UserAvatar src={org.logo} name={org.name} size="sm" />
-                        <div className="min-w-0">
-                          <p className="truncate text-[13px] font-semibold text-white">{org.name}</p>
-                          <p className="truncate text-[11px] text-caption">
-                            {formatDate(org.createdAt)}
-                          </p>
-                        </div>
+                        <p className="truncate text-[13px] font-semibold text-white">{org.name}</p>
                       </div>
+
+                      {/* Date */}
+                      <span className="text-[12px] text-slate-300">{formatDate(org.createdAt)}</span>
 
                       {/* Type */}
                       <span
