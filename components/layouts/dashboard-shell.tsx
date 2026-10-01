@@ -16,10 +16,37 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const hydrated = useAuthHydrated();
   const token = useAuthStore((s) => s.token);
+  const expiresAt = useAuthStore((s) => s.expiresAt);
+  const logout = useAuthStore((s) => s.logout);
 
   useEffect(() => {
-    if (hydrated && !token) router.replace("/login");
-  }, [hydrated, token, router]);
+    if (!hydrated) return;
+
+    const expireSession = () => {
+      logout();
+      router.replace("/login");
+    };
+
+    if (!token || !expiresAt || expiresAt <= Date.now()) {
+      expireSession();
+      return;
+    }
+
+    const timeout = window.setTimeout(expireSession, expiresAt - Date.now());
+    const checkExpiry = () => {
+      if (expiresAt <= Date.now()) expireSession();
+    };
+
+    // Timers can be suspended while the browser is in the background.
+    window.addEventListener("focus", checkExpiry);
+    window.addEventListener("pageshow", checkExpiry);
+
+    return () => {
+      window.clearTimeout(timeout);
+      window.removeEventListener("focus", checkExpiry);
+      window.removeEventListener("pageshow", checkExpiry);
+    };
+  }, [hydrated, token, expiresAt, logout, router]);
 
   if (!hydrated || !token) return null;
 

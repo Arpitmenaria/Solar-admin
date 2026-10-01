@@ -14,17 +14,22 @@ export interface AdminUser {
 interface AuthState {
   token: string | null;
   admin: AdminUser | null;
+  expiresAt: number | null;
   setAuth: (token: string, admin: AdminUser) => void;
   logout: () => void;
 }
+
+export const AUTH_SESSION_DURATION_MS = 24 * 60 * 60 * 1000;
 
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       token: null,
       admin: null,
-      setAuth: (token, admin) => set({ token, admin }),
-      logout: () => set({ token: null, admin: null }),
+      expiresAt: null,
+      setAuth: (token, admin) =>
+        set({ token, admin, expiresAt: Date.now() + AUTH_SESSION_DURATION_MS }),
+      logout: () => set({ token: null, admin: null, expiresAt: null }),
     }),
     { name: "kick-analyst-admin-auth" }
   )
