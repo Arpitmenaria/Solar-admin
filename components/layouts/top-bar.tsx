@@ -1,90 +1,56 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Bell, Menu, LogOut, CheckCheck, UserPlus, FileWarning, MessageSquareWarning, MailWarning, ShieldAlert, type LucideIcon } from "lucide-react";
+import {
+  Bell,
+  Menu,
+  LogOut,
+  CheckCheck,
+  Sun,
+  Zap,
+  ShieldCheck,
+  AlertTriangle,
+  Info,
+  CheckCircle2,
+} from "lucide-react";
 import { useUIStore } from "@/store/ui.store";
 import { useAuthStore } from "@/store/auth.store";
-import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { createPortal } from "react-dom";
 import { toast } from "sonner";
-import { connectAdminSocket, disconnectAdminSocket } from "@/services/socket";
-import { useAdminNotifications, useMarkNotificationRead, useMarkAllNotificationsRead, notificationsKey } from "@/hooks/use-notifications";
-import type { AdminNotification, AdminNotificationType } from "@/types";
-import type { NotificationsPage } from "@/services/notifications.service";
+import { INITIAL_NOTIFICATIONS } from "@/constants/solar-data";
+import type { SolarNotification, SolarNotificationSeverity } from "@/types";
 
-const TYPE_META: Record<AdminNotificationType, { icon: LucideIcon; color: string; bg: string }> = {
-  new_user:       { icon: UserPlus,             color: "text-blue-400",    bg: "bg-blue-500/10"    },
-  post_report:    { icon: FileWarning,          color: "text-red-400",     bg: "bg-red-500/10"     },
-  comment_report: { icon: MessageSquareWarning, color: "text-orange-400",  bg: "bg-orange-500/10"  },
-  message_report: { icon: MailWarning,          color: "text-purple-400",  bg: "bg-purple-500/10"  },
-  group_report:   { icon: ShieldAlert,          color: "text-yellow-400",  bg: "bg-yellow-500/10"  },
+const SEVERITY_ICONS: Record<SolarNotificationSeverity, { icon: typeof Info; color: string; bg: string }> = {
+  info:    { icon: Info,          color: "text-blue-400",   bg: "bg-blue-500/10"   },
+  success: { icon: CheckCircle2,  color: "text-emerald-400",bg: "bg-emerald-500/10"},
+  warning: { icon: AlertTriangle, color: "text-amber-400",  bg: "bg-amber-500/10"  },
+  alert:   { icon: AlertTriangle, color: "text-rose-400",   bg: "bg-rose-500/10"   },
 };
-
-function timeAgo(iso: string): string {
-  const diffMs = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(diffMs / 60_000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
-  return `${Math.floor(hours / 24)}d ago`;
-}
-
-// Establishes the live socket connection for as long as an admin is logged
-// in — mounted once from TopBar since that's the only consumer of realtime
-// notifications today. Pushes into the same react-query cache the REST list
-// (useAdminNotifications) reads from, so a live event and a page refresh
-// both render through one code path.
-function useAdminNotificationSocket() {
-  const token = useAuthStore((s) => s.token);
-  const qc = useQueryClient();
-
-  useEffect(() => {
-    if (!token) return;
-    const socket = connectAdminSocket(token);
-
-    function handleNotification(data: AdminNotification) {
-      qc.setQueryData<NotificationsPage>(notificationsKey, (prev) => {
-        if (!prev) return prev;
-        if (prev.notifications.some((n) => n.id === data.id)) return prev;
-        return {
-          ...prev,
-          notifications: [data, ...prev.notifications],
-          unreadCount: prev.unreadCount + 1,
-          total: prev.total + 1,
-        };
-      });
-      toast.message(data.title, { description: data.message });
-    }
-
-    socket.on("admin:notification", handleNotification);
-    return () => {
-      socket.off("admin:notification", handleNotification);
-      disconnectAdminSocket();
-    };
-  }, [token, qc]);
-}
 
 function NotificationPortal({
   open,
   anchorRef,
+  notifications,
+  onMarkRead,
+  onMarkAllRead,
   onClose,
 }: {
   open: boolean;
   anchorRef: React.RefObject<HTMLButtonElement | null>;
+  notifications: SolarNotification[];
+  onMarkRead: (id: string) => void;
+  onMarkAllRead: () => void;
   onClose: () => void;
 }) {
   const [pos, setPos] = useState({ top: 0, right: 0 });
   const [mounted, setMounted] = useState(false);
-  const { data } = useAdminNotifications();
-  const { mutate: markRead } = useMarkNotificationRead();
-  const { mutate: markAllRead } = useMarkAllNotificationsRead();
-  const notifications = data?.notifications ?? [];
-  const unreadCount = data?.unreadCount ?? 0;
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!open || !anchorRef.current) return;
@@ -97,7 +63,7 @@ function NotificationPortal({
     const handler = (e: MouseEvent) => {
       const target = e.target as Node;
       if (anchorRef.current?.contains(target)) return;
-      const panel = document.getElementById("notif-panel");
+      const panel = document.getElementById("solar-notif-panel");
       if (panel && !panel.contains(target)) onClose();
     };
     document.addEventListener("mousedown", handler);
@@ -110,63 +76,71 @@ function NotificationPortal({
     <AnimatePresence>
       {open && (
         <motion.div
-          id="notif-panel"
+          id="solar-notif-panel"
           initial={{ opacity: 0, y: -8, scale: 0.97 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -6, scale: 0.97 }}
           transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
-          style={{ position: "fixed", top: pos.top, right: pos.right, zIndex: 9999, width: 340 }}
-          className="max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-white/[0.10] bg-[#0d1321] shadow-2xl shadow-black/60"
+          style={{ position: "fixed", top: pos.top, right: pos.right, zIndex: 9999, width: 360 }}
+          className="max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-white/[0.12] bg-[#0c1322] shadow-2xl shadow-black/70 backdrop-blur-md"
         >
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-white/[0.07] px-4 py-3">
+          <div className="flex items-center justify-between border-b border-white/[0.08] px-4 py-3 bg-white/[0.02]">
             <div className="flex items-center gap-2">
-              <Bell size={13} className="text-blue-400" />
-              <span className="text-[12px] font-semibold text-white">Notifications</span>
+              <Sun size={15} className="text-amber-400" />
+              <span className="text-[13px] font-semibold text-white">Solar Alerts & Telemetry</span>
               {unreadCount > 0 && (
-                <span className="rounded-full bg-blue-600 px-1.5 py-0.5 text-[10px] font-bold text-white leading-none">
+                <span className="rounded-full bg-amber-500 px-1.5 py-0.5 text-[10px] font-bold text-slate-950 leading-none">
                   {unreadCount}
                 </span>
               )}
             </div>
             <button
-              onClick={() => markAllRead()}
-              className="flex items-center gap-1 text-[11px] text-[#3a4d6a] transition-colors hover:text-blue-400"
+              onClick={onMarkAllRead}
+              className="flex items-center gap-1 text-[11px] font-medium text-slate-400 transition-colors hover:text-amber-300"
             >
-              <CheckCheck size={11} />
+              <CheckCheck size={12} />
               Mark all read
             </button>
           </div>
 
-          {/* Items */}
-          <div className="divide-y divide-white/[0.05]">
-            {notifications.length === 0 && (
-              <p className="px-4 py-6 text-center text-[12px] text-[#4a5a7a]">You&apos;re all caught up.</p>
-            )}
-            {notifications.map((n) => {
-              const meta = TYPE_META[n.type];
-              const Icon = meta.icon;
-              return (
-                <motion.button
-                  key={n.id}
-                  onClick={() => !n.read && markRead(n.id)}
-                  whileHover={{ backgroundColor: "rgba(255,255,255,0.03)" }}
-                  className="flex w-full items-start gap-3 px-4 py-3 text-left transition-colors"
-                >
-                  <div className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${meta.bg}`}>
-                    <Icon size={14} className={meta.color} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-[12px] font-semibold text-slate-200 leading-tight">{n.title}</p>
-                      {!n.read && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-blue-500" />}
+          {/* List */}
+          <div className="divide-y divide-white/[0.06] max-h-[380px] overflow-y-auto">
+            {notifications.length === 0 ? (
+              <p className="px-4 py-8 text-center text-[12px] text-slate-400">
+                All systems operating normally. No alerts.
+              </p>
+            ) : (
+              notifications.map((n) => {
+                const meta = SEVERITY_ICONS[n.severity] ?? SEVERITY_ICONS.info;
+                const Icon = meta.icon;
+                return (
+                  <button
+                    key={n.id}
+                    onClick={() => onMarkRead(n.id)}
+                    className={`flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-white/[0.04] ${
+                      n.read ? "opacity-75" : "bg-amber-500/[0.03]"
+                    }`}
+                  >
+                    <div className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${meta.bg}`}>
+                      <Icon size={14} className={meta.color} />
                     </div>
-                    <p className="mt-0.5 text-[11px] leading-relaxed text-[#4a5a7a]">{n.message}</p>
-                    <p className="mt-1 text-[10px] text-[#2e3d57]">{timeAgo(n.createdAt)}</p>
-                  </div>
-                </motion.button>
-              );
-            })}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-[12px] font-semibold text-slate-200 leading-snug">
+                          {n.title}
+                        </p>
+                        {!n.read && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />}
+                      </div>
+                      <p className="mt-1 text-[11px] leading-relaxed text-slate-400">
+                        {n.message}
+                      </p>
+                      <p className="mt-1 text-[10px] text-slate-500">{n.timestamp}</p>
+                    </div>
+                  </button>
+                );
+              })
+            )}
           </div>
         </motion.div>
       )}
@@ -180,79 +154,100 @@ export function TopBar() {
   const logout = useAuthStore((s) => s.logout);
   const router = useRouter();
   const [notifOpen, setNotifOpen] = useState(false);
+  const [notifications, setNotifications] = useState<SolarNotification[]>(INITIAL_NOTIFICATIONS);
   const bellRef = useRef<HTMLButtonElement>(null);
-  const { data } = useAdminNotifications();
-  const unreadCount = data?.unreadCount ?? 0;
 
-  useAdminNotificationSocket();
+  const unreadCount = notifications.filter((n) => !n.read).length;
+
+  function handleMarkRead(id: string) {
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+    );
+  }
+
+  function handleMarkAllRead() {
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    toast.success("All notifications marked as read");
+  }
 
   return (
     <>
-      <header className="fixed left-0 right-0 top-0 z-50 flex h-[52px] items-center justify-between border-b border-white/[0.06] bg-background px-4 md:px-5">
-
+      <header className="fixed left-0 right-0 top-0 z-50 flex h-[52px] items-center justify-between border-b border-white/[0.06] bg-[#080c16] px-4 md:px-5">
         {/* Left */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <button
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-icon-muted transition-colors hover:bg-white/[0.06] md:hidden"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-white/[0.06] md:hidden"
             onClick={() => setMobileOpen(true)}
             aria-label="Open navigation menu"
           >
             <Menu size={18} />
           </button>
-          <span className="text-[15px] font-bold tracking-[-0.2px] text-blue-500">
-            Kink Analyst Admin
-          </span>
+
+          <div className="flex items-center gap-2">
+            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-amber-500 text-slate-950 font-bold">
+              <Sun size={15} />
+            </div>
+            <span className="text-[15px] font-bold tracking-tight text-white">
+              Sparrow Solar Admin
+            </span>
+          </div>
+
+          <div className="hidden sm:flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-medium text-emerald-400 ml-2">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            Grid Interconnected · 100% Normal
+          </div>
         </div>
 
         {/* Right */}
-        <div className="flex items-center gap-2.5">
-
-          {/* Bell */}
+        <div className="flex items-center gap-3">
+          {/* Notifications bell */}
           <motion.button
             ref={bellRef}
             aria-label="Notifications"
             onClick={() => setNotifOpen((v) => !v)}
-            whileHover={{ scale: 1.08 }}
-            whileTap={{ scale: 0.92 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             className={`relative flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
               notifOpen
-                ? "bg-blue-500/15 text-blue-400 border border-blue-500/30"
-                : "border border-white/[0.07] text-icon-muted hover:border-white/[0.14] hover:bg-white/[0.06] hover:text-slate-200"
+                ? "bg-amber-500/15 text-amber-300 border border-amber-500/40"
+                : "border border-white/[0.08] text-slate-400 hover:border-white/[0.18] hover:bg-white/[0.06] hover:text-slate-200"
             }`}
           >
             <Bell size={15} />
             {unreadCount > 0 && (
-              <motion.span
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-blue-600 text-[9px] font-bold text-white shadow-md shadow-blue-600/40"
-              >
+              <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-[9px] font-bold text-slate-950 shadow-md">
                 {unreadCount}
-              </motion.span>
+              </span>
             )}
           </motion.button>
 
           {/* Divider */}
-          <div className="h-5 w-px bg-white/[0.07]" />
+          <div className="h-5 w-px bg-white/[0.08]" />
 
-          {/* Logout */}
+          {/* Logout button */}
           <motion.button
             aria-label="Logout"
-            onClick={() => { logout(); router.push("/login"); }}
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.96 }}
-            className="group relative flex items-center gap-1.5 overflow-hidden rounded-lg bg-red-600 px-3.5 py-1.5 text-[12px] font-semibold text-white shadow-sm shadow-red-600/20 transition-all hover:bg-red-700 hover:shadow-md hover:shadow-red-600/30"
+            onClick={() => {
+              logout();
+              toast.info("Logged out successfully");
+              router.push("/login");
+            }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="flex items-center gap-1.5 rounded-lg border border-rose-500/30 bg-rose-500/15 px-3 py-1.5 text-[12px] font-semibold text-rose-300 transition-all hover:bg-rose-500/25 hover:text-rose-200 active:scale-[0.98]"
           >
-            <LogOut size={13} className="transition-transform group-hover:-translate-x-[1px] group-hover:rotate-[-4deg]" />
-            Logout
+            <LogOut size={13} />
+            Sign Out
           </motion.button>
-
         </div>
       </header>
 
       <NotificationPortal
         open={notifOpen}
         anchorRef={bellRef}
+        notifications={notifications}
+        onMarkRead={handleMarkRead}
+        onMarkAllRead={handleMarkAllRead}
         onClose={() => setNotifOpen(false)}
       />
     </>
