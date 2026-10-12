@@ -31,7 +31,7 @@ export const useAuthStore = create<AuthState>()(
         set({ token, admin, expiresAt: Date.now() + AUTH_SESSION_DURATION_MS }),
       logout: () => set({ token: null, admin: null, expiresAt: null }),
     }),
-    { name: "kick-analyst-admin-auth" }
+    { name: "sparrow-solar-admin-auth" }
   )
 );
 
